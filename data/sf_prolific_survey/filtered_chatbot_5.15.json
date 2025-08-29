@@ -1,0 +1,964 @@
+[
+  {
+    "id": "67ebc24ee98e314102e23f1a",
+    "coordinates": {
+      "lat": 37.77531976261271,
+      "lng": -122.42216629383607
+    },
+    "agent": {
+      "age": 19,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "30.0 to 34.9 percent",
+      "means of transportation": "Car / Truck / Van",
+      "income": "$100,000-$124,999",
+      "occupation": "Sales and office occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "I've lived in the same apartment these last five years, with the rent coming up from 1500-2100. This was mainly spurred on by inflation."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Buena Vista Park",
+          "Yerba Buena Gardens",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children",
+          "John O'Connell Technical High School"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "Zuni Café",
+          "The Stinking Rose",
+          "Jasper's Corner Tap and Kitchen",
+          "Nopa"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "24th St Mission",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Buena Vista Park, Yerba Buena Gardens, Franklin Square. Dining options include: Fairmont San Francisco, Zuni Café, The Stinking Rose, Jasper's Corner Tap and Kitchen, Nopa. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children, John O'Connell Technical High School. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, 24th St Mission, San Francisco. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "668b7ec2d3b6830e2063fb8d",
+    "coordinates": {
+      "lat": 37.7764239169302,
+      "lng": -122.41710711012422
+    },
+    "agent": {
+      "age": 31,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "30.0 to 34.9 percent",
+      "means of transportation": "Walk, Public Transportation",
+      "income": "$10,000-$14,999",
+      "occupation": "Service occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "I have lived mostly in the Western Addition, particularly in the Fillmore in a subsidized housing complex. Rent has increased a few times over the last two years due to our co-op's loan payments increasing in size."
+    },
+    "geo_content": {
+      "neighborhood": "SoMa",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Yerba Buena Gardens",
+          "Buena Vista Park",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children",
+          "John O'Connell Technical High School"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Bi-Rite Market",
+          "Trader Joe's",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Perbacco",
+          "Zuni Café",
+          "Boulevard"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "San Francisco",
+          "24th St Mission"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "UCSF Pediatric Echocardiography Imaging Program",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the SoMa neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Yerba Buena Gardens, Buena Vista Park, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Perbacco, Zuni Café, Boulevard. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Bi-Rite Market, Trader Joe's, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children, John O'Connell Technical High School. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, San Francisco, 24th St Mission. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, UCSF Pediatric Echocardiography Imaging Program, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "67e879fe11e09af6fae79aaf",
+    "coordinates": {
+      "lat": 37.77927354978571,
+      "lng": -122.42123394107384
+    },
+    "agent": {
+      "age": 40,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "30.0 to 34.9 percent",
+      "means of transportation": "Taxi / cab, Walk, Public Transportation, Worked from home",
+      "income": "$25,000–$29,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Now Married (Spouse Present)",
+      "children": "6 to 17 years old",
+      "housing experience": " Initially, I lived in a shared rental apartment in the Inner Sunset with roommates to manage high rental costs. After two years, I moved to a studio in the Outer Sunset to gain more privacy, but increasing rent and job instability during the pandemic forced me to relocate again. I then moved in temporarily with family in the Excelsior District before securing a more affordable one-bedroom unit through a housing assistance program."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Union Street Inn",
+          "Mission Dolores Park",
+          "Yerba Buena Gardens",
+          "Buena Vista Park",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "Galileo Academy of Science and Technology",
+          "The International School of San Francisco",
+          "Montessori House of Children"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Perbacco",
+          "Zuni Café",
+          "Jasper's Corner Tap and Kitchen"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Four Barrel Coffee",
+          "Ritual Coffee Roasters"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "San Francisco",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Union Street Inn, Mission Dolores Park, Yerba Buena Gardens, Buena Vista Park, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Perbacco, Zuni Café, Jasper's Corner Tap and Kitchen. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Four Barrel Coffee, Ritual Coffee Roasters. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, Galileo Academy of Science and Technology, The International School of San Francisco, Montessori House of Children. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, San Francisco, San Francisco. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "664662d0e586193a0ca4267e",
+    "coordinates": {
+      "lat": 37.77850775922219,
+      "lng": -122.42226970472315
+    },
+    "agent": {
+      "age": 19,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "40.0 to 49.9 percent",
+      "means of transportation": "Walk, Public Transportation",
+      "income": "$75,000-$99,999",
+      "occupation": "Service occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "I have not moved apartments or changed anything in the last 5 years. My building was retrofitted for earthquakes a few years ago."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Buena Vista Park",
+          "Yerba Buena Gardens",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Galileo Academy of Science and Technology",
+          "Montessori House of Children"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Zuni Café",
+          "Perbacco",
+          "Jasper's Corner Tap and Kitchen"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "San Francisco",
+          "24th St Mission"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Buena Vista Park, Yerba Buena Gardens, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Zuni Café, Perbacco, Jasper's Corner Tap and Kitchen. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Galileo Academy of Science and Technology, Montessori House of Children. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, San Francisco, 24th St Mission. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "65d50a645355ef7756002e2b",
+    "coordinates": {
+      "lat": 37.776674611819956,
+      "lng": -122.42158225449772
+    },
+    "agent": {
+      "age": 42,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Owner-occupied",
+      "Gross rent": "Not computed",
+      "means of transportation": "Walk, Public Transportation",
+      "income": "$100,000-$124,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "There were no changes. I live in a house I own."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Buena Vista Park",
+          "Yerba Buena Gardens",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children",
+          "Galileo Academy of Science and Technology"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Zuni Café",
+          "Perbacco",
+          "Jasper's Corner Tap and Kitchen"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "24th St Mission",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Buena Vista Park, Yerba Buena Gardens, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Zuni Café, Perbacco, Jasper's Corner Tap and Kitchen. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children, Galileo Academy of Science and Technology. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, 24th St Mission, San Francisco. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "67e6b4c78b8b457f3bc6a866",
+    "coordinates": {
+      "lat": 37.78111725149342,
+      "lng": -122.42017281638674
+    },
+    "agent": {
+      "age": 41,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "25.0 to 29.9 percent",
+      "means of transportation": "Car / Truck / Van, Taxi / cab",
+      "income": "$150,000-$199,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Now Married (Spouse Present)",
+      "children": "6 to 17 years old",
+      "housing experience": "The reasons for a change in my housing and rental situations was because of the high housing cost and also, i desired for a change of environment."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Union Street Inn",
+          "Mission Dolores Park",
+          "Yerba Buena Gardens",
+          "Buena Vista Park",
+          "Franklin Square"
+        ],
+        "school": [
+          "Galileo Academy of Science and Technology",
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Perbacco",
+          "Boulevard",
+          "Zuni Café"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Four Barrel Coffee",
+          "Ritual Coffee Roasters"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "San Francisco",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street",
+          "Heart and Vascular Center: California Pacific Medical Center: Pacific Campus"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Union Street Inn, Mission Dolores Park, Yerba Buena Gardens, Buena Vista Park, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Perbacco, Boulevard, Zuni Café. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Four Barrel Coffee, Ritual Coffee Roasters. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Galileo Academy of Science and Technology, Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, San Francisco, San Francisco. Hospitals nearby: Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street, Heart and Vascular Center: California Pacific Medical Center: Pacific Campus."
+    }
+  },
+  {
+    "id": "65e442f1bf350cd00afae308",
+    "coordinates": {
+      "lat": 37.77560515555121,
+      "lng": -122.41842394319544
+    },
+    "agent": {
+      "age": 20,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "40.0 to 49.9 percent",
+      "means of transportation": "Car / Truck / Van, Walk, Public Transportation",
+      "income": "$100,000-$124,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "Changed from rental to dorms. Due to cost of living."
+    },
+    "geo_content": {
+      "neighborhood": "SoMa",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Yerba Buena Gardens",
+          "Buena Vista Park",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children",
+          "John O'Connell Technical High School"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Perbacco",
+          "Zuni Café",
+          "Jasper's Corner Tap and Kitchen"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "24th St Mission",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the SoMa neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Yerba Buena Gardens, Buena Vista Park, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Perbacco, Zuni Café, Jasper's Corner Tap and Kitchen. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children, John O'Connell Technical High School. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, 24th St Mission, San Francisco. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "64d63b117d0fcfc1cd8d6934",
+    "coordinates": {
+      "lat": 37.7758948048159,
+      "lng": -122.42205181762417
+    },
+    "agent": {
+      "age": 50,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Owner-occupied",
+      "Gross rent": "Not computed",
+      "means of transportation": "Car / Truck / Van, Walk, Public Transportation",
+      "income": "$75,000-$99,999",
+      "occupation": "Service occupations",
+      "family type": "Never Married",
+      "children": "6 to 17 years old",
+      "housing experience": "I’ve lived at the same address on 15th Avenue in the Sunset District, where my family has been rooted for generations. The house was originally my grandparents’, passed down to my parents, and now I help take care of it. We haven’t moved, but we’ve definitely felt the pressure — rising property taxes, new development creeping in, and the change in character of the neighborhood. What used to be a quiet, mostly family-filled area is seeing more dense apartment buildings and tech folks moving in. It’s still home, but it’s not the same Sunset I grew up in."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Buena Vista Park",
+          "Yerba Buena Gardens",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children",
+          "John O'Connell Technical High School"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Zuni Café",
+          "Jasper's Corner Tap and Kitchen",
+          "Nopa"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "24th St Mission",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Buena Vista Park, Yerba Buena Gardens, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Zuni Café, Jasper's Corner Tap and Kitchen, Nopa. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children, John O'Connell Technical High School. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, 24th St Mission, San Francisco. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "5be8dab5d153f500019ab320",
+    "coordinates": {
+      "lat": 37.780977665302345,
+      "lng": -122.41818471619595
+    },
+    "agent": {
+      "age": 50,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "20.0 to 24.9 percent",
+      "means of transportation": "Car / Truck / Van",
+      "income": "$75,000-$99,999",
+      "occupation": "Service occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "I haven’t made any big moves in the last five years but my rent has gone up considerably."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Union Street Inn",
+          "Mission Dolores Park",
+          "Yerba Buena Gardens",
+          "Buena Vista Park",
+          "Franklin Square"
+        ],
+        "school": [
+          "Galileo Academy of Science and Technology",
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Boulevard",
+          "Perbacco",
+          "Zuni Café"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Four Barrel Coffee",
+          "Ritual Coffee Roasters"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "San Francisco",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Union Street Inn, Mission Dolores Park, Yerba Buena Gardens, Buena Vista Park, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Boulevard, Perbacco, Zuni Café. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Four Barrel Coffee, Ritual Coffee Roasters. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Galileo Academy of Science and Technology, Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, San Francisco, San Francisco. Hospitals nearby: Stroke Care Center: California Pacific Medical Center: Pacific Campus, Zuckerberg San Francisco General Hospital and Trauma Center, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "66594968a8fca6ea85c9ac19",
+    "coordinates": {
+      "lat": 37.77592356114677,
+      "lng": -122.42227035900271
+    },
+    "agent": {
+      "age": 26,
+      "Geo Mobility": "Different house in United States 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "50.0 percent or more",
+      "means of transportation": "Car / Truck / Van, Bicycle, Walk, Public Transportation",
+      "income": "$75,000-$99,999",
+      "occupation": "Sales and office occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "I moved to San Francisco last year for a new job opportunity. I am currently renting an apartment."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Buena Vista Park",
+          "Yerba Buena Gardens",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children",
+          "John O'Connell Technical High School"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Zuni Café",
+          "Jasper's Corner Tap and Kitchen",
+          "Nopa"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "24th St Mission",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Buena Vista Park, Yerba Buena Gardens, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Zuni Café, Jasper's Corner Tap and Kitchen, Nopa. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children, John O'Connell Technical High School. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, 24th St Mission, San Francisco. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "5ae5b7e26735bd0001d7dfe3",
+    "coordinates": {
+      "lat": 37.77709021663361,
+      "lng": -122.42127504946822
+    },
+    "agent": {
+      "age": 42,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "40.0 to 49.9 percent",
+      "means of transportation": "Car / Truck / Van",
+      "income": "$100,000-$124,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Now Married (Spouse Present)",
+      "children": "Under 6 years old, 6 to 17 years old",
+      "housing experience": "Rent at my particular apartment has naturally gone up substantially. My housing status has remained unchanged, thankfully."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Buena Vista Park",
+          "Yerba Buena Gardens",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Galileo Academy of Science and Technology",
+          "Montessori House of Children"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Zuni Café",
+          "Perbacco",
+          "Jasper's Corner Tap and Kitchen"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "24th St Mission",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Buena Vista Park, Yerba Buena Gardens, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Zuni Café, Perbacco, Jasper's Corner Tap and Kitchen. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Galileo Academy of Science and Technology, Montessori House of Children. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, 24th St Mission, San Francisco. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "668340555d67e9d1df712a45",
+    "coordinates": {
+      "lat": 37.777558474454594,
+      "lng": -122.42144198423094
+    },
+    "agent": {
+      "age": 32,
+      "Geo Mobility": "Different house in United States 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "50.0 percent or more",
+      "means of transportation": "Walk, Public Transportation, Worked from home",
+      "income": "$75,000-$99,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "Moved from renting an apartment in Park Merced to renting a room in the neighborhood next to it. I had to move as we got evicted from during COVID."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Mission Dolores Park",
+          "Union Street Inn",
+          "Yerba Buena Gardens",
+          "Buena Vista Park",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Galileo Academy of Science and Technology",
+          "Montessori House of Children"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Zuni Café",
+          "Perbacco",
+          "Jasper's Corner Tap and Kitchen"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Ritual Coffee Roasters",
+          "Four Barrel Coffee"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "24th St Mission",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Zuckerberg San Francisco General Hospital and Trauma Center",
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Mission Dolores Park, Union Street Inn, Yerba Buena Gardens, Buena Vista Park, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Zuni Café, Perbacco, Jasper's Corner Tap and Kitchen. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Ritual Coffee Roasters, Four Barrel Coffee. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Galileo Academy of Science and Technology, Montessori House of Children. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, 24th St Mission, San Francisco. Hospitals nearby: Zuckerberg San Francisco General Hospital and Trauma Center, Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street."
+    }
+  },
+  {
+    "id": "6656b41a68bc810ea64c442c",
+    "coordinates": {
+      "lat": 37.77999290312015,
+      "lng": -122.42278282133489
+    },
+    "agent": {
+      "age": 29,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "35.0 to 39.9 percent",
+      "means of transportation": "Car / Truck / Van, Taxi / cab, Walk, Public Transportation, Worked from home",
+      "income": "$75,000-$99,999",
+      "occupation": "Service occupations",
+      "family type": "Never Married",
+      "children": "No Children",
+      "housing experience": "I have lived in Park Merced since early 2019. I haven't had any changes to this as I haven't needed to move."
+    },
+    "geo_content": {
+      "neighborhood": "Civic Center",
+      "pois_within_2_miles": {
+        "park": [
+          "Union Street Inn",
+          "Mission Dolores Park",
+          "Yerba Buena Gardens",
+          "Buena Vista Park",
+          "Franklin Square"
+        ],
+        "school": [
+          "Mission High School",
+          "Galileo Academy of Science and Technology",
+          "Sacred Heart Cathedral Preparatory",
+          "The International School of San Francisco",
+          "Montessori House of Children"
+        ],
+        "supermarket": [
+          "Trader Joe's",
+          "Rainbow Grocery Cooperative",
+          "Trader Joe's",
+          "Bi-Rite Market",
+          "Whole Foods Market"
+        ],
+        "restaurant": [
+          "Fairmont San Francisco",
+          "The Stinking Rose",
+          "Perbacco",
+          "Zuni Café",
+          "Jasper's Corner Tap and Kitchen"
+        ],
+        "cafe": [
+          "Zuni Café",
+          "DNA Lounge",
+          "Sightglass Coffee",
+          "Four Barrel Coffee",
+          "Ritual Coffee Roasters"
+        ],
+        "transit_station": [
+          "Powell Street",
+          "Civic Center / UN Plaza",
+          "Montgomery",
+          "San Francisco",
+          "San Francisco"
+        ],
+        "hospital": [
+          "Stroke Care Center: California Pacific Medical Center: Pacific Campus",
+          "Kaiser Permanente San Francisco Medical Center",
+          "Cardiac Catheterization Laboratory: California Pacific Medical Center",
+          "CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street",
+          "Heart and Vascular Center: California Pacific Medical Center: Pacific Campus"
+        ]
+      },
+      "narrative": "You live in the Civic Center neighborhood. Parks nearby: Union Street Inn, Mission Dolores Park, Yerba Buena Gardens, Buena Vista Park, Franklin Square. Dining options include: Fairmont San Francisco, The Stinking Rose, Perbacco, Zuni Café, Jasper's Corner Tap and Kitchen. Cafes nearby: Zuni Café, DNA Lounge, Sightglass Coffee, Four Barrel Coffee, Ritual Coffee Roasters. Grocery stores: Trader Joe's, Rainbow Grocery Cooperative, Trader Joe's, Bi-Rite Market, Whole Foods Market. Schools: Mission High School, Galileo Academy of Science and Technology, Sacred Heart Cathedral Preparatory, The International School of San Francisco, Montessori House of Children. Public transport: Powell Street, Civic Center / UN Plaza, Montgomery, San Francisco, San Francisco. Hospitals nearby: Stroke Care Center: California Pacific Medical Center: Pacific Campus, Kaiser Permanente San Francisco Medical Center, Cardiac Catheterization Laboratory: California Pacific Medical Center, CPMC Pacific Heights Outpatient Center | 2333 Buchanan Street, Heart and Vascular Center: California Pacific Medical Center: Pacific Campus."
+    }
+  }
+]

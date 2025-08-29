@@ -1,0 +1,296 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://agent-city-hall.com/schemas/housing-policy-opinion",
+  "title": "Housing Policy Opinion Evaluation Schema",
+  "description": "Schema for housing policy opinion data, model predictions, and evaluation metrics",
+  "version": "1.0",
+  "definitions": {
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Identifier for a scenario, in the format n.m (e.g., '1.1', '2.3')"
+    },
+    "opinion_rating": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 10,
+      "description": "Opinion rating on a scale of 1-10"
+    },
+    "reason_category": {
+      "type": "string",
+      "description": "A reason category describing why the participant reacted to a policy"
+    },
+    "reason_code": {
+      "type": "string",
+      "pattern": "^[A-L]$",
+      "description": "A single letter code (A-L) representing a reason category"
+    },
+    "demographics": {
+      "type": "object",
+      "description": "Demographic information about a participant",
+      "properties": {
+        "age": {
+          "type": "string",
+          "description": "Age range of the participant"
+        },
+        "housing_status": {
+          "type": "string",
+          "description": "Whether the participant rents, owns, etc."
+        },
+        "income": {
+          "type": "string",
+          "description": "Income range of the participant"
+        },
+        "occupation": {
+          "type": "string",
+          "description": "Participant's occupation category"
+        },
+        "transportation": {
+          "type": "string",
+          "description": "Primary mode of transportation"
+        },
+        "household": {
+          "type": "string", 
+          "description": "Household and family situation"
+        },
+        "zipcode": {
+          "type": "string",
+          "description": "ZIP code of residence"
+        },
+        "address": {
+          "type": "string",
+          "description": "Approximate address or neighborhood"
+        },
+        "housing_experience": {
+          "type": "string",
+          "description": "Description of housing experience in the past years"
+        }
+      }
+    },
+    "opinions": {
+      "type": "object",
+      "description": "Numeric opinions for different scenarios",
+      "patternProperties": {
+        "^\\d+\\.\\d+$": { "$ref": "#/definitions/opinion_rating" }
+      },
+      "additionalProperties": false
+    },
+    "reasons": {
+      "type": "object",
+      "description": "Reasons selected for different scenarios",
+      "patternProperties": {
+        "^\\d+\\.\\d+$": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/reason_category" },
+          "description": "List of reasons for a specific scenario"
+        }
+      },
+      "additionalProperties": false
+    },
+    "reasons_mapped": {
+      "type": "object",
+      "description": "Coded reasons selected for different scenarios",
+      "patternProperties": {
+        "^\\d+\\.\\d+$": {
+          "type": "array",
+          "items": { "$ref": "#/definitions/reason_code" },
+          "description": "List of reason codes for a specific scenario"
+        }
+      },
+      "additionalProperties": false
+    },
+    "participant_reaction": {
+      "type": "object",
+      "required": ["opinions", "reasons"],
+      "properties": {
+        "opinions": { "$ref": "#/definitions/opinions" },
+        "reasons": { "$ref": "#/definitions/reasons" }
+      }
+    },
+    "participant_mapped_reaction": {
+      "type": "object",
+      "required": ["opinions", "reasons"],
+      "properties": {
+        "opinions": { "$ref": "#/definitions/opinions" },
+        "reasons": { "$ref": "#/definitions/reasons_mapped" }
+      }
+    },
+    "opinion_metrics": {
+      "type": "object",
+      "description": "Metrics for opinion predictions",
+      "required": ["rmse", "mae", "r2"],
+      "properties": {
+        "rmse": {
+          "type": "number",
+          "description": "Root Mean Square Error",
+          "minimum": 0
+        },
+        "mae": {
+          "type": "number",
+          "description": "Mean Absolute Error",
+          "minimum": 0
+        },
+        "r2": {
+          "type": "number",
+          "description": "R-squared coefficient",
+          "maximum": 1
+        }
+      }
+    },
+    "reason_metrics": {
+      "type": "object",
+      "description": "Metrics for reason predictions",
+      "required": ["jaccard_index", "micro_precision", "micro_recall", "micro_f1"],
+      "properties": {
+        "jaccard_index": {
+          "type": "number",
+          "description": "Mean Jaccard similarity index",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "micro_precision": {
+          "type": "number",
+          "description": "Micro-averaged precision",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "micro_recall": {
+          "type": "number",
+          "description": "Micro-averaged recall",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "micro_f1": {
+          "type": "number",
+          "description": "Micro-averaged F1 score",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    },
+    "scenario_metrics": {
+      "type": "object",
+      "description": "Metrics for a specific scenario",
+      "required": ["opinion_metrics", "reason_metrics"],
+      "properties": {
+        "opinion_metrics": {
+          "type": "object",
+          "required": ["rmse", "mae"],
+          "properties": {
+            "rmse": {
+              "type": "number",
+              "minimum": 0
+            },
+            "mae": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "reason_metrics": {
+          "type": "object",
+          "required": ["jaccard_index", "precision", "recall", "f1"],
+          "properties": {
+            "jaccard_index": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "precision": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "recall": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "f1": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "ground_truth": {
+      "type": "object",
+      "description": "Ground truth data containing participant demographics and reactions",
+      "patternProperties": {
+        "^[a-zA-Z0-9]+$": {
+          "type": "object",
+          "required": ["demographics", "reactions"],
+          "properties": {
+            "demographics": { "$ref": "#/definitions/demographics" },
+            "reactions": { "$ref": "#/definitions/participant_reaction" }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "model_prediction": {
+      "type": "object",
+      "description": "Model predictions for participants' reactions",
+      "patternProperties": {
+        "^[a-zA-Z0-9]+$": { "$ref": "#/definitions/participant_reaction" }
+      },
+      "additionalProperties": false
+    },
+    "model_prediction_mapped": {
+      "type": "object",
+      "description": "Model predictions with coded reason labels",
+      "patternProperties": {
+        "^[a-zA-Z0-9]+$": { "$ref": "#/definitions/participant_mapped_reaction" }
+      },
+      "additionalProperties": false
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Evaluation metrics comparing ground truth to model predictions",
+      "required": ["opinion_metrics", "reason_metrics", "per_scenario"],
+      "properties": {
+        "opinion_metrics": { "$ref": "#/definitions/opinion_metrics" },
+        "reason_metrics": { "$ref": "#/definitions/reason_metrics" },
+        "per_scenario": {
+          "type": "object",
+          "description": "Metrics broken down by scenario",
+          "patternProperties": {
+            "^\\d+\\.\\d+$": { "$ref": "#/definitions/scenario_metrics" }
+          },
+          "additionalProperties": false
+        }
+      }
+    },
+    "reason_mapping": {
+      "type": "object",
+      "description": "Mapping between reason text and codes",
+      "required": ["mapping", "reverse_mapping"],
+      "properties": {
+        "mapping": {
+          "type": "object",
+          "description": "Maps reason text to code",
+          "patternProperties": {
+            "^.+$": {
+              "type": "string",
+              "pattern": "^[A-L]$"
+            }
+          }
+        },
+        "reverse_mapping": {
+          "type": "object",
+          "description": "Maps code to reason text",
+          "patternProperties": {
+            "^[A-L]$": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  }
+} 

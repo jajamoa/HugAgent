@@ -1,0 +1,141 @@
+{
+  "description": "Schema for housing policy opinion data",
+  "version": "1.0",
+  "schemas": {
+    "ground_truth": {
+      "type": "object",
+      "participants": {
+        "type": "object",
+        "description": "Map of participant IDs to their demographic information and reactions",
+        "properties": {
+          "<participant_id>": {
+            "type": "object",
+            "properties": {
+              "demographics": {
+                "type": "object",
+                "description": "Demographic information about the participant",
+                "properties": {
+                  "age": {"type": "string"},
+                  "housing_status": {"type": "string"},
+                  "income": {"type": "string"},
+                  "occupation": {"type": "string"},
+                  "transportation": {"type": "string"},
+                  "household": {"type": "string"},
+                  "zipcode": {"type": "string"},
+                  "address": {"type": "string"},
+                  "housing_experience": {"type": "string"}
+                }
+              },
+              "reactions": {
+                "type": "object",
+                "description": "Participant's reactions to policy scenarios",
+                "properties": {
+                  "opinions": {
+                    "type": "object",
+                    "description": "Numeric opinions (support level) for scenarios, on a scale of 1-10",
+                    "properties": {
+                      "<scenario_id>": {"type": "integer", "minimum": 1, "maximum": 10}
+                    }
+                  },
+                  "reasons": {
+                    "type": "object",
+                    "description": "Reasons selected for each scenario response",
+                    "properties": {
+                      "<scenario_id>": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "List of reason categories selected"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "model_prediction": {
+      "type": "object",
+      "description": "Model predictions for participants' reactions to housing policies",
+      "properties": {
+        "<participant_id>": {
+          "type": "object",
+          "description": "Predictions for a single participant",
+          "properties": {
+            "opinions": {
+              "type": "object",
+              "description": "Predicted numeric support level for scenarios, on a scale of 1-10",
+              "properties": {
+                "<scenario_id>": {"type": "integer", "minimum": 1, "maximum": 10}
+              }
+            },
+            "reasons": {
+              "type": "object",
+              "description": "Predicted reasons for each scenario response",
+              "properties": {
+                "<scenario_id>": {
+                  "type": "array",
+                  "items": {"type": "string"},
+                  "description": "List of predicted reason categories"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Evaluation metrics comparing ground truth to model predictions",
+      "properties": {
+        "opinion_metrics": {
+          "type": "object",
+          "description": "Metrics for opinion predictions",
+          "properties": {
+            "rmse": {"type": "number", "description": "Root Mean Square Error"},
+            "mae": {"type": "number", "description": "Mean Absolute Error"},
+            "r2": {"type": "number", "description": "R-squared coefficient"}
+          }
+        },
+        "reason_metrics": {
+          "type": "object",
+          "description": "Metrics for reason predictions",
+          "properties": {
+            "jaccard_index": {"type": "number", "description": "Mean Jaccard similarity index"},
+            "micro_precision": {"type": "number", "description": "Micro-averaged precision"},
+            "micro_recall": {"type": "number", "description": "Micro-averaged recall"},
+            "micro_f1": {"type": "number", "description": "Micro-averaged F1 score"}
+          }
+        },
+        "per_scenario": {
+          "type": "object",
+          "description": "Metrics broken down by scenario",
+          "properties": {
+            "<scenario_id>": {
+              "type": "object",
+              "properties": {
+                "opinion_metrics": {
+                  "type": "object",
+                  "properties": {
+                    "rmse": {"type": "number"},
+                    "mae": {"type": "number"}
+                  }
+                },
+                "reason_metrics": {
+                  "type": "object",
+                  "properties": {
+                    "jaccard_index": {"type": "number"},
+                    "precision": {"type": "number"},
+                    "recall": {"type": "number"},
+                    "f1": {"type": "number"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+} 

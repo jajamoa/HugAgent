@@ -1,0 +1,240 @@
+[
+  {
+    "id": "675724ccce05695f1f77ad27",
+    "coordinates": {
+      "lat": 37.7801694958812,
+      "lng": -122.42091241876876
+    },
+    "agent": {
+      "age": 37,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "25.0 to 29.9 percent",
+      "means of transportation": "Taxi / cab",
+      "income": "$50,000\u2013$99,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Married-couple family \u2013 Own child 6 to 11 years old"
+    }
+  },
+  {
+    "id": "667a5ff51c51c00cc8fa401b",
+    "coordinates": {
+      "lat": 37.78033326039292,
+      "lng": -122.42054807313768
+    },
+    "agent": {
+      "age": 27,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "20.0 to 24.9 percent",
+      "means of transportation": "Taxi / cab",
+      "income": "$25,000\u2013$49,999",
+      "occupation": "Service occupations",
+      "family type": "Married, no own children under 18 years old"
+    }
+  },
+  {
+    "id": "67df27dcf59178048927e1e0",
+    "coordinates": {
+      "lat": 37.775308879356636,
+      "lng": -122.41812954901023
+    },
+    "agent": {
+      "age": 42,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Owner-occupied",
+      "Gross rent": "35.0 percent or more",
+      "means of transportation": "Taxi / cab",
+      "income": "$100,000 or more",
+      "occupation": "Health care",
+      "family type": "Married-couple family \u2013 Own child 12 to 17 years old"
+    }
+  },
+  {
+    "id": "67a7f0b4cd899684a4540c81",
+    "coordinates": {
+      "lat": 37.77734830230312,
+      "lng": -122.41848678712327
+    },
+    "agent": {
+      "age": 47,
+      "Geo Mobility": "Moved within same county",
+      "householder type": "Owner-occupied",
+      "Gross rent": "Not computed",
+      "means of transportation": "Taxi / cab, Motorcycle, Worked from home",
+      "income": "$100,000 or more",
+      "occupation": "ICT senior data analyst",
+      "family type": "Married-couple family \u2013 Own child 12 to 17 years old"
+    }
+  },
+  {
+    "id": "67f08f941e4a8bc778f9c01d",
+    "coordinates": {
+      "lat": 37.77697443432606,
+      "lng": -122.41986949852553
+    },
+    "agent": {
+      "age": 42,
+      "Geo Mobility": "Moved within same county",
+      "householder type": "Renter",
+      "Gross rent": "20.0 to 24.9 percent",
+      "means of transportation": "Taxi / cab",
+      "income": "$50,000\u2013$99,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Married-couple family \u2013 Own child under 3 years old"
+    }
+  },
+  {
+    "id": "6422f34be2b8257efb345837",
+    "coordinates": {
+      "lat": 37.776312849872596,
+      "lng": -122.41939123190832
+    },
+    "agent": {
+      "age": 52,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Owner-occupied",
+      "Gross rent": "Not computed",
+      "means of transportation": "Worked from home, Own car",
+      "income": "$100,000 or more",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Married-couple family \u2013 Own child 3 or 4 years old"
+    }
+  },
+  {
+    "id": "67570e64fcbbd6076d56e231",
+    "coordinates": {
+      "lat": 37.7576632160174,
+      "lng": -122.43407742049102
+    },
+    "agent": {
+      "age": 27,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Owner-occupied",
+      "Gross rent": "25.0 to 29.9 percent",
+      "means of transportation": "Taxi / cab, Motorcycle",
+      "income": "$50,000\u2013$99,999",
+      "occupation": "Production, transportation, and material moving occupations",
+      "family type": "Married-couple family \u2013 Own child under 3 years old"
+    }
+  },
+  {
+    "id": "67ed84f0157a46a0dcb9bac6",
+    "coordinates": {
+      "lat": 37.77710325813362,
+      "lng": -122.41827144883133
+    },
+    "agent": {
+      "age": 32,
+      "Geo Mobility": "Moved within same county",
+      "householder type": "Owner-occupied",
+      "Gross rent": "20.0 to 24.9 percent",
+      "means of transportation": "Taxi / cab",
+      "income": "$50,000\u2013$99,999",
+      "occupation": "Service occupations",
+      "family type": "Married-couple family \u2013 Own child 12 to 17 years old"
+    }
+  },
+  {
+    "id": "67d84f3ae6e2db3ba2b69b5e",
+    "coordinates": {
+      "lat": 37.77649152079759,
+      "lng": -122.4197453870969
+    },
+    "agent": {
+      "age": 32,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "Less than 20.0 percent",
+      "means of transportation": "Taxi / cab, Motorcycle",
+      "income": "$25,000\u2013$49,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Married-couple family \u2013 Own child 5 years old"
+    }
+  },
+  {
+    "id": "67f30615fe902d6a7d0c449e",
+    "coordinates": {
+      "lat": 37.72425756625072,
+      "lng": -122.4807930502535
+    },
+    "agent": {
+      "age": 37,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "20.0 to 24.9 percent",
+      "means of transportation": "Taxi / cab, Personal Car",
+      "income": "$50,000\u2013$99,999",
+      "occupation": "Education",
+      "family type": "Married-couple family \u2013 Own child 12 to 17 years old"
+    }
+  },
+  {
+    "id": "65e395693e55e0a627707870",
+    "coordinates": {
+      "lat": 37.71993855574806,
+      "lng": -122.47937446011022
+    },
+    "agent": {
+      "age": 42,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Owner-occupied",
+      "Gross rent": "Not computed",
+      "means of transportation": "Worked from home, Car",
+      "income": "$100,000 or more",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Married-couple family \u2013 Own child under 3 years old"
+    }
+  },
+  {
+    "id": "65d53085794e617217d43942",
+    "coordinates": {
+      "lat": 37.77273015996252,
+      "lng": -122.41490122385498
+    },
+    "agent": {
+      "age": 27,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Renter",
+      "Gross rent": "35.0 percent or more",
+      "means of transportation": "public transit",
+      "income": "$25,000\u2013$49,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Single (not married), no own children under 18 years old"
+    }
+  },
+  {
+    "id": "67ddeeb16c3378ebbd4bcb8e",
+    "coordinates": {
+      "lat": 37.777006644774715,
+      "lng": -122.42029230189408
+    },
+    "agent": {
+      "age": 29,
+      "Geo Mobility": "Moved within same county",
+      "householder type": "Renter",
+      "Gross rent": "20.0 to 24.9 percent",
+      "means of transportation": "Taxi / cab",
+      "income": "$25,000\u2013$49,999",
+      "occupation": "Management, business, science, and arts occupations",
+      "family type": "Married-couple family \u2013 Own child 3 or 4 years old"
+    }
+  },
+  {
+    "id": "6766ecf63a849b0fabf9755c",
+    "coordinates": {
+      "lat": 37.791465538730634,
+      "lng": -122.42443959914846
+    },
+    "agent": {
+      "age": 42,
+      "Geo Mobility": "Same house 1 year ago",
+      "householder type": "Owner-occupied",
+      "Gross rent": "Not computed",
+      "means of transportation": "Worked from home",
+      "income": "$50,000\u2013$99,999",
+      "occupation": "currently unemployed",
+      "family type": "Married-couple family \u2013 Own child 6 to 11 years old"
+    }
+  }
+]

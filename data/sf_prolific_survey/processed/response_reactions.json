@@ -1,0 +1,819 @@
+{
+  "675724ccce05695f1f77ad27": {
+    "opinions": {
+      "1.1": 6,
+      "1.2": 5,
+      "1.3": 8,
+      "2.1": 5,
+      "2.2": 8,
+      "2.3": 4,
+      "3.1": 8,
+      "3.2": 5,
+      "3.3": 7
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability"
+      ],
+      "1.2": [
+        "Walkability and access to amenities",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "1.3": [
+        "Affordability for low- and middle-income residents",
+        "Personal property values or homeownership concerns",
+        "Integration of new residents into community life"
+      ],
+      "2.1": [
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "School quality or capacity in the area"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Walkability and access to amenities",
+        "Noise, congestion, or infrastructure strain"
+      ],
+      "2.3": [
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses",
+        "Building height or scale relative to surroundings"
+      ],
+      "3.1": [
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "3.2": [
+        "Noise, congestion, or infrastructure strain",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "3.3": [
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility"
+      ]
+    }
+  },
+  "667a5ff51c51c00cc8fa401b": {
+    "opinions": {
+      "1.1": 7,
+      "1.2": 5,
+      "1.3": 7,
+      "2.1": 7,
+      "2.2": 6,
+      "2.3": 8,
+      "3.1": 4,
+      "3.2": 9,
+      "3.3": 7
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability"
+      ],
+      "1.2": [
+        "Walkability and access to amenities"
+      ],
+      "1.3": [
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "2.1": [
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "2.2": [
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "2.3": [
+        "Traffic and parking availability",
+        "Walkability and access to amenities"
+      ],
+      "3.1": [
+        "Noise, congestion, or infrastructure strain"
+      ],
+      "3.2": [
+        "Personal property values or homeownership concerns"
+      ],
+      "3.3": [
+        "Affordability for low- and middle-income residents"
+      ]
+    }
+  },
+  "67df27dcf59178048927e1e0": {
+    "opinions": {
+      "1.1": 10,
+      "1.2": 10,
+      "1.3": 10,
+      "2.1": 10,
+      "2.2": 10,
+      "2.3": 10,
+      "3.1": 9,
+      "3.2": 6,
+      "3.3": 10
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "1.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Walkability and access to amenities"
+      ],
+      "1.3": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "2.1": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Walkability and access to amenities",
+        "Personal property values or homeownership concerns",
+        "School quality or capacity in the area"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Walkability and access to amenities",
+        "Noise, congestion, or infrastructure strain",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "2.3": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility"
+      ],
+      "3.1": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents"
+      ],
+      "3.2": [
+        "Housing supply and availability",
+        "School quality or capacity in the area"
+      ],
+      "3.3": [
+        "Housing supply and availability",
+        "School quality or capacity in the area"
+      ]
+    }
+  },
+  "67a7f0b4cd899684a4540c81": {
+    "opinions": {
+      "1.1": 5,
+      "1.2": 6,
+      "1.3": 6,
+      "2.1": 6,
+      "2.2": 6,
+      "2.3": 6,
+      "3.1": 6,
+      "3.2": 6,
+      "3.3": 6
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility",
+        "Walkability and access to amenities"
+      ],
+      "1.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility"
+      ],
+      "1.3": [
+        "Walkability and access to amenities",
+        "Noise, congestion, or infrastructure strain",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "2.1": [
+        "Economic vitality for local businesses",
+        "Building height or scale relative to surroundings",
+        "Personal property values or homeownership concerns"
+      ],
+      "2.2": [
+        "Affordability for low- and middle-income residents",
+        "Fairness and distribution of development across neighborhoods",
+        "Building height or scale relative to surroundings"
+      ],
+      "2.3": [
+        "Personal property values or homeownership concerns",
+        "Integration of new residents into community life",
+        "School quality or capacity in the area"
+      ],
+      "3.1": [
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability"
+      ],
+      "3.2": [
+        "Affordability for low- and middle-income residents",
+        "Noise, congestion, or infrastructure strain",
+        "Personal property values or homeownership concerns"
+      ],
+      "3.3": [
+        "Traffic and parking availability",
+        "Walkability and access to amenities",
+        "Noise, congestion, or infrastructure strain"
+      ]
+    }
+  },
+  "67f08f941e4a8bc778f9c01d": {
+    "opinions": {
+      "1.1": 9,
+      "1.2": 9,
+      "1.3": 7,
+      "2.1": 8,
+      "2.2": 8,
+      "2.3": 9,
+      "3.1": 7,
+      "3.2": 9,
+      "3.3": 8
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Walkability and access to amenities"
+      ],
+      "1.2": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility"
+      ],
+      "1.3": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility",
+        "Economic vitality for local businesses"
+      ],
+      "2.1": [
+        "Neighborhood character and visual compatibility",
+        "Walkability and access to amenities"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Economic vitality for local businesses"
+      ],
+      "2.3": [
+        "Housing supply and availability",
+        "Economic vitality for local businesses"
+      ],
+      "3.1": [
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "3.2": [
+        "Housing supply and availability",
+        "Walkability and access to amenities"
+      ],
+      "3.3": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility"
+      ]
+    }
+  },
+  "6422f34be2b8257efb345837": {
+    "opinions": {
+      "1.1": 10,
+      "1.2": 9,
+      "1.3": 9,
+      "2.1": 9,
+      "2.2": 8,
+      "2.3": 6,
+      "3.1": 8,
+      "3.2": 7,
+      "3.3": 6
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Walkability and access to amenities",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "1.2": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses",
+        "Integration of new residents into community life"
+      ],
+      "1.3": [
+        "Affordability for low- and middle-income residents",
+        "Integration of new residents into community life"
+      ],
+      "2.1": [
+        "Affordability for low- and middle-income residents",
+        "Economic vitality for local businesses",
+        "Integration of new residents into community life"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "2.3": [
+        "Personal property values or homeownership concerns"
+      ],
+      "3.1": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "3.2": [
+        "Affordability for low- and middle-income residents",
+        "Integration of new residents into community life"
+      ],
+      "3.3": [
+        "Fairness and distribution of development across neighborhoods"
+      ]
+    }
+  },
+  "67570e64fcbbd6076d56e231": {
+    "opinions": {
+      "1.1": 8,
+      "1.2": 8,
+      "1.3": 8,
+      "2.1": 8,
+      "2.2": 8,
+      "2.3": 7,
+      "3.1": 8,
+      "3.2": 8,
+      "3.3": 6
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Traffic and parking availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "1.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Economic vitality for local businesses"
+      ],
+      "1.3": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility"
+      ],
+      "2.1": [
+        "Affordability for low- and middle-income residents",
+        "Traffic and parking availability",
+        "Walkability and access to amenities"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Economic vitality for local businesses"
+      ],
+      "2.3": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Personal property values or homeownership concerns"
+      ],
+      "3.1": [
+        "Housing supply and availability",
+        "Traffic and parking availability",
+        "Walkability and access to amenities"
+      ],
+      "3.2": [
+        "Housing supply and availability",
+        "Economic vitality for local businesses",
+        "Personal property values or homeownership concerns"
+      ],
+      "3.3": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Personal property values or homeownership concerns"
+      ]
+    }
+  },
+  "67ed84f0157a46a0dcb9bac6": {
+    "opinions": {
+      "1.1": 7,
+      "1.2": 8,
+      "1.3": 9,
+      "2.1": 7,
+      "2.2": 7,
+      "2.3": 7,
+      "3.1": 4,
+      "3.2": 9,
+      "3.3": 7
+    },
+    "reasons": {
+      "1.1": [
+        "Traffic and parking availability"
+      ],
+      "1.2": [
+        "Affordability for low- and middle-income residents"
+      ],
+      "1.3": [
+        "Housing supply and availability"
+      ],
+      "2.1": [
+        "Noise, congestion, or infrastructure strain"
+      ],
+      "2.2": [
+        "Personal property values or homeownership concerns"
+      ],
+      "2.3": [
+        "Personal property values or homeownership concerns"
+      ],
+      "3.1": [
+        "Building height or scale relative to surroundings"
+      ],
+      "3.2": [
+        "Economic vitality for local businesses"
+      ],
+      "3.3": [
+        "Personal property values or homeownership concerns"
+      ]
+    }
+  },
+  "67d84f3ae6e2db3ba2b69b5e": {
+    "opinions": {
+      "1.1": 7,
+      "1.2": 6,
+      "1.3": 5,
+      "2.1": 8,
+      "2.2": 7,
+      "2.3": 8,
+      "3.1": 6,
+      "3.2": 6,
+      "3.3": 7
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Traffic and parking availability",
+        "Walkability and access to amenities",
+        "School quality or capacity in the area"
+      ],
+      "1.2": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "1.3": [
+        "Housing supply and availability",
+        "Traffic and parking availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Integration of new residents into community life",
+        "School quality or capacity in the area"
+      ],
+      "2.1": [
+        "Housing supply and availability",
+        "Economic vitality for local businesses",
+        "School quality or capacity in the area"
+      ],
+      "2.2": [
+        "Noise, congestion, or infrastructure strain",
+        "Fairness and distribution of development across neighborhoods",
+        "Personal property values or homeownership concerns"
+      ],
+      "2.3": [
+        "Neighborhood character and visual compatibility",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "3.1": [
+        "Affordability for low- and middle-income residents",
+        "Walkability and access to amenities",
+        "Noise, congestion, or infrastructure strain",
+        "School quality or capacity in the area"
+      ],
+      "3.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses",
+        "School quality or capacity in the area"
+      ],
+      "3.3": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods",
+        "School quality or capacity in the area"
+      ]
+    }
+  },
+  "67f30615fe902d6a7d0c449e": {
+    "opinions": {
+      "1.1": 6,
+      "1.2": 4,
+      "1.3": 2,
+      "2.1": 8,
+      "2.2": 5,
+      "2.3": 2,
+      "3.1": 9,
+      "3.2": 6,
+      "3.3": 3
+    },
+    "reasons": {
+      "1.1": [
+        "Affordability for low- and middle-income residents",
+        "Walkability and access to amenities",
+        "Building height or scale relative to surroundings"
+      ],
+      "1.2": [
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Building height or scale relative to surroundings",
+        "Personal property values or homeownership concerns"
+      ],
+      "1.3": [
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Noise, congestion, or infrastructure strain",
+        "Building height or scale relative to surroundings"
+      ],
+      "2.1": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Fairness and distribution of development across neighborhoods",
+        "Building height or scale relative to surroundings"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses",
+        "Building height or scale relative to surroundings"
+      ],
+      "2.3": [
+        "Neighborhood character and visual compatibility",
+        "Traffic and parking availability",
+        "Noise, congestion, or infrastructure strain",
+        "Building height or scale relative to surroundings",
+        "Personal property values or homeownership concerns"
+      ],
+      "3.1": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses",
+        "Building height or scale relative to surroundings"
+      ],
+      "3.2": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses",
+        "Building height or scale relative to surroundings"
+      ],
+      "3.3": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Traffic and parking availability",
+        "Noise, congestion, or infrastructure strain",
+        "Building height or scale relative to surroundings",
+        "Integration of new residents into community life"
+      ]
+    }
+  },
+  "65e395693e55e0a627707870": {
+    "opinions": {
+      "1.1": 8,
+      "1.2": 10,
+      "1.3": 9,
+      "2.1": 9,
+      "2.2": 10,
+      "2.3": 6,
+      "3.1": 10,
+      "3.2": 9,
+      "3.3": 4
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "1.2": [
+        "Housing supply and availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "1.3": [
+        "Housing supply and availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "2.1": [
+        "Housing supply and availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "2.3": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility",
+        "Building height or scale relative to surroundings"
+      ],
+      "3.1": [
+        "Housing supply and availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "3.2": [
+        "Housing supply and availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "3.3": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility",
+        "Building height or scale relative to surroundings"
+      ]
+    }
+  },
+  "65d53085794e617217d43942": {
+    "opinions": {
+      "1.1": 10,
+      "1.2": 10,
+      "1.3": 10,
+      "2.1": 10,
+      "2.2": 8,
+      "2.3": 7,
+      "3.1": 10,
+      "3.2": 10,
+      "3.3": 10
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Integration of new residents into community life"
+      ],
+      "1.2": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "1.3": [
+        "Housing supply and availability",
+        "Walkability and access to amenities",
+        "Integration of new residents into community life"
+      ],
+      "2.1": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "2.3": [
+        "Housing supply and availability",
+        "Traffic and parking availability",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "3.1": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility"
+      ],
+      "3.2": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "3.3": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ]
+    }
+  },
+  "67ddeeb16c3378ebbd4bcb8e": {
+    "opinions": {
+      "1.1": 8,
+      "1.2": 6,
+      "1.3": 4,
+      "2.1": 9,
+      "2.2": 7,
+      "2.3": 5,
+      "3.1": 8,
+      "3.2": 6,
+      "3.3": 3
+    },
+    "reasons": {
+      "1.1": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents"
+      ],
+      "1.2": [
+        "Housing supply and availability"
+      ],
+      "1.3": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility"
+      ],
+      "2.1": [
+        "Housing supply and availability",
+        "Walkability and access to amenities"
+      ],
+      "2.2": [
+        "Housing supply and availability"
+      ],
+      "2.3": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "3.1": [
+        "Housing supply and availability",
+        "Neighborhood character and visual compatibility"
+      ],
+      "3.2": [
+        "Housing supply and availability",
+        "Building height or scale relative to surroundings"
+      ],
+      "3.3": [
+        "Neighborhood character and visual compatibility",
+        "Fairness and distribution of development across neighborhoods"
+      ]
+    }
+  },
+  "6766ecf63a849b0fabf9755c": {
+    "opinions": {
+      "1.1": 8,
+      "1.2": 5,
+      "1.3": 9,
+      "2.1": 9,
+      "2.2": 9,
+      "2.3": 10,
+      "3.1": 9,
+      "3.2": 10,
+      "3.3": 10
+    },
+    "reasons": {
+      "1.1": [
+        "Affordability for low- and middle-income residents",
+        "Traffic and parking availability",
+        "Building height or scale relative to surroundings"
+      ],
+      "1.2": [
+        "Affordability for low- and middle-income residents",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "1.3": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Traffic and parking availability"
+      ],
+      "2.1": [
+        "Housing supply and availability",
+        "Affordability for low- and middle-income residents",
+        "Fairness and distribution of development across neighborhoods"
+      ],
+      "2.2": [
+        "Housing supply and availability",
+        "Fairness and distribution of development across neighborhoods",
+        "Economic vitality for local businesses"
+      ],
+      "2.3": [
+        "Traffic and parking availability",
+        "Economic vitality for local businesses",
+        "Building height or scale relative to surroundings"
+      ],
+      "3.1": [
+        "Traffic and parking availability",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses"
+      ],
+      "3.2": [
+        "Affordability for low- and middle-income residents",
+        "Economic vitality for local businesses",
+        "Building height or scale relative to surroundings"
+      ],
+      "3.3": [
+        "Affordability for low- and middle-income residents",
+        "Neighborhood character and visual compatibility",
+        "Walkability and access to amenities",
+        "Economic vitality for local businesses",
+        "Building height or scale relative to surroundings"
+      ]
+    }
+  }
+}
