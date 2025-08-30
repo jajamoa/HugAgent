@@ -1,6 +1,7 @@
 {
   "topics": {
     "upzoning": {
+      "anchor": "zoning",
       "questions": [
         {
           "id": "1.1",
@@ -59,12 +60,13 @@
             "text": "To what extent do the following reasons influence your stance?",
             "type": "reason_evaluation",
             "scale": [1, 5],
-            "reasons": ["G", "C", "S", "T", "U"]
+            "reasons": ["N", "C", "S", "T", "U"]
           }
         }
       ]
     },
     "surveillance_camera": {
+      "anchor": "camera",
       "questions": [
         {
           "id": "2.1",
@@ -155,11 +157,12 @@
       ]
     },
     "universal_healthcare": {
+      "anchor": "healthcare",
       "questions": [
         {
           "id": "3.1",
           "q_label": "uhc_support_level",
-          "text": "On a scale from 1 to 10, how much do you support or oppose implementing a universal healthcare system in the U.S.?",
+          "text": "Universal healthcare refers to a system in which all individuals have access to necessary health services without financial hardship, typically funded by public resources such as taxes. On a scale from 1 to 10, how much do you support or oppose implementing a universal healthcare system in the U.S.?",
           "type": "stance",
           "scale": [1, 10],
           "has_reason_followup": false
