@@ -58,8 +58,8 @@
   },
   "medium": {
     "total": 50,
-    "correct": 39,
-    "accuracy": 0.78,
+    "correct": 40,
+    "accuracy": 0.8,
     "answers": [
       1,
       1,
@@ -105,7 +105,7 @@
       1,
       0,
       1,
-      0,
+      1,
       1,
       0,
       1,

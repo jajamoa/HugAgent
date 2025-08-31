@@ -1,13 +1,13 @@
 {
   "simple": {
     "total": 50,
-    "correct": 40,
-    "accuracy": 0.8,
+    "correct": 39,
+    "accuracy": 0.78,
     "answers": [
       1,
       1,
       1,
-      1,
+      0,
       0,
       0,
       0,
