@@ -15,21 +15,24 @@ python process_data.py
 
 #### Model Evaluation  
 ```bash
-python evaluate_qwen.py [OPTIONS]
-
-# Examples:
+# Single model
 python evaluate_qwen.py --model qwen-plus --benchmark_path sample_150.jsonl
-python evaluate_qwen.py --model qwen2.5-7b-instruct --temperature 0.1
-python evaluate_qwen.py --model qwen-max --no-demographics --no-context
+
+# Debug mode (sequential, interactive)
+python evaluate_qwen.py --model qwen-plus --debug
+
+# Batch evaluation (all models in parallel)
+./run_all_evaluations.sh
 ```
 
-**Options:**
+**All Options:**
 - `--benchmark_path`: JSONL file path (default: sample.jsonl)
-- `--model`: Model name (qwen-plus, qwen-max, qwen2.5-*, etc.)
-- `--temperature`: Generation temperature (default: 0.1)  
-- `--no-demographics`: Exclude participant demographics
-- `--no-context`: Exclude conversation context
-- `--max-workers`: Parallel workers (default: 3)
+- `--model`: qwen-max, qwen-plus, qwen-turbo, qwen2.5-{72b,32b,14b,7b,3b,1.5b,0.5b}-instruct
+- `--temperature`: Generation temperature 0.0-1.0 (default: 0.1)
+- `--no-demographics`: Exclude participant demographics from prompt
+- `--no-context`: Exclude context QAs from prompt  
+- `--max-workers`: Parallel workers for API calls (default: 3)
+- `--debug`: Sequential processing with full prompt/response display
 
 ### Visualization Tool
 
@@ -62,7 +65,8 @@ Each level tests belief inference with decreasing information availability.
 Benchmark/
 ├── process_data.py          # Extract QA pairs from pilot_36users/
 ├── evaluate_qwen.py         # Run model evaluation with ToM prompts
-├── llm_utils.py            # Qwen API wrapper
+├── run_all_evaluations.sh   # Batch evaluation script (parallel)
+├── llm_utils.py            # Qwen API wrapper with debug support
 ├── sample_150.jsonl        # Generated benchmark questions
 ├── pilot_36users/          # Raw participant data
 ├── evaluation_results_*.json # Model performance by difficulty

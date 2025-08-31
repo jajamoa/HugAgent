@@ -6,6 +6,22 @@ from dotenv import load_dotenv
 import dashscope
 from typing import Optional, Dict, Any
 
+# ANSI color codes for terminal output
+class Colors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+    
+    @staticmethod
+    def format(text, color):
+        return f"{color}{text}{Colors.END}"
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -44,7 +60,8 @@ class QwenLLM:
         prompt: str, 
         system_message: str = "You are a helpful assistant.",
         temperature: Optional[float] = None,
-        return_json: bool = False
+        return_json: bool = False,
+        debug: bool = False
     ) -> Optional[str]:
         """
         Generate response from Qwen LLM
@@ -54,6 +71,7 @@ class QwenLLM:
             system_message: System message for context
             temperature: Sampling temperature (0.0-1.0), uses default if None
             return_json: Whether to parse response as JSON
+            debug: If True, print full prompt and response
             
         Returns:
             Response string or parsed JSON dict
@@ -62,6 +80,19 @@ class QwenLLM:
             # Use default temperature if not specified
             if temperature is None:
                 temperature = self.default_temperature
+            
+            if debug:
+                print(f"\n{Colors.format('='*80, Colors.HEADER)}")
+                print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Model: {Colors.format(self.model, Colors.CYAN)}")
+                print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Temperature: {Colors.format(str(temperature), Colors.YELLOW)}, Seed: {Colors.format(str(self.random_seed), Colors.YELLOW)}")
+                print(f"{Colors.format('='*80, Colors.HEADER)}")
+                print(f"{Colors.format('[SYSTEM PROMPT]:', Colors.GREEN + Colors.BOLD)}")
+                print(f"{Colors.format(system_message, Colors.GREEN)}")
+                print(f"{Colors.format('-'*80, Colors.BLUE)}")
+                print(f"{Colors.format('[USER PROMPT]:', Colors.CYAN + Colors.BOLD)}")
+                print(f"{Colors.format(prompt, Colors.CYAN)}")
+                print(f"{Colors.format('='*80, Colors.HEADER)}")
+                input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to send request...")
                 
             logger.info(f"Sending prompt to {self.model} (temp={temperature}, seed={self.random_seed})")
             
@@ -80,6 +111,12 @@ class QwenLLM:
             if response.status_code == 200:
                 content = response.output.choices[0].message.content
                 logger.info("Successfully received response")
+                
+                if debug:
+                    print(f"\n{Colors.format('[RESPONSE]:', Colors.RED + Colors.BOLD)}")
+                    print(f"{Colors.format(content, Colors.RED)}")
+                    print(f"{Colors.format('='*80, Colors.HEADER)}")
+                    input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to continue...")
                 
                 if return_json:
                     try:

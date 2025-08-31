@@ -4,9 +4,9 @@ import argparse
 import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-from llm_utils import QwenLLM
+from llm_utils import QwenLLM, Colors
 
-def process_single_question(llm, vqa, include_demographics, include_context, temperature):
+def process_single_question(llm, vqa, include_demographics, include_context, temperature, debug=False):
     """Process a single question and return the result"""
     try:
         # Construct the question prompt
@@ -15,11 +15,17 @@ def process_single_question(llm, vqa, include_demographics, include_context, tem
         demographics = vqa.get("demographics", {})
         context_qas = vqa.get("context_qas", [])
         
-        # Build prompt components
-        prompt_parts = []
+        # Build system message for Theory of Mind evaluation
+        system_parts = [
+            "You are an expert psychologist specializing in Theory of Mind and belief attribution.",
+            "Your task: analyze conversation transcripts to infer what the participant believes about causal relationships.",
+            "Focus on understanding their mental model - what they think causes what, not what is objectively true.",
+            "Consider their background, conversation patterns, and implicit beliefs expressed through their responses.",
+            "Base your inference strictly on evidence from their statements, not general assumptions."
+        ]
         
-        # Add system context for Theory of Mind evaluation
-        prompt_parts.append("This is a Theory of Mind (ToM) benchmark evaluation. You need to infer what this person believes based on their responses and background.")
+        # Build user prompt components
+        prompt_parts = []
         
         # Add demographics if requested
         if include_demographics and demographics:
@@ -46,17 +52,20 @@ def process_single_question(llm, vqa, include_demographics, include_context, tem
             options_text += f"{key}) {answer_options[key]}\n"
         prompt_parts.append(options_text.strip())
         
-        # Add instruction
+        # Add clear instruction
         options_str = ", ".join(option_keys)
-        prompt_parts.append(f"Please respond with either {options_str}.")
+        prompt_parts.append(f"Based on the evidence above, respond with ONLY the single letter ({options_str}) that best represents this person's belief.")
         
         # Combine all parts
-        question_prompt = "\n\n".join(prompt_parts)
+        system_message = " ".join(system_parts)
+        user_prompt = "\n\n".join(prompt_parts)
         
         # Generate answer using Qwen
         generated_response = llm.generate_response(
-            question_prompt, 
-            temperature=temperature
+            user_prompt,
+            system_message=system_message,
+            temperature=temperature,
+            debug=debug
         )
         
         # Extract the answer dynamically from available options
@@ -106,7 +115,7 @@ def process_single_question(llm, vqa, include_demographics, include_context, tem
             'error': str(e)
         }
 
-def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, include_demographics=True, include_context=True, max_workers=3):
+def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, include_demographics=True, include_context=True, max_workers=3, debug=False):
     """
     Evaluate Theory of Mind belief inference questions using Qwen model
     """
@@ -162,46 +171,56 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
         total = 0
         answers = []
         
-        # Process questions in parallel
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            # Submit all questions
-            future_to_index = {
-                executor.submit(process_single_question, llm, vqa, include_demographics, include_context, temperature): i
-                for i, vqa in enumerate(dataset)
-            }
+        # Process questions (parallel or sequential based on debug mode)
+        if debug:
+            # Sequential processing for debug mode
+            results = []
+            for i, vqa in enumerate(dataset):
+                print(f"\n{Colors.format('[DEBUG]', Colors.BOLD + Colors.YELLOW)} Processing question {Colors.format(str(i+1), Colors.CYAN)}/{Colors.format(str(len(dataset)), Colors.CYAN)} in {Colors.format(difficulty, Colors.GREEN)} difficulty")
+                result = process_single_question(llm, vqa, include_demographics, include_context, temperature, debug)
+                results.append(result)
+        else:
+            # Parallel processing for normal mode
+            with ThreadPoolExecutor(max_workers=max_workers) as executor:
+                # Submit all questions
+                future_to_index = {
+                    executor.submit(process_single_question, llm, vqa, include_demographics, include_context, temperature, debug): i
+                    for i, vqa in enumerate(dataset)
+                }
             
-            # Process completed results
-            results = [None] * len(dataset)
-            
-            for future in tqdm(as_completed(future_to_index), total=len(dataset), desc=f"Processing {difficulty}"):
-                index = future_to_index[future]
-                result = future.result()
-                results[index] = result
+                # Process completed results
+                results = [None] * len(dataset)
                 
-                # Add small delay between API calls to respect rate limits
-                time.sleep(0.1)
-            
-            # Process results in order
-            for i, result in enumerate(results):
-                if result is None:
-                    continue
+                for future in tqdm(as_completed(future_to_index), total=len(dataset), desc=f"Processing {difficulty}"):
+                    index = future_to_index[future]
+                    result = future.result()
+                    results[index] = result
                     
-                vqa = result['vqa']
-                generated_answer = result['generated_answer']
-                generated_response = result['generated_response']
-                correct_answer = result['correct_answer']
-                is_correct = result['is_correct']
-                context_qas_count = result['context_qas_count']
+                    # Add small delay between API calls to respect rate limits
+                    time.sleep(0.1)
+        
+        # Process results in order
+        for i, result in enumerate(results):
+            if result is None:
+                continue
                 
-                if is_correct:
-                    correct += 1
-                    answers.append(1)
-                else:
-                    answers.append(0)
+            vqa = result['vqa']
+            generated_answer = result['generated_answer']
+            generated_response = result['generated_response']
+            correct_answer = result['correct_answer']
+            is_correct = result['is_correct']
+            context_qas_count = result['context_qas_count']
+            
+            if is_correct:
+                correct += 1
+                answers.append(1)
+            else:
+                answers.append(0)
+            
+            total += 1
                 
-                total += 1
-                
-                # Print details for verbose mode
+            # Print details for verbose mode (only if not in debug mode)
+            if not debug:
                 print(f"\n[{difficulty.upper()}] Question {total}:")
                 print(f"Context QAs: {context_qas_count}")
                 print(f"Task: {vqa['task_question']}")
@@ -275,6 +294,8 @@ def main():
                        help="Exclude context QAs from prompt")
     parser.add_argument("--max-workers", type=int, default=3,
                        help="Maximum number of parallel workers for API calls")
+    parser.add_argument("--debug", action="store_true",
+                       help="Enable debug mode: sequential processing with full prompt/response display")
     
     args = parser.parse_args()
     
@@ -285,7 +306,8 @@ def main():
             temperature=args.temperature,
             include_demographics=not args.no_demographics,
             include_context=not args.no_context,
-            max_workers=args.max_workers
+            max_workers=args.max_workers,
+            debug=args.debug
         )
         
         # Save results
