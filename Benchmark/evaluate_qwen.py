@@ -6,14 +6,20 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from llm_utils import QwenLLM, Colors
 
-def process_single_question(llm, vqa, include_demographics, include_context, temperature, debug=False):
+def process_single_question(llm, vqa, include_demographics, include_context, temperature, debug=False, swap_data=None):
     """Process a single question and return the result"""
     try:
         # Construct the question prompt
         task_question = vqa["task_question"]
         answer_options = vqa["answer_options"]
-        demographics = vqa.get("demographics", {})
-        context_qas = vqa.get("context_qas", [])
+        
+        # Use swapped data if swap experiment is enabled
+        if swap_data:
+            demographics = swap_data.get("demographics", {})
+            context_qas = swap_data.get("context_qas", [])
+        else:
+            demographics = vqa.get("demographics", {})
+            context_qas = vqa.get("context_qas", [])
         
         # Build system message for Theory of Mind evaluation
         system_parts = [
@@ -115,7 +121,29 @@ def process_single_question(llm, vqa, include_demographics, include_context, tem
             'error': str(e)
         }
 
-def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, include_demographics=True, include_context=True, max_workers=3, debug=False):
+def create_swap_mapping(dataset):
+    """Create mapping to swap data between consecutive prolific IDs"""
+    prolific_ids = []
+    id_to_data = {}
+    
+    for vqa in dataset:
+        pid = vqa.get("prolific_id", "")
+        if pid and pid not in id_to_data:
+            prolific_ids.append(pid)
+            id_to_data[pid] = {
+                "demographics": vqa.get("demographics", {}),
+                "context_qas": vqa.get("context_qas", [])
+            }
+    
+    # Create swap mapping: each ID maps to next ID's data
+    swap_mapping = {}
+    for i, pid in enumerate(prolific_ids):
+        next_pid = prolific_ids[(i + 1) % len(prolific_ids)]
+        swap_mapping[pid] = id_to_data[next_pid]
+    
+    return swap_mapping
+
+def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, include_demographics=True, include_context=True, max_workers=3, debug=False, swap_experiment=False):
     """
     Evaluate Theory of Mind belief inference questions using Qwen model
     """
@@ -153,6 +181,9 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
         if difficulty in difficulty_datasets:
             difficulty_datasets[difficulty].append(vqa)
     
+    # Create swap mapping if swap experiment is enabled
+    swap_mapping = create_swap_mapping(vqa_dataset) if swap_experiment else None
+    
     # Results for each difficulty
     all_results = {}
     
@@ -177,16 +208,29 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
             results = []
             for i, vqa in enumerate(dataset):
                 print(f"\n{Colors.format('[DEBUG]', Colors.BOLD + Colors.YELLOW)} Processing question {Colors.format(str(i+1), Colors.CYAN)}/{Colors.format(str(len(dataset)), Colors.CYAN)} in {Colors.format(difficulty, Colors.GREEN)} difficulty")
-                result = process_single_question(llm, vqa, include_demographics, include_context, temperature, debug)
+                
+                # Get swap data if experiment is enabled
+                swap_data = None
+                if swap_experiment and swap_mapping:
+                    pid = vqa.get("prolific_id", "")
+                    swap_data = swap_mapping.get(pid)
+                
+                result = process_single_question(llm, vqa, include_demographics, include_context, temperature, debug, swap_data)
                 results.append(result)
         else:
             # Parallel processing for normal mode
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 # Submit all questions
-                future_to_index = {
-                    executor.submit(process_single_question, llm, vqa, include_demographics, include_context, temperature, debug): i
-                    for i, vqa in enumerate(dataset)
-                }
+                future_to_index = {}
+                for i, vqa in enumerate(dataset):
+                    # Get swap data if experiment is enabled
+                    swap_data = None
+                    if swap_experiment and swap_mapping:
+                        pid = vqa.get("prolific_id", "")
+                        swap_data = swap_mapping.get(pid)
+                    
+                    future = executor.submit(process_single_question, llm, vqa, include_demographics, include_context, temperature, debug, swap_data)
+                    future_to_index[future] = i
             
                 # Process completed results
                 results = [None] * len(dataset)
@@ -296,6 +340,8 @@ def main():
                        help="Maximum number of parallel workers for API calls")
     parser.add_argument("--debug", action="store_true",
                        help="Enable debug mode: sequential processing with full prompt/response display")
+    parser.add_argument("--swap-experiment", action="store_true",
+                       help="Use next participant's demographics/context for prediction (extreme test)")
     
     args = parser.parse_args()
     
@@ -307,11 +353,13 @@ def main():
             include_demographics=not args.no_demographics,
             include_context=not args.no_context,
             max_workers=args.max_workers,
-            debug=args.debug
+            debug=args.debug,
+            swap_experiment=args.swap_experiment
         )
         
         # Save results
-        results_filename = f"evaluation_results_{args.model}_by_difficulty.json"
+        suffix = "_swap" if args.swap_experiment else ""
+        results_filename = f"evaluation_results_{args.model}_by_difficulty{suffix}.json"
         with open(results_filename, "w") as f:
             json.dump(results, f, indent=2)
         

@@ -33,6 +33,7 @@ python evaluate_qwen.py --model qwen-plus --debug
 - `--no-context`: Exclude context QAs from prompt  
 - `--max-workers`: Parallel workers for API calls (default: 3)
 - `--debug`: Sequential processing with full prompt/response display
+- `--swap-experiment`: Use next participant's data for prediction (extreme test)
 
 ### Visualization Tool
 
