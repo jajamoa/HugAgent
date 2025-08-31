@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Performance Comparison - Error Analysis</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .file-upload-area {
+            border: 3px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.2s;
+        }
+
+        .upload-button:hover {
+            background: #2563eb;
+        }
+
+        .uploaded-files {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .file-tag {
+            background: #10b981;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .file-tag .remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .data-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .data-status.ready {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .data-status.incomplete {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .model-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .model-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 8px 15px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .model-checkbox:hover {
+            border-color: #3b82f6;
+        }
+
+        .model-checkbox input[type="checkbox"] {
+            margin: 0;
+        }
+
+        .model-checkbox.checked {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .difficulty-tabs {
+            display: flex;
+            gap: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .difficulty-tab {
+            padding: 8px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .difficulty-tab:not(:first-child) {
+            border-left: none;
+        }
+
+        .difficulty-tab.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .difficulty-tab:hover:not(.active) {
+            background: #e2e8f0;
+        }
+
+        .stats-compact {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-icon {
+            font-size: 1.2rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .cache-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .cache-button {
+            padding: 6px 12px;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+
+        .cache-button:hover {
+            background: #e2e8f0;
+        }
+
+        .grid-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .grid-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .question-grid {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            gap: 4px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .question-cell {
+            width: 50px;
+            height: 50px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .question-cell:hover {
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .question-cell.correct {
+            background: #10b981;
+            color: white;
+        }
+
+        .question-cell.error {
+            background: #ef4444;
+            color: white;
+        }
+
+        .question-cell.error-multiple {
+            background: #dc2626;
+            color: white;
+            border: 3px solid #fbbf24;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0;
+        }
+
+        .modal-body {
+            padding: 20px 30px;
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .close {
+            color: #64748b;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .close:hover {
+            color: #ef4444;
+        }
+
+        .question-detail {
+            margin-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 1.1rem;
+            color: #1e293b;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .answer-options {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .answer-option {
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .model-results {
+            margin-top: 20px;
+        }
+
+        .model-result {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            background: #f8fafc;
+        }
+
+        .model-name {
+            font-weight: 600;
+        }
+
+        .result-correct {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .result-error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .result-status {
+            font-weight: bold;
+        }
+
+        .context-container {
+            margin-top: 20px;
+        }
+
+        .context-scroll {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .info-badge {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #374151;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            margin: 2px;
+        }
+
+        .context-item {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            background: white;
+            margin: 0;
+        }
+
+        .context-item:last-child {
+            border-bottom: none;
+        }
+
+        .context-item:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .context-question {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .context-answer {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        .question-section {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .question-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        @media (max-width: 768px) {
+            .question-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .model-selector {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Model Performance Analysis</h1>
+            <p>Compare error patterns across different models and difficulty levels</p>
+        </div>
+
+        <!-- File Upload Area -->
+        <div class="file-upload-area" id="fileUploadArea">
+            <div class="upload-icon">📁</div>
+            <div class="upload-text">
+                <strong>Drag and drop files here</strong><br>
+                Upload evaluation result JSON files and sample data JSONL file
+            </div>
+            <button class="upload-button" onclick="document.getElementById('evaluationFiles').click()">
+                Choose Evaluation Files
+            </button>
+            <button class="upload-button" onclick="document.getElementById('sampleFile').click()">
+                Choose Sample Data
+            </button>
+            <input type="file" id="evaluationFiles" class="file-input" multiple accept=".json">
+            <input type="file" id="sampleFile" class="file-input" accept=".jsonl">
+            
+            <div class="uploaded-files" id="uploadedFiles"></div>
+        </div>
+
+        <!-- Data Status -->
+        <div class="data-status incomplete" id="dataStatus">
+            📋 Please upload evaluation results (JSON) and sample data (JSONL) files to start analysis
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel" id="controlPanel" style="display: none;">
+            <div class="control-row">
+                <!-- Left side: Difficulty selector and stats -->
+                <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+                    <div class="difficulty-selector">
+                        <span style="font-weight: 500; color: #374151;">Difficulty:</span>
+                        <div class="difficulty-tabs">
+                            <div class="difficulty-tab active" data-difficulty="simple">Simple</div>
+                            <div class="difficulty-tab" data-difficulty="medium">Medium</div>
+                            <div class="difficulty-tab" data-difficulty="hard">Hard</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats-compact">
+                        <div class="stat-item">
+                            <span class="stat-icon">📊</span>
+                            <div>
+                                <div class="stat-value" id="total-questions">0</div>
+                                <div class="stat-label">Total</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">⚠️</span>
+                            <div>
+                                <div class="stat-value" id="error-count">0</div>
+                                <div class="stat-label">Common Errors</div>
+                            </div>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-icon">🎯</span>
+                            <div>
+                                <div class="stat-value" id="avg-accuracy">0%</div>
+                                <div class="stat-label">Avg Accuracy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right side: Cache controls -->
+                <div class="cache-controls">
+                    <button class="cache-button" onclick="clearCache(); location.reload();">
+                        🗑️ Clear Cache
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Model selector row -->
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                <div class="model-selector">
+                    <span style="font-weight: 500; color: #374151; margin-right: 10px;">Select Models:</span>
+                    <!-- Model checkboxes will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-container">
+            <div class="grid-header">
+                <h3 id="grid-title">Question Performance Grid</h3>
+                <p id="grid-subtitle">Click on any question to see details</p>
+            </div>
+            <div class="question-grid" id="question-grid">
+                <!-- Grid items will be generated by JavaScript -->
+            </div>
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #10b981;"></div>
+                    <span>All models correct</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ef4444;"></div>
+                    <span>Some models wrong</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #dc2626; border: 3px solid #fbbf24;"></div>
+                    <span>Multiple models wrong</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for question details -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modal-title">Question Details</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global data storage
+        let modelData = {};
+        let questionsData = {};
+        let uploadedFiles = {};
+        let currentDifficulty = 'simple';
+        let selectedModels = [];
+        let dataReady = false;
+
+        // Cache management
+        const CACHE_KEYS = {
+            MODEL_DATA: 'modelData_v1',
+            QUESTIONS_DATA: 'questionsData_v1',
+            UPLOADED_FILES: 'uploadedFiles_v1',
+            SELECTED_MODELS: 'selectedModels_v1'
+        };
+
+        function saveToCache() {
+            try {
+                localStorage.setItem(CACHE_KEYS.MODEL_DATA, JSON.stringify(modelData));
+                localStorage.setItem(CACHE_KEYS.QUESTIONS_DATA, JSON.stringify(questionsData));
+                localStorage.setItem(CACHE_KEYS.UPLOADED_FILES, JSON.stringify(uploadedFiles));
+                localStorage.setItem(CACHE_KEYS.SELECTED_MODELS, JSON.stringify(selectedModels));
+            } catch (error) {
+                console.warn('Failed to save to cache:', error);
+            }
+        }
+
+        function loadFromCache() {
+            try {
+                const cachedModelData = localStorage.getItem(CACHE_KEYS.MODEL_DATA);
+                const cachedQuestionsData = localStorage.getItem(CACHE_KEYS.QUESTIONS_DATA);
+                const cachedUploadedFiles = localStorage.getItem(CACHE_KEYS.UPLOADED_FILES);
+                const cachedSelectedModels = localStorage.getItem(CACHE_KEYS.SELECTED_MODELS);
+
+                if (cachedModelData) modelData = JSON.parse(cachedModelData);
+                if (cachedQuestionsData) questionsData = JSON.parse(cachedQuestionsData);
+                if (cachedUploadedFiles) uploadedFiles = JSON.parse(cachedUploadedFiles);
+                if (cachedSelectedModels) selectedModels = JSON.parse(cachedSelectedModels);
+
+                return Object.keys(modelData).length > 0 || Object.keys(questionsData).length > 0;
+            } catch (error) {
+                console.warn('Failed to load from cache:', error);
+                clearCache();
+                return false;
+            }
+        }
+
+        function clearCache() {
+            Object.values(CACHE_KEYS).forEach(key => {
+                localStorage.removeItem(key);
+            });
+        }
+
+        // Initialize the application
+        function init() {
+            // Try to load from cache first
+            const hasCache = loadFromCache();
+            if (hasCache) {
+                updateUploadedFilesList();
+                updateModelSelector();
+                // Auto-select first model if none selected
+                if (selectedModels.length === 0 && Object.keys(modelData).length > 0) {
+                    selectedModels = [Object.keys(modelData)[0]];
+                }
+            }
+            
+            setupEventListeners();
+            setupFileHandling();
+            updateDataStatus();
+        }
+
+        // File handling setup
+        function setupFileHandling() {
+            const uploadArea = document.getElementById('fileUploadArea');
+            const evaluationFiles = document.getElementById('evaluationFiles');
+            const sampleFile = document.getElementById('sampleFile');
+
+            // Drag and drop events
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFiles(e.dataTransfer.files);
+            });
+
+            // File input events
+            evaluationFiles.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+
+            sampleFile.addEventListener('change', (e) => {
+                handleFiles(e.target.files);
+            });
+        }
+
+        // Handle uploaded files
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.name.endsWith('.json')) {
+                    handleEvaluationFile(file);
+                } else if (file.name.endsWith('.jsonl')) {
+                    handleSampleFile(file);
+                } else {
+                    alert('Please upload only JSON (evaluation results) or JSONL (sample data) files');
+                }
+            });
+        }
+
+        // Handle evaluation result JSON files
+        function handleEvaluationFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const modelName = extractModelName(file.name);
+                    modelData[modelName] = data;
+                    uploadedFiles[file.name] = 'evaluation';
+                    updateUploadedFilesList();
+                    updateModelSelector();
+                    updateDataStatus();
+                    saveToCache();
+                } catch (error) {
+                    alert(`Error parsing ${file.name}: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Handle sample data JSONL file
+        function handleSampleFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const content = e.target.result.trim();
+                    let data;
+                    
+                    // Try to parse as a single JSON array first
+                    try {
+                        data = JSON.parse(content);
+                        if (!Array.isArray(data)) {
+                            // If it's a single object, wrap it in an array
+                            data = [data];
+                        }
+                    } catch (singleJsonError) {
+                        // If that fails, try to parse as JSONL (one JSON object per line)
+                        try {
+                            const lines = content.split('\n').filter(line => line.trim());
+                            data = lines.map(line => JSON.parse(line));
+                        } catch (jsonlError) {
+                            // If both fail, try to split by '}\n{' pattern for formatted JSON objects
+                            try {
+                                const jsonObjects = content.split(/}\s*\n\s*{/);
+                                if (jsonObjects.length > 1) {
+                                    // Add back the braces that were removed by split
+                                    data = jsonObjects.map((obj, index) => {
+                                        let jsonStr = obj.trim();
+                                        if (index > 0) jsonStr = '{' + jsonStr;
+                                        if (index < jsonObjects.length - 1) jsonStr = jsonStr + '}';
+                                        return JSON.parse(jsonStr);
+                                    });
+                                } else {
+                                    throw new Error('Unable to parse file format');
+                                }
+                            } catch (formattedError) {
+                                throw new Error(`Unable to parse file: ${formattedError.message}`);
+                            }
+                        }
+                    }
+                    
+                    questionsData = parseQuestionsData(data);
+                    uploadedFiles[file.name] = 'sample';
+                    updateUploadedFilesList();
+                    updateDataStatus();
+                    saveToCache();
+                } catch (error) {
+                    alert(`Error parsing ${file.name}: ${error.message}`);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Extract model name from filename
+        function extractModelName(filename) {
+            const name = filename.replace('evaluation_results_', '')
+                                .replace('_by_difficulty.json', '')
+                                .replace('.json', '');
+            return name;
+        }
+
+        // Parse questions data by difficulty
+        function parseQuestionsData(data) {
+            const parsed = { simple: [], medium: [], hard: [] };
+            
+            data.forEach((item, index) => {
+                if (item.difficulty && item.task_question) {
+                    const questionInfo = {
+                        id: item.id || `q_${index}`,
+                        prolific_id: item.prolific_id || '',
+                        question: item.task_question,
+                        answer_options: item.answer_options || {},
+                        topic: item.topic || '',
+                        task_type: item.task_type || '',
+                        context_qas: item.context_qas || [],  // 取全部context，不再限制数量
+                        demographics: item.demographics || {}
+                    };
+                    
+                    if (parsed[item.difficulty]) {
+                        parsed[item.difficulty].push(questionInfo);
+                    }
+                }
+            });
+            
+            return parsed;
+        }
+
+        // Update uploaded files list display
+        function updateUploadedFilesList() {
+            const container = document.getElementById('uploadedFiles');
+            container.innerHTML = '';
+            
+            Object.keys(uploadedFiles).forEach(filename => {
+                const tag = document.createElement('div');
+                tag.className = 'file-tag';
+                tag.innerHTML = `
+                    ${filename} 
+                    <span class="remove" onclick="removeFile('${filename}')">×</span>
+                `;
+                container.appendChild(tag);
+            });
+        }
+
+        // Remove uploaded file
+        function removeFile(filename) {
+            const fileType = uploadedFiles[filename];
+            delete uploadedFiles[filename];
+            
+            if (fileType === 'evaluation') {
+                // Remove from modelData
+                Object.keys(modelData).forEach(modelName => {
+                    if (filename.includes(modelName)) {
+                        delete modelData[modelName];
+                    }
+                });
+                updateModelSelector();
+            } else if (fileType === 'sample') {
+                questionsData = {};
+            }
+            
+            updateUploadedFilesList();
+            updateDataStatus();
+        }
+
+        // Update model selector based on uploaded data
+        function updateModelSelector() {
+            const container = document.querySelector('.model-selector');
+            const existingCheckboxes = container.querySelectorAll('.model-checkbox');
+            
+            // Remove existing model checkboxes (keep the label)
+            existingCheckboxes.forEach(checkbox => checkbox.remove());
+            
+            // Add new checkboxes for uploaded models
+            Object.keys(modelData).forEach(modelName => {
+                const label = document.createElement('label');
+                label.className = 'model-checkbox';
+                label.innerHTML = `
+                    <input type="checkbox" data-model="${modelName}"> ${modelName}
+                `;
+                container.appendChild(label);
+                
+                // Add event listener
+                const checkbox = label.querySelector('input');
+                // Set initial state based on cached selection
+                if (selectedModels.includes(modelName)) {
+                    checkbox.checked = true;
+                    label.classList.add('checked');
+                }
+                
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        selectedModels.push(modelName);
+                        label.classList.add('checked');
+                    } else {
+                        selectedModels = selectedModels.filter(m => m !== modelName);
+                        label.classList.remove('checked');
+                    }
+                    saveToCache();
+                    updateVisualization();
+                });
+            });
+        }
+
+        // Update data status
+        function updateDataStatus() {
+            const statusElement = document.getElementById('dataStatus');
+            const hasEvaluationData = Object.keys(modelData).length > 0;
+            const hasSampleData = Object.keys(questionsData).length > 0;
+            
+            if (hasEvaluationData && hasSampleData) {
+                statusElement.className = 'data-status ready';
+                statusElement.innerHTML = '✅ Data loaded successfully! Select models and difficulty level to start analysis.';
+                dataReady = true;
+            } else {
+                statusElement.className = 'data-status incomplete';
+                const missing = [];
+                if (!hasEvaluationData) missing.push('evaluation results (JSON)');
+                if (!hasSampleData) missing.push('sample data (JSONL)');
+                statusElement.innerHTML = `📋 Please upload: ${missing.join(' and ')}`;
+                dataReady = false;
+            }
+            
+            // Show/hide controls based on data readiness
+            const controlPanel = document.getElementById('controlPanel');
+            const gridContainer = document.querySelector('.grid-container');
+            
+            if (controlPanel) controlPanel.style.display = dataReady ? 'block' : 'none';
+            if (gridContainer) gridContainer.style.display = dataReady ? 'block' : 'none';
+            
+            if (dataReady) {
+                updateVisualization();
+            }
+        }
+
+        function setupEventListeners() {
+            // Model checkboxes are now handled dynamically in updateModelSelector()
+
+            // Difficulty tabs
+            document.querySelectorAll('.difficulty-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.difficulty-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentDifficulty = this.dataset.difficulty;
+                    updateVisualization();
+                });
+            });
+
+            // Modal
+            const modal = document.getElementById('questionModal');
+            const closeBtn = document.querySelector('.close');
+            
+            closeBtn.addEventListener('click', () => {
+                modal.style.display = 'none';
+            });
+            
+            window.addEventListener('click', (event) => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        function updateVisualization() {
+            if (!dataReady || selectedModels.length === 0) return;
+            
+            updateStats();
+            updateGrid();
+        }
+
+        function updateStats() {
+            const currentQuestions = questionsData[currentDifficulty] || [];
+            const totalQuestions = currentQuestions.length;
+            let totalCorrect = 0;
+            let commonErrors = 0;
+
+            if (totalQuestions === 0) return;
+
+            // Calculate common errors (questions where multiple models failed)
+            for (let i = 0; i < totalQuestions; i++) {
+                let errorsForQuestion = 0;
+                let totalCorrectForQuestion = 0;
+                
+                selectedModels.forEach(model => {
+                    const modelResults = modelData[model];
+                    if (modelResults && modelResults[currentDifficulty] && modelResults[currentDifficulty].answers) {
+                        const answer = modelResults[currentDifficulty].answers[i];
+                        if (answer === 0) {
+                            errorsForQuestion++;
+                        } else {
+                            totalCorrectForQuestion++;
+                        }
+                    }
+                });
+                
+                totalCorrect += totalCorrectForQuestion;
+                
+                if (errorsForQuestion >= 2) {
+                    commonErrors++;
+                }
+            }
+
+            const avgAccuracy = selectedModels.length > 0 ? 
+                Math.round((totalCorrect / (totalQuestions * selectedModels.length)) * 100) : 0;
+
+            document.getElementById('total-questions').textContent = totalQuestions;
+            document.getElementById('error-count').textContent = commonErrors;
+            document.getElementById('avg-accuracy').textContent = avgAccuracy + '%';
+        }
+
+        function updateGrid() {
+            const grid = document.getElementById('question-grid');
+            grid.innerHTML = '';
+            
+            const currentQuestions = questionsData[currentDifficulty] || [];
+            const totalQuestions = currentQuestions.length;
+
+            for (let i = 0; i < totalQuestions; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'question-cell';
+                cell.textContent = i + 1;
+                cell.dataset.questionIndex = i;
+
+                // Determine cell status based on selected models
+                let errorCount = 0;
+                selectedModels.forEach(model => {
+                    const modelResults = modelData[model];
+                    if (modelResults && modelResults[currentDifficulty] && modelResults[currentDifficulty].answers) {
+                        if (modelResults[currentDifficulty].answers[i] === 0) {
+                            errorCount++;
+                        }
+                    }
+                });
+
+                if (errorCount === 0) {
+                    cell.classList.add('correct');
+                } else if (errorCount >= 2) {
+                    cell.classList.add('error-multiple');
+                } else {
+                    cell.classList.add('error');
+                }
+
+                cell.addEventListener('click', () => showQuestionDetail(i));
+                grid.appendChild(cell);
+            }
+        }
+
+        function showQuestionDetail(questionIndex) {
+            const modal = document.getElementById('questionModal');
+            const modalBody = document.getElementById('modal-body');
+            
+            const currentQuestions = questionsData[currentDifficulty] || [];
+            const question = currentQuestions[questionIndex];
+            
+            if (!question) {
+                modalBody.innerHTML = '<p>Question not found</p>';
+                modal.style.display = 'block';
+                return;
+            }
+            
+            // Generate question detail content
+            let html = `
+                <div class="question-section">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
+                        <h3>Question ${questionIndex + 1} (${currentDifficulty.toUpperCase()})</h3>
+                        <div style="text-align: right; color: #6b7280; font-size: 0.9rem;">
+                            <div><strong>ID:</strong> ${question.id}</div>
+                            ${question.prolific_id ? `<div><strong>Prolific ID:</strong> ${question.prolific_id}</div>` : ''}
+                            ${question.topic ? `<div><strong>Topic:</strong> ${question.topic}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="question-text">
+                        <strong>Task:</strong> ${question.question}
+                    </div>
+            `;
+            
+            // Add answer options if available
+            if (question.answer_options && Object.keys(question.answer_options).length > 0) {
+                html += '<div class="answer-options" style="margin-top: 15px;">';
+                Object.entries(question.answer_options).forEach(([key, value]) => {
+                    html += `<div class="answer-option"><strong>${key}:</strong> ${value}</div>`;
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+            
+            // Add participant demographics info if available
+            if (question.demographics && Object.keys(question.demographics).length > 0) {
+                html += `
+                    <div class="question-section">
+                        <h4 style="margin-bottom: 10px;">Participant Demographics</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                `;
+                
+                // Show key demographic info as badges
+                const keyDemographics = [
+                    'age', 'education', 'housing_status', 'household_income', 
+                    'race_ethnicity', 'marital_status', 'occupation', 'zipcode'
+                ];
+                keyDemographics.forEach(key => {
+                    if (question.demographics[key]) {
+                        const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        html += `<span class="info-badge"><strong>${displayKey}:</strong> ${question.demographics[key]}</span>`;
+                    }
+                });
+                
+                html += '</div></div>';
+            }
+            
+            // Add context Q&As if available
+            if (question.context_qas && question.context_qas.length > 0) {
+                html += `
+                    <div class="question-section">
+                        <h4 style="margin-bottom: 15px;">
+                            Context Responses 
+                            <span style="font-weight: normal; color: #6b7280;">(All ${question.context_qas.length} responses from participant)</span>
+                        </h4>
+                        <div class="context-scroll">
+                `;
+                
+                question.context_qas.forEach((qa, index) => {
+                    html += `
+                        <div class="context-item">
+                            <div class="context-question">
+                                <span style="color: #3b82f6; font-weight: bold;">Q${qa.question_number || index + 1}:</span> 
+                                ${qa.question}
+                            </div>
+                            <div class="context-answer">
+                                <span style="color: #059669; font-weight: bold;">A:</span> 
+                                ${qa.answer}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div></div>';
+            }
+            
+            html += '<div class="question-section"><h4>Model Performance</h4>';
+
+            selectedModels.forEach(model => {
+                const modelResults = modelData[model];
+                if (modelResults && modelResults[currentDifficulty] && modelResults[currentDifficulty].answers) {
+                    const result = modelResults[currentDifficulty].answers[questionIndex];
+                    const resultClass = result === 1 ? 'result-correct' : 'result-error';
+                    const resultText = result === 1 ? 'CORRECT' : 'INCORRECT';
+                    
+                    html += `
+                        <div class="model-result ${resultClass}">
+                            <span class="model-name">${model}</span>
+                            <span class="result-status">${resultText}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            html += '</div>';
+            modalBody.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

@@ -5,11 +5,13 @@ from pathlib import Path
 from llm_utils import QwenLLM
 
 def process_user_folder(user_folder, qa_start_id=1):
-    """Process single user folder and generate QA data for zoning topic"""
+    """Process single user folder and generate QA data for zoning topic
+    Returns: (qa_pairs, next_qa_id)
+    """
     # Read demographic data
     demo_path = user_folder / "demographic" / "demographic.json"
     if not demo_path.exists():
-        return []
+        return [], qa_start_id
         
     with open(demo_path, 'r') as f:
         demo_data = json.load(f)
@@ -17,7 +19,7 @@ def process_user_folder(user_folder, qa_start_id=1):
     # Read zoning reaction data
     zoning_path = user_folder / "survey" / "zoning_reaction.json"
     if not zoning_path.exists():
-        return []
+        return [], qa_start_id
         
     with open(zoning_path, 'r') as f:
         zoning_data = json.load(f)
@@ -44,7 +46,7 @@ def process_user_folder(user_folder, qa_start_id=1):
     # Note: Higher difficulty = less context (harder to infer beliefs with limited information)
     difficulty_configs = [
         {"name": "simple", "context_size": len(context_qas)},  # All available context (easiest)
-        {"name": "medium", "context_size": 15}, 
+        {"name": "medium", "context_size": 10},  # Medium context
         {"name": "hard", "context_size": 5}  # Minimal context (hardest)
     ]
     
@@ -84,7 +86,7 @@ def process_user_folder(user_folder, qa_start_id=1):
             }
             qa_pairs.append(qa_entry)
             qa_start_id += 1
-    return qa_pairs
+    return qa_pairs, qa_start_id
 
 def extract_zoning_answer(zoning_data, user_id):
     """Extract answer from zoning reaction data"""
@@ -236,14 +238,13 @@ def main():
         print(f"Processing user folder: {user_folder.name}")
         
         # Process current user's data
-        qa_pairs = process_user_folder(user_folder, qa_counter)
+        qa_pairs, qa_counter = process_user_folder(user_folder, qa_counter)
         all_qa_pairs.extend(qa_pairs)
-        # Note: qa_counter is updated inside process_user_folder now
         
         print(f"Generated {len(qa_pairs)} QA pairs for user {user_folder.name}")
         
         # Break after first iteration for now
-        break
+        # break
     
     # Save results as JSONL (one JSON object per line, formatted)
     output_file = output_dir / "sample.jsonl"

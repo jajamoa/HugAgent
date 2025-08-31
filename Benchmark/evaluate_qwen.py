@@ -254,7 +254,18 @@ def main():
     parser.add_argument("--benchmark_path", type=str, default="sample.jsonl", 
                        help="Path to the benchmark JSONL file")
     parser.add_argument("--model", type=str, default="qwen-plus", 
-                       choices=["qwen-plus", "qwen-max"], 
+                       choices=[
+                           "qwen-max", 
+                           "qwen-plus", 
+                           "qwen-turbo",
+                           "qwen2.5-72b-instruct",
+                           "qwen2.5-32b-instruct", 
+                           "qwen2.5-14b-instruct",
+                           "qwen2.5-7b-instruct",
+                           "qwen2.5-3b-instruct",
+                           "qwen2.5-1.5b-instruct",
+                           "qwen2.5-0.5b-instruct"
+                       ], 
                        help="Qwen model to use")
     parser.add_argument("--temperature", type=float, default=0.1, 
                        help="Temperature for generation")
