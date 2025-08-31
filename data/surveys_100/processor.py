@@ -3,13 +3,13 @@
 """
 Three-Topic Survey Processor   (updated 2025-05-15)
 
-读取 *.csv 问卷结果 → 生成
+Read *.csv survey results → generate
   <stem>_demographics.json
   <stem>_housing_reactions.json
   <stem>_surveillance_reactions.json
   <stem>_healthcare_reactions.json
 
-输出格式满足 Evaluator:
+Output format satisfies Evaluator:
 {
   "<PROLIFIC_ID>": {
     "opinions": { "1.1": 7, "1.2": 9, ... },
@@ -136,21 +136,6 @@ class ThreeTopicSurveyProcessor:
             "citizenship": r"citizenship.*nativity status"
         }
 
-        # for pid in df[id_col].unique():
-        #     part = df[df[id_col] == pid]
-
-        #     # Check attention only if enabled
-        #     if self.check_attention:
-        #         attention_cols = [col for col in df.columns if "please press the following link" in col.lower()]
-        #         attention_answers = [
-        #             part[col].iloc[0].strip().lower() for col in attention_cols if col in part.columns
-        #     ]
-        #     if not attention_answers or any(ans != "yes" for ans in attention_answers):
-        #         print(f"⏭️  Skipping {pid} due to failed attention check")
-        #         continue
-
-        #     # Check for missing demographic data
-        #     demo_data = {}
         for pid in df[id_col].unique():
             part = df[df[id_col] == pid]
 
@@ -185,23 +170,26 @@ class ThreeTopicSurveyProcessor:
 
             demographics[pid] = demo_data
 
-            # Extract reactions (existing code)
+            # —— Topic reactions (prioritize by tags; keep original fallback logic) ——
             housing_all[pid] = self._extract_topic_reactions(
                 part,
                 self.schema["topics"]["upzoning"],
                 self.housing_mapping,
+                topic_tag="zoning",
             )
 
             camera_all[pid] = self._extract_topic_reactions(
                 part,
                 self.schema["topics"]["surveillance_camera"],
                 self.camera_mapping,
+                topic_tag="camera",
             )
 
             health_all[pid] = self._extract_topic_reactions(
                 part,
                 self.schema["topics"]["universal_healthcare"],
                 self.health_mapping,
+                topic_tag="healthcare",
             )
 
             # Check if any required opinions or reasons are missing
@@ -236,45 +224,31 @@ class ThreeTopicSurveyProcessor:
         except Exception:
             return None
 
+    @staticmethod
     def _normalize(text: str) -> str:
         """
-        - 移除所有标点（含中英文）
-        - Unicode NFKD 兼容分解，去掉重音
-        - 压缩空格、转小写
+        - Remove all punctuation (including Chinese and English)
+        - Unicode NFKD compatibility decomposition, remove accents
+        - Compress whitespace, convert to lowercase
         """
+        import unicodedata
         text = unicodedata.normalize("NFKD", text)
-        text = re.sub(r"[^\w\s]", " ", text)          # 去标点
+        text = re.sub(r"[^\w\s]", " ", text)          # Remove punctuation
         text = re.sub(r"\s+", " ", text).strip().lower()
         return text
 
     def _col_match(self, col: str, target: str) -> bool:
-        """Match column name with target question text.
-        
-        Args:
-            col: Column name from CSV
-            target: Target question text from schema
-            
-        Returns:
-            bool: Whether they match
-        """
-        # Normalize both strings
+        """Match column name with target question text."""
         col = re.sub(r"\s+", " ", col.strip().lower())
         target = re.sub(r"\s+", " ", target.strip().lower())
-
-        # Extract key parts (first N words) from target
-        target_key = " ".join(target.split()[:7])  # First 7 words usually contain the key question
-        
-        # Check if key parts are in column name
+        target_key = " ".join(target.split()[:7])
         if target_key and target_key in col:
             return True
-
-        # Check if column contains most of target words
         target_words = set(target.split())
         col_words = set(col.split())
         common_words = target_words & col_words
         if len(common_words) >= min(len(target_words) * 0.6, len(col_words) * 0.6):
             return True
-
         return False
 
     def _extract_topic_reactions(
@@ -282,114 +256,122 @@ class ThreeTopicSurveyProcessor:
         part_df: pd.DataFrame,
         topic_schema: Dict[str, Any],
         reason_map: Dict[str, str],
+        topic_tag: str,   # ← New: used to match [zoning]/[camera]/[healthcare]
     ) -> Dict[str, Any]:
         out = {"opinions": {}, "reasons": {}}
 
-        # Create reverse mapping for more flexible matching
+        # Reverse word bag: used to match letter codes based on reason text
         reverse_map = {}
         for text, code in reason_map.items():
-            # Convert reason text to lowercase and remove punctuation for matching
-            clean_text = re.sub(r'[^\w\s]', '', text.lower())
-            words = set(clean_text.split())
-            reverse_map[code] = words
+            clean_text = re.sub(r"[^\w\s]", "", text.lower())
+            reverse_map.setdefault(code, set(clean_text.split()))
+
+        # Pre-cache lowercase column names
+        lower_cols = [(c, c.lower()) for c in part_df.columns]
+
+        def _tagged_cols_for(q_id: str, kind: str) -> list[str]:
+            """Find columns with tags: kind ∈ {'opinions','reasons'}"""
+            tgt_topic = f"[{topic_tag}]"
+            tgt_qid = f"[{q_id}]"
+            tgt_kind = f"[{kind}]"
+            return [
+                c for c, cl in lower_cols
+                if tgt_topic in cl and tgt_qid in cl and tgt_kind in cl
+            ]
 
         for q in topic_schema["questions"]:
             q_id = q["id"]
             q_text = q["text"]
 
-            # Find matching column for the question
             matched_cols = [c for c in part_df.columns if self._col_match(c, q_text)]
-            if matched_cols:
-                # Get the first matching column that doesn't contain reason text
-                opinion_col = next((c for c in matched_cols if "[" not in c), None)
-                if opinion_col and not pd.isna(part_df[opinion_col].iloc[0]):
-                    val = self._safe_int(part_df[opinion_col].iloc[0])
-                if val is not None:
-                    out["opinions"][q_id] = val
+            
+            # ---------- Opinions (only non-reason_evaluation; prioritize tags, then fallback) ----------
+            if q.get("type") != "reason_evaluation":
+                opinion_cols = _tagged_cols_for(q_id, "opinions")
+                opinion_val = None
+                if opinion_cols:
+                    raw = part_df[opinion_cols[0]].iloc[0]
+                    opinion_val = self._safe_int(raw)
+                else:
+                    if matched_cols:
+                        pref = next((c for c in matched_cols if "[opinions]" in c.lower()), matched_cols[0])
+                        opinion_val = self._safe_int(part_df[pref].iloc[0])
+                if opinion_val is not None:
+                    out["opinions"][q_id] = opinion_val
 
-            # Process reasons if this is a reason evaluation question
-            if q["type"] == "reason_evaluation":
-                reasons_needed = q["reasons"]  # Keep original order
+            # ---------- Reasons (native reasons or followup) ----------
+            def _collect_reasons_for(qid: str, needed_codes: list[str]) -> dict[str, int]:
+                """Extract reasons for this question from tagged columns, filtered by needed_codes"""
+                got: dict[str, int] = {}
+                candidates = _tagged_cols_for(qid, "reasons")
+                for col in candidates:
+                    tokens = re.findall(r"\[([^\]]+)\]", col)
+                    code_from_tag = None
+                    if len(tokens) >= 4 and tokens[2].lower() == "reasons":
+                        tcode = tokens[3].strip().upper()
+                        if tcode in needed_codes:
+                            code_from_tag = tcode
+                    # Infer code from text (using the last bracketed reason text)
+                    reason_txt = tokens[-1].strip() if tokens else ""
+                    r_clean = re.sub(r"[^\w\s]", "", reason_txt.lower())
+                    reason_words = set(r_clean.split())
+                    best_code = None
+                    best_overlap = 0.0
+                    for code in needed_codes:
+                        target_words = reverse_map.get(code, set())
+                        if not target_words:
+                            continue
+                        overlap = len(reason_words & target_words) / max(1, len(target_words))
+                        if overlap > best_overlap:
+                            best_overlap = overlap
+                            best_code = code
+                    final_code = code_from_tag or best_code
+                    if final_code and final_code in needed_codes:
+                        val = self._safe_int(part_df[col].iloc[0])
+                        if val is not None:
+                            got[final_code] = val
+                return got
+
+            # 1) Current question is a reasons question
+            if q.get("type") == "reason_evaluation":
+                need = q["reasons"]
                 out["reasons"].setdefault(q_id, {})
-                
-                # Create a mapping of reason codes to their column indices
-                reason_cols = {}
-                for col in part_df.columns:
-                    if "[" in col and "]" in col:
-                        # Extract text between square brackets
-                        bracket_start = col.rfind("[")  # Use last occurrence of [
-                        bracket_end = col.rfind("]")    # Use last occurrence of ]
-                        if bracket_start != -1 and bracket_end != -1:
-                            reason_txt = col[bracket_start + 1:bracket_end].strip()
-                            # Clean reason text for matching
-                            clean_reason = re.sub(r'[^\w\s]', '', reason_txt.lower())
-                            reason_words = set(clean_reason.split())
-                            
-                            # Try to find matching reason code
-                            best_match = None
-                            max_overlap = 0
-                            for code in reasons_needed:  # Use ordered list from schema
-                                if code in reason_map.values():  # Check if code is valid
-                                    target_words = reverse_map.get(code, set())
-                                    overlap = len(reason_words & target_words) / len(target_words) if target_words else 0
-                                    if overlap > 0.5 and overlap > max_overlap:  # Lower threshold for better matching
-                                        max_overlap = overlap
-                                        best_match = code
-                            
-                            if best_match:
-                                reason_cols[best_match] = col
-                
-                # Extract values in schema-defined order
-                for code in reasons_needed:
-                    if code in reason_cols:
-                        col = reason_cols[code]
-                        if not pd.isna(part_df[col].iloc[0]):  # Check for NaN
-                            score = self._safe_int(part_df[col].iloc[0])
-                            if score is not None:
-                                out["reasons"][q_id][code] = score
+                # First extract from tags; if no tags, use your original loose matching (minimal changes)
+                extracted = _collect_reasons_for(q_id, need)
+                if not extracted:
+                    # Fallback: In columns matching the question text, prioritize letter codes from tags; otherwise infer from word overlap with reason text
+                    for col in part_df.columns:
+                        if not self._col_match(col, q_text):
+                            continue
+                        tokens = re.findall(r"\[([^\]]+)\]", col)
+                        # Directly read code from tags
+                        code = next((t.strip().upper() for t in tokens if t.strip().upper() in need), None)
+                        if not code:
+                            # Infer from word overlap with the last bracketed text
+                            reason_txt = tokens[-1].strip() if tokens else ""
+                            r_clean = re.sub(r"[^\w\s]", "", reason_txt.lower())
+                            reason_words = set(r_clean.split())
+                            best_code, best_overlap = None, 0.0
+                            for cand in need:
+                                target_words = reverse_map.get(cand, set())
+                                if not target_words:
+                                    continue
+                                overlap = len(reason_words & target_words) / max(1, len(target_words))
+                                if overlap > best_overlap:
+                                    best_overlap, best_code = overlap, cand
+                        if code:
+                            val = self._safe_int(part_df[col].iloc[0])
+                            if val is not None:
+                                extracted[code] = val
+                out["reasons"][q_id].update(extracted)
 
-            # Process followup reasons if they exist
+            # 2) Current question has followup reasons (scenario question reasons)
             if q.get("has_reason_followup"):
-                f = q["followup"]
                 parent_id = q_id
+                need = q["followup"]["reasons"]
                 out["reasons"].setdefault(parent_id, {})
-                needed = f["reasons"]  # Keep original order
-
-                # Create a mapping of reason codes to their column indices
-                reason_cols = {}
-                for col in part_df.columns:
-                    if "[" in col and "]" in col:
-                        # Extract text between square brackets
-                        bracket_start = col.rfind("[")  # Use last occurrence of [
-                        bracket_end = col.rfind("]")    # Use last occurrence of ]
-                        if bracket_start != -1 and bracket_end != -1:
-                            reason_txt = col[bracket_start + 1:bracket_end].strip()
-                            # Clean reason text for matching
-                            clean_reason = re.sub(r'[^\w\s]', '', reason_txt.lower())
-                            reason_words = set(clean_reason.split())
-                            
-                            # Try to find matching reason code
-                            best_match = None
-                            max_overlap = 0
-                            for code in needed:  # Use ordered list from schema
-                                if code in reason_map.values():  # Check if code is valid
-                                    target_words = reverse_map.get(code, set())
-                                    overlap = len(reason_words & target_words) / len(target_words) if target_words else 0
-                                    if overlap > 0.5 and overlap > max_overlap:  # Lower threshold for better matching
-                                        max_overlap = overlap
-                                        best_match = code
-                            
-                            if best_match:
-                                reason_cols[best_match] = col
-                
-                # Extract values in schema-defined order
-                for code in needed:
-                    if code in reason_cols:
-                        col = reason_cols[code]
-                        if not pd.isna(part_df[col].iloc[0]):  # Check for NaN
-                            score = self._safe_int(part_df[col].iloc[0])
-                            if score is not None:
-                                out["reasons"][parent_id][code] = score
+                extracted = _collect_reasons_for(parent_id, need)
+                out["reasons"][parent_id].update(extracted)
 
         return out
 
