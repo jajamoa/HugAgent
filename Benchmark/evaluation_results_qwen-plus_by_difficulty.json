@@ -1,0 +1,53 @@
+{
+  "simple": {
+    "total": 10,
+    "correct": 3,
+    "accuracy": 0.3,
+    "answers": [
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "medium": {
+    "total": 10,
+    "correct": 4,
+    "accuracy": 0.4,
+    "answers": [
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  "hard": {
+    "total": 10,
+    "correct": 3,
+    "accuracy": 0.3,
+    "answers": [
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  }
+}
