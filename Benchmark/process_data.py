@@ -1,12 +1,13 @@
 import json
 import os
 import csv
+import argparse
 from pathlib import Path
 from llm_utils import QwenLLM
 from concurrent.futures import ThreadPoolExecutor
 import threading
 
-def process_user_folder(user_folder, qa_start_id=1):
+def process_user_folder(user_folder, qa_start_id=1, context_lengths=None):
     """Process single user folder and generate QA data for zoning topic
     Returns: (qa_pairs, next_qa_id)
     """
@@ -41,41 +42,48 @@ def process_user_folder(user_folder, qa_start_id=1):
     # Extract demographics data (remove nested prolific_id key)
     demo_info = demo_data.get(user_folder.name, demo_data)
     
-    # Generate multiple belief inference questions using LLM
-    belief_qas = generate_multiple_belief_inference_questions(context_qas, prolific_id)
+    # Generate multiple belief attribution questions using LLM
+    belief_qas = generate_multiple_belief_attribution_questions(context_qas, prolific_id)
     
-    # Generate three difficulty versions for each belief inference question
-    # Note: Higher difficulty = less context (harder to infer beliefs with limited information)
-    difficulty_configs = [
-        {"name": "simple", "context_size": len(context_qas)},  # All available context (easiest)
+    # Generate three context length versions for each belief attribution question
+    # Note: Shorter context = harder to infer beliefs with limited information
+    all_context_configs = [
+        {"name": "long", "context_size": len(context_qas)},  # All available context
         {"name": "medium", "context_size": 10},  # Medium context
-        {"name": "hard", "context_size": 5}  # Minimal context (hardest)
+        {"name": "short", "context_size": 5}  # Minimal context
     ]
+    
+    # Filter context configs based on input parameter
+    if context_lengths is None:
+        context_lengths = ["short", "medium", "long"]
+    
+    context_configs = [config for config in all_context_configs 
+                      if config["name"] in context_lengths]
     
     for belief_qa in belief_qas:
         # Get the source QA question content to exclude it from context for this specific question only
         source_qa_question = belief_qa.get("source_qa", {}).get("question", "")
         
-        for j, config in enumerate(difficulty_configs):
+        for j, config in enumerate(context_configs):
             # Remove only this question's source QA from context using question content match
             context_without_current_source = [qa for qa in context_qas 
                                             if qa["question"] != source_qa_question]
             
-            # Select appropriate amount of context for this difficulty
+            # Select appropriate amount of context for this context length
             if config["context_size"] >= len(context_without_current_source):
-                difficulty_context = context_without_current_source
+                context_length_context = context_without_current_source
             else:
-                difficulty_context = context_without_current_source[:config["context_size"]]
+                context_length_context = context_without_current_source[:config["context_size"]]
             
             # Create QA entry with LLM-generated question
             qa_entry = {
                 "id": f"qa_{qa_start_id:03d}",
                 "prolific_id": prolific_id,
                 "demographics": demo_info,
-                "context_qas": difficulty_context,
-                "difficulty": config["name"],
+                "context_qas": context_length_context,
+                "context_length": config["name"],
                 "topic": "zoning",
-                "task_type": "belief_inference",
+                "task_type": "belief_attribution",
                 "task_question": belief_qa["question"],
                 "answer_options": {
                     "A": "POSITIVE effect",
@@ -148,8 +156,8 @@ def extract_context_qas(csv_path):
     
     return context_qas
 
-def generate_multiple_belief_inference_questions(context_qas, prolific_id):
-    """Generate multiple belief inference questions using LLM based on context QAs"""
+def generate_multiple_belief_attribution_questions(context_qas, prolific_id):
+    """Generate multiple belief attribution questions using LLM based on context QAs"""
     if not context_qas:
         return []
     
@@ -216,7 +224,7 @@ Use simple, everyday language for the factors. For example:
 - "traffic congestion" instead of "transportation systems impact"
 - "neighborhood character" instead of "community identity factors"
 
-Return up to 15 belief inference questions maximum.
+Return up to 15 belief attribution questions maximum.
 """
 
         response = llm.generate_response(
@@ -226,7 +234,7 @@ Return up to 15 belief inference questions maximum.
         )
         
         if response and isinstance(response, list):
-            print(f"Generated {len(response)} belief inference questions for user {prolific_id}")
+            print(f"Generated {len(response)} belief attribution questions for user {prolific_id}")
             for i, qa in enumerate(response):
                 print(f"Question {i+1}: {qa.get('question', 'N/A')}")
                 print(f"Answer {i+1}: {qa.get('answer', 'N/A')}")
@@ -236,10 +244,20 @@ Return up to 15 belief inference questions maximum.
             return []
             
     except Exception as e:
-        print(f"Error generating belief inference questions: {e}")
+        print(f"Error generating belief attribution questions: {e}")
         return []
 
 def main():
+    parser = argparse.ArgumentParser(description='Process user data and generate QA pairs')
+    parser.add_argument('--context-lengths', nargs='+', 
+                       choices=['short', 'medium', 'long'],
+                       default=['short', 'medium', 'long'],
+                       help='Context lengths to generate (default: all)')
+    parser.add_argument('--max-workers', type=int, default=3,
+                       help='Maximum number of parallel workers (default: 3)')
+    parser.add_argument('--max-users', type=int, default=10,
+                       help='Maximum number of user folders to process (default: 10)')
+    args = parser.parse_args()
     # Set up paths (relative to current working directory)
     pilot_dir = Path("./pilot_36users")
     output_dir = Path("./")
@@ -264,7 +282,7 @@ def main():
             current_counter = qa_counter
         
         # Process current user's data
-        qa_pairs, next_counter = process_user_folder(user_folder, current_counter)
+        qa_pairs, next_counter = process_user_folder(user_folder, current_counter, args.context_lengths)
         
         # Update global counter thread-safely
         with qa_counter_lock:
@@ -273,10 +291,10 @@ def main():
         print(f"Generated {len(qa_pairs)} QA pairs for user {user_folder.name}")
         return qa_pairs
     
-    # Process user folders concurrently with max 3 workers
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    # Process user folders concurrently with configurable workers
+    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
         futures = []
-        for user_folder in user_folders[:10]:
+        for user_folder in user_folders[:args.max_users]:
             future = executor.submit(process_user_with_counter, user_folder)
             futures.append(future)
         
@@ -286,7 +304,7 @@ def main():
             all_qa_pairs.extend(qa_pairs)
     
     # Save results as JSONL (one JSON object per line, formatted)
-    output_file = output_dir / "sample_prompt_v3_15q.jsonl"
+    output_file = output_dir / "sample.jsonl"
     with open(output_file, 'w') as f:
         for qa_pair in all_qa_pairs:
             f.write(json.dumps(qa_pair, indent=2, ensure_ascii=False) + '\n')

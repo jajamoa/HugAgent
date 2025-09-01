@@ -11,6 +11,9 @@ A benchmark for evaluating LLM theory of mind capabilities through human-grounde
 cd Benchmark/
 python process_data.py
 # Processes pilot_36users/ folder and generates sample.jsonl
+
+# With options
+python process_data.py --context-lengths short medium --max-workers 5 --max-users 20
 ```
 
 #### Model Evaluation  
@@ -25,7 +28,7 @@ python evaluate_qwen.py --model qwen-plus --debug
 ./run_all_evaluations.sh
 ```
 
-**All Options:**
+**Evaluation Options:**
 - `--benchmark_path`: JSONL file path (default: sample.jsonl)
 - `--model`: qwen-max, qwen-plus, qwen-turbo, qwen2.5-{72b,32b,14b,7b,3b,1.5b,0.5b}-instruct
 - `--temperature`: Generation temperature 0.0-1.0 (default: 0.1)
@@ -34,6 +37,11 @@ python evaluate_qwen.py --model qwen-plus --debug
 - `--max-workers`: Parallel workers for API calls (default: 3)
 - `--debug`: Sequential processing with full prompt/response display
 - `--swap-experiment`: Use next participant's data for prediction (extreme test)
+
+**Data Processing Options:**
+- `--context-lengths`: Context lengths to generate (choices: short, medium, long; default: all)
+- `--max-workers`: Maximum parallel workers (default: 3)
+- `--max-users`: Maximum user folders to process (default: 10)
 
 ### Visualization Tool
 
@@ -53,12 +61,12 @@ python -m http.server 8000
 
 ## Benchmark Structure
 
-**Difficulty Levels:**
-- **Simple**: Full context (all 20+ conversation turns)
+**Context Length Levels:**
+- **Long**: Full context (all 20+ conversation turns)
 - **Medium**: Partial context (10 conversation turns)  
-- **Hard**: Minimal context (5 conversation turns)
+- **Short**: Minimal context (5 conversation turns)
 
-Each level tests belief inference with decreasing information availability.
+Each level tests belief attribution with decreasing information availability.
 
 ## Files
 
