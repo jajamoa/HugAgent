@@ -1,0 +1,47 @@
+{
+  "id": "qa_001",
+  "prolific_id": "test01",
+  "demographics": {
+    "age": "32",
+    "housing_status": "Owner-occupied"
+  },
+  "context_qas": [
+    {
+      "question_number": "1",
+      "question": "Do you support upzoning?",
+      "answer": "Yes, I think it helps with housing crisis."
+    }
+  ],
+  "topic": "zoning",
+  "task_type": "belief_update",
+  "question_id": "1.1",
+  "question_type": "opinion",
+  "task_question": "On a scale from 1 to 10, how much do you support upzoning?",
+  "user_answer": 8,
+  "scale": [1, 10]
+}
+
+{
+  "id": "qa_002", 
+  "prolific_id": "test01",
+  "demographics": {
+    "age": "32",
+    "housing_status": "Owner-occupied"
+  },
+  "context_qas": [
+    {
+      "question_number": "1",
+      "question": "Do you support upzoning?", 
+      "answer": "Yes, I think it helps with housing crisis."
+    }
+  ],
+  "topic": "zoning",
+  "task_type": "belief_update",
+  "question_id": "1.1r_A",
+  "question_type": "reason_evaluation",
+  "task_question": "How much does building more homes influence your opinion?",
+  "reason_code": "A",
+  "reason_text": "Building more homes helps with the housing crisis.",
+  "user_answer": 5,
+  "scale": [1, 5]
+}
