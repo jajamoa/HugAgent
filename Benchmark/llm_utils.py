@@ -1,6 +1,8 @@
 import os
 import json
 import logging
+import time
+import random
 from pathlib import Path
 from dotenv import load_dotenv
 import dashscope
@@ -63,10 +65,11 @@ class QwenLLM:
         system_message: str = "You are a helpful assistant.",
         temperature: Optional[float] = None,
         return_json: bool = False,
-        debug: bool = False
+        debug: bool = False,
+        max_retries: int = 3
     ) -> Optional[str]:
         """
-        Generate response from Qwen LLM
+        Generate response from Qwen LLM with retry logic for rate limiting
         
         Args:
             prompt: User prompt
@@ -74,70 +77,94 @@ class QwenLLM:
             temperature: Sampling temperature (0.0-1.0), uses default if None
             return_json: Whether to parse response as JSON
             debug: If True, print full prompt and response
+            max_retries: Maximum number of retry attempts for rate limiting
             
         Returns:
             Response string or parsed JSON dict
         """
-        try:
-            # Use default temperature if not specified
-            if temperature is None:
-                temperature = self.default_temperature
-            
-            if debug:
-                print(f"\n{Colors.format('='*80, Colors.HEADER)}")
-                print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Model: {Colors.format(self.model, Colors.CYAN)}")
-                print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Temperature: {Colors.format(str(temperature), Colors.YELLOW)}, Seed: {Colors.format(str(self.random_seed), Colors.YELLOW)}")
-                print(f"{Colors.format('='*80, Colors.HEADER)}")
-                print(f"{Colors.format('[SYSTEM PROMPT]:', Colors.GREEN + Colors.BOLD)}")
-                print(f"{Colors.format(system_message, Colors.GREEN)}")
-                print(f"{Colors.format('-'*80, Colors.BLUE)}")
-                print(f"{Colors.format('[USER PROMPT]:', Colors.CYAN + Colors.BOLD)}")
-                print(f"{Colors.format(prompt, Colors.CYAN)}")
-                print(f"{Colors.format('='*80, Colors.HEADER)}")
-                input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to send request...")
+        # Use default temperature if not specified
+        if temperature is None:
+            temperature = self.default_temperature
+        
+        if debug:
+            print(f"\n{Colors.format('='*80, Colors.HEADER)}")
+            print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Model: {Colors.format(self.model, Colors.CYAN)}")
+            print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Temperature: {Colors.format(str(temperature), Colors.YELLOW)}, Seed: {Colors.format(str(self.random_seed), Colors.YELLOW)}")
+            print(f"{Colors.format('='*80, Colors.HEADER)}")
+            print(f"{Colors.format('[SYSTEM PROMPT]:', Colors.GREEN + Colors.BOLD)}")
+            print(f"{Colors.format(system_message, Colors.GREEN)}")
+            print(f"{Colors.format('-'*80, Colors.BLUE)}")
+            print(f"{Colors.format('[USER PROMPT]:', Colors.CYAN + Colors.BOLD)}")
+            print(f"{Colors.format(prompt, Colors.CYAN)}")
+            print(f"{Colors.format('='*80, Colors.HEADER)}")
+            input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to send request...")
+        
+        # Retry logic with exponential backoff
+        for attempt in range(max_retries + 1):
+            try:
+                logger.info(f"Sending prompt to {self.model} (temp={temperature}, seed={self.random_seed})")
+                if attempt > 0:
+                    logger.info(f"Retry attempt {attempt}/{max_retries}")
                 
-            logger.info(f"Sending prompt to {self.model} (temp={temperature}, seed={self.random_seed})")
-            
-            response = dashscope.Generation.call(
-                api_key=self.api_key,
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": prompt},
-                ],
-                result_format="message",
-                temperature=temperature,
-                seed=self.random_seed,
-            )
+                response = dashscope.Generation.call(
+                    api_key=self.api_key,
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": prompt},
+                    ],
+                    result_format="message",
+                    temperature=temperature,
+                    seed=self.random_seed,
+                )
 
-            if response.status_code == 200:
-                content = response.output.choices[0].message.content
-                logger.info("Successfully received response")
-                
-                if debug:
-                    print(f"\n{Colors.format('[RESPONSE]:', Colors.RED + Colors.BOLD)}")
-                    print(f"{Colors.format(content, Colors.RED)}")
-                    print(f"{Colors.format('='*80, Colors.HEADER)}")
-                    input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to continue...")
-                
-                if return_json:
-                    try:
-                        cleaned_json = self._clean_json_string(content)
-                        logger.info(f"Attempting to parse JSON: {cleaned_json[:200]}...")
-                        return json.loads(cleaned_json)
-                    except json.JSONDecodeError as e:
-                        logger.error(f"Failed to parse JSON response: {e}")
-                        logger.error(f"Raw response: {content}")
+                if response.status_code == 200:
+                    content = response.output.choices[0].message.content
+                    logger.info("Successfully received response")
+                    
+                    if debug:
+                        print(f"\n{Colors.format('[RESPONSE]:', Colors.RED + Colors.BOLD)}")
+                        print(f"{Colors.format(content, Colors.RED)}")
+                        print(f"{Colors.format('='*80, Colors.HEADER)}")
+                        input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to continue...")
+                    
+                    if return_json:
+                        try:
+                            cleaned_json = self._clean_json_string(content)
+                            logger.info(f"Attempting to parse JSON: {cleaned_json[:200]}...")
+                            return json.loads(cleaned_json)
+                        except json.JSONDecodeError as e:
+                            logger.error(f"Failed to parse JSON response: {e}")
+                            logger.error(f"Raw response: {content}")
+                            return None
+                    
+                    return content
+                    
+                elif response.status_code == 429:
+                    # Rate limit error - implement exponential backoff
+                    if attempt < max_retries:
+                        wait_time = (2 ** attempt) + random.uniform(0, 1)  # Exponential backoff with jitter
+                        logger.warning(f"Rate limit hit (429). Waiting {wait_time:.2f}s before retry {attempt + 1}/{max_retries}")
+                        time.sleep(wait_time)
+                        continue
+                    else:
+                        logger.error(f"API rate limit exceeded after {max_retries} retries")
                         return None
-                
-                return content
-            else:
-                logger.error(f"API call failed with status: {response.status_code}")
-                return None
+                else:
+                    logger.error(f"API call failed with status: {response.status_code}")
+                    return None
 
-        except Exception as e:
-            logger.error(f"Error calling Qwen API: {e}")
-            return None
+            except Exception as e:
+                if attempt < max_retries:
+                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    logger.error(f"Error calling Qwen API: {e}. Retrying in {wait_time:.2f}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    logger.error(f"Error calling Qwen API after {max_retries} retries: {e}")
+                    return None
+        
+        return None
 
     def _clean_json_string(self, json_str: str) -> str:
         """Extract JSON from response string"""

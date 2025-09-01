@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
 from llm_utils import QwenLLM, Colors
 
-def process_single_question(llm, vqa, include_demographics, include_context, temperature, debug=False, swap_data=None):
+def process_single_question(llm, vqa, include_demographics, include_context, temperature, debug=False, swap_data=None, max_retries=3):
     """Process a single question and return the result"""
     try:
         # Construct the question prompt
@@ -71,7 +71,8 @@ def process_single_question(llm, vqa, include_demographics, include_context, tem
             user_prompt,
             system_message=system_message,
             temperature=temperature,
-            debug=debug
+            debug=debug,
+            max_retries=max_retries
         )
         
         # Extract the answer dynamically from available options
@@ -215,7 +216,7 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
                     pid = vqa.get("prolific_id", "")
                     swap_data = swap_mapping.get(pid)
                 
-                result = process_single_question(llm, vqa, include_demographics, include_context, temperature, debug, swap_data)
+                result = process_single_question(llm, vqa, include_demographics, include_context, temperature, debug, swap_data, max_retries=5)
                 results.append(result)
         else:
             # Parallel processing for normal mode
@@ -229,7 +230,7 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
                         pid = vqa.get("prolific_id", "")
                         swap_data = swap_mapping.get(pid)
                     
-                    future = executor.submit(process_single_question, llm, vqa, include_demographics, include_context, temperature, debug, swap_data)
+                    future = executor.submit(process_single_question, llm, vqa, include_demographics, include_context, temperature, debug, swap_data, max_retries=5)
                     future_to_index[future] = i
             
                 # Process completed results
@@ -336,7 +337,7 @@ def main():
                        help="Exclude demographics from prompt")
     parser.add_argument("--no-context", action="store_true",
                        help="Exclude context QAs from prompt")
-    parser.add_argument("--max-workers", type=int, default=3,
+    parser.add_argument("--max-workers", type=int, default=2,
                        help="Maximum number of parallel workers for API calls")
     parser.add_argument("--debug", action="store_true",
                        help="Enable debug mode: sequential processing with full prompt/response display")
