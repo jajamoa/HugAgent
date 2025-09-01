@@ -315,7 +315,7 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
 
 def main():
     parser = argparse.ArgumentParser(description="Evaluate Theory of Mind belief inference benchmark with Qwen")
-    parser.add_argument("--benchmark_path", type=str, default="sample.jsonl", 
+    parser.add_argument("--benchmark_path", type=str, default="sample_prompt_v3.jsonl", 
                        help="Path to the benchmark JSONL file")
     parser.add_argument("--model", type=str, default="qwen-plus", 
                        choices=[

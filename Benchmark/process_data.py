@@ -2,10 +2,33 @@ import json
 import os
 import csv
 import argparse
+import re
 from pathlib import Path
 from llm_utils import QwenLLM
 from concurrent.futures import ThreadPoolExecutor
 import threading
+
+# Weak causal sign detector patterns
+KW_TRIGGER = re.compile(
+    r"(?:\b(effect|effects|impact|impacts|impacting|impacted|influence|influences|influencing|influenced|affect|affects|affecting|affected)\b"
+    r"|(?:\bpositive\b|\bnegative\b)"
+    r"|(?:\blead\s+to\b|\bled\s+to\b|\bcauses?\b|\bcaused\b|\bresult(?:s|ed)?\s+in\b|\bresult(?:s|ed)?\s+from\b)"
+    r"|(?:\bconsequence(?:s)?\b)"
+    r"|(?:\bdue\s+to\b|\bbecause\s+of\b|\bowing\s+to\b|\bas\s+a\s+result\s+of\b)"
+    r"|(?:\bcausal(?:ly)?\b)"
+    r"|(?:\brelationship(?:s)?\b|\bconnection(?:s)?\b))",
+    re.IGNORECASE
+)
+
+def is_weak_causal_sign_question(text):
+    """
+    Weak identification: if keywords appear, consider it causal/effect question.
+    """
+    if not text or not text.strip():
+        return False
+    t = text.strip()
+    # Keyword trigger - sufficient for detection
+    return bool(KW_TRIGGER.search(t))
 
 def process_user_folder(user_folder, qa_start_id=1, context_lengths=None):
     """Process single user folder and generate QA data for zoning topic
@@ -164,10 +187,19 @@ def generate_multiple_belief_attribution_questions(context_qas, prolific_id):
     try:
         llm = QwenLLM(model="qwen-plus")
         
-        # Format context QAs for the prompt
+        # Filter context QAs to only include those with causal/effect patterns
+        filtered_qas = [qa for qa in context_qas if is_weak_causal_sign_question(qa['question'])]
+        
+        if not filtered_qas:
+            print(f"No causal-relevant questions found for user {prolific_id}")
+            return []
+        
+        print(f"Filtered {len(context_qas)} QAs down to {len(filtered_qas)} causal-relevant QAs for user {prolific_id}")
+        
+        # Format filtered context QAs for the prompt
         context_text = "\n".join([
             f"Q{qa['question_number']}: {qa['question']}\nA{qa['question_number']}: {qa['answer']}"
-            for qa in context_qas
+            for qa in filtered_qas
         ])
         
         prompt = f"""
@@ -177,23 +209,9 @@ Conversation:
 {context_text}
 
 Your task:
-1) Find ALL Q&A pairs where the answer explicitly or implicitly describes how one factor CAUSES or INFLUENCES another (up to 15 pairs).
-   - Exclude Q&A that are only about preferences, personal feelings, or general norms without causal wording.
-2) For each selected pair, create a simple, clear question about the relationship using everyday language.
-   - Each factor must be ≤3 words, lowercase, everyday terms.
-   - Do not invent factors that are not implied by the original answer.
-3) Based on the person's answer, determine their belief about the effect.
-
-CRUCIAL: Context sensitivity
-- For each candidate, assess how much the belief depends on OTHER parts of the conversation beyond its own source QA.
-- Label "dependency_level" as:
-  0 = self-contained (can be answered from the source QA alone),
-  1 = weak-context (answer is clearer/safer when combined with 1–2 other QAs),
-  2 = strong-context (requires synthesizing ≥2 other QAs; single QA is ambiguous or misleading).
-- Provide "supporting_qnums": a list of other question numbers that must be combined to justify the belief (empty list allowed for level 0).
-- Provide "context_sensitivity": a prediction of answerability under truncation:
-  {{"hard_5":"answerable|risky|not_answerable","medium_10":"answerable|risky|not_answerable","simple_all":"answerable"}}
-  (Assume "hard_5" means only the first 5 remaining context QAs excluding the source; "medium_10" = first 10; "simple_all" = all remaining.)
+1. Find ALL Q&A pairs that show how the person believes one factor affects another (up to 10 pairs)
+2. For each pair, create a simple, clear question about the relationship using everyday language
+3. Based on the person's answer, determine their belief about the effect
 
 Selection rule:
 - PRIORITIZE items with dependency_level ≥ 1 (needs-context). If fewer than 10 such items exist, then fill the remainder with the best dependency_level = 0 items.
@@ -224,7 +242,7 @@ Use simple, everyday language for the factors. For example:
 - "traffic congestion" instead of "transportation systems impact"
 - "neighborhood character" instead of "community identity factors"
 
-Return up to 15 belief attribution questions maximum.
+Return up to 10 belief inference questions maximum.
 """
 
         response = llm.generate_response(
@@ -304,7 +322,7 @@ def main():
             all_qa_pairs.extend(qa_pairs)
     
     # Save results as JSONL (one JSON object per line, formatted)
-    output_file = output_dir / "sample.jsonl"
+    output_file = output_dir / "sample_prompt_v1_10q_regu1.jsonl"
     with open(output_file, 'w') as f:
         for qa_pair in all_qa_pairs:
             f.write(json.dumps(qa_pair, indent=2, ensure_ascii=False) + '\n')
