@@ -1,0 +1,13 @@
+# Core dependencies for HugToM-QA benchmark
+dashscope>=1.20.0
+python-dotenv>=1.0.0
+tqdm>=4.65.0
+
+# AI packages (optional)
+openai>=1.0.0               # OpenAI API (import as: from openai import OpenAI)
+google-genai==1.32.0        # GenAI Python SDK (import as: from google import genai)
+google-generativeai>=0.8.0  # for Google AI (import as: import google.generativeai as genai)
+genai>=2.0.0                # standalone genai package (import as: import genai)
+
+# Standard library (included with Python)
+# json, pathlib, argparse, concurrent.futures, asyncio
