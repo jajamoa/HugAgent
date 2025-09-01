@@ -3,6 +3,8 @@ import os
 import csv
 from pathlib import Path
 from llm_utils import QwenLLM
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 def process_user_folder(user_folder, qa_start_id=1):
     """Process single user folder and generate QA data for zoning topic
@@ -167,9 +169,27 @@ Conversation:
 {context_text}
 
 Your task:
-1. Find ALL Q&A pairs that show how the person believes one factor affects another (up to 10 pairs)
-2. For each pair, create a simple, clear question about the relationship using everyday language
-3. Based on the person's answer, determine their belief about the effect
+1) Find ALL Q&A pairs where the answer explicitly or implicitly describes how one factor CAUSES or INFLUENCES another (up to 15 pairs).
+   - Exclude Q&A that are only about preferences, personal feelings, or general norms without causal wording.
+2) For each selected pair, create a simple, clear question about the relationship using everyday language.
+   - Each factor must be ≤3 words, lowercase, everyday terms.
+   - Do not invent factors that are not implied by the original answer.
+3) Based on the person's answer, determine their belief about the effect.
+
+CRUCIAL: Context sensitivity
+- For each candidate, assess how much the belief depends on OTHER parts of the conversation beyond its own source QA.
+- Label "dependency_level" as:
+  0 = self-contained (can be answered from the source QA alone),
+  1 = weak-context (answer is clearer/safer when combined with 1–2 other QAs),
+  2 = strong-context (requires synthesizing ≥2 other QAs; single QA is ambiguous or misleading).
+- Provide "supporting_qnums": a list of other question numbers that must be combined to justify the belief (empty list allowed for level 0).
+- Provide "context_sensitivity": a prediction of answerability under truncation:
+  {{"hard_5":"answerable|risky|not_answerable","medium_10":"answerable|risky|not_answerable","simple_all":"answerable"}}
+  (Assume "hard_5" means only the first 5 remaining context QAs excluding the source; "medium_10" = first 10; "simple_all" = all remaining.)
+
+Selection rule:
+- PRIORITIZE items with dependency_level ≥ 1 (needs-context). If fewer than 10 such items exist, then fill the remainder with the best dependency_level = 0 items.
+- Prefer diverse factor pairs; avoid near-duplicates.
 
 Return JSON format as an array:
 [
@@ -196,7 +216,7 @@ Use simple, everyday language for the factors. For example:
 - "traffic congestion" instead of "transportation systems impact"
 - "neighborhood character" instead of "community identity factors"
 
-Return up to 10 belief inference questions maximum.
+Return up to 15 belief inference questions maximum.
 """
 
         response = llm.generate_response(
@@ -232,22 +252,41 @@ def main():
     
     all_qa_pairs = []
     qa_counter = 1
+    qa_counter_lock = threading.Lock()
     
-    # Loop through all user folders
-    for user_folder in user_folders:
+    def process_user_with_counter(user_folder):
+        """Thread-safe wrapper for processing user folder"""
+        nonlocal qa_counter
         print(f"Processing user folder: {user_folder.name}")
         
+        # Get thread-safe counter value
+        with qa_counter_lock:
+            current_counter = qa_counter
+        
         # Process current user's data
-        qa_pairs, qa_counter = process_user_folder(user_folder, qa_counter)
-        all_qa_pairs.extend(qa_pairs)
+        qa_pairs, next_counter = process_user_folder(user_folder, current_counter)
+        
+        # Update global counter thread-safely
+        with qa_counter_lock:
+            qa_counter = max(qa_counter, next_counter)
         
         print(f"Generated {len(qa_pairs)} QA pairs for user {user_folder.name}")
+        return qa_pairs
+    
+    # Process user folders concurrently with max 3 workers
+    with ThreadPoolExecutor(max_workers=3) as executor:
+        futures = []
+        for user_folder in user_folders[:10]:
+            future = executor.submit(process_user_with_counter, user_folder)
+            futures.append(future)
         
-        # Break after first iteration for now
-        # break
+        # Collect results from all threads
+        for future in futures:
+            qa_pairs = future.result()
+            all_qa_pairs.extend(qa_pairs)
     
     # Save results as JSONL (one JSON object per line, formatted)
-    output_file = output_dir / "sample.jsonl"
+    output_file = output_dir / "sample_prompt_v3_15q.jsonl"
     with open(output_file, 'w') as f:
         for qa_pair in all_qa_pairs:
             f.write(json.dumps(qa_pair, indent=2, ensure_ascii=False) + '\n')
