@@ -282,11 +282,12 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
         task_type = vqa.get("task_type", "belief_attribution")
         task_types.add(task_type)
         
-        # For belief_attribution, use existing difficulty levels
+        # For belief_attribution, use context_length as difficulty
         if task_type == "belief_attribution":
-            difficulty = vqa.get("difficulty", "unknown")
-            if difficulty in difficulty_datasets:
-                difficulty_datasets[difficulty].append(vqa)
+            difficulty = vqa.get("context_length", "unknown")
+            if difficulty not in difficulty_datasets:
+                difficulty_datasets[difficulty] = []
+            difficulty_datasets[difficulty].append(vqa)
         
         # For belief_update, group all together since difficulty doesn't apply the same way
         elif task_type == "belief_update":
