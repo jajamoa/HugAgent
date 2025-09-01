@@ -6,7 +6,7 @@
 set -e  # Exit on any error
 
 # Configuration
-BENCHMARK_PATH="sample_prompt_v3_15q.jsonl"
+BENCHMARK_PATH="sample_prompt_v3_10q_regu1.jsonl"
 TEMPERATURE=0.1
 MAX_WORKERS=6
 LOG_DIR="logs"
