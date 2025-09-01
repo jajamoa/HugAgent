@@ -8,7 +8,7 @@ from llm_utils import QwenLLM
 from concurrent.futures import ThreadPoolExecutor
 import threading
 
-# Weak causal sign detector patterns
+# Weak causal sign detector patterns (disabled for belief attribution)
 KW_TRIGGER = re.compile(
     r"(?:\b(effect|effects|impact|impacts|impacting|impacted|influence|influences|influencing|influenced|affect|affects|affecting|affected)\b"
     r"|(?:\bpositive\b|\bnegative\b)"
@@ -20,15 +20,20 @@ KW_TRIGGER = re.compile(
     re.IGNORECASE
 )
 
+# New regex for belief attribution - match "How strong is this effect?"
+EFFECT_STRENGTH_TRIGGER = re.compile(r"How\s+strong\s+is\s+this\s+effect\?", re.IGNORECASE)
+
+
 def is_weak_causal_sign_question(text):
     """
-    Weak identification: if keywords appear, consider it causal/effect question.
+    Only match "How strong is this effect?" pattern
     """
     if not text or not text.strip():
         return False
     t = text.strip()
-    # Keyword trigger - sufficient for detection
-    return bool(KW_TRIGGER.search(t))
+    
+    # Only use effect strength trigger
+    return bool(EFFECT_STRENGTH_TRIGGER.search(t))
 
 def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_type="belief_attribution", topic="zoning"):
     """Process single user folder and generate QA data for specified topic and task type
@@ -129,6 +134,16 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
         if transcript_path.exists():
             context_qas = extract_context_qas(transcript_path)
         
+        # Apply context length filtering for belief_update if specified
+        if context_lengths and len(context_lengths) == 1:
+            # If only one context length specified, use it
+            length_name = context_lengths[0]
+            if length_name == "short":
+                context_qas = context_qas[:5]
+            elif length_name == "medium":
+                context_qas = context_qas[:10]
+            # "long" uses all context_qas
+        
         # Process belief update questions from survey data
         survey_qas = process_belief_update_questions(user_folder, topic)
         
@@ -137,7 +152,7 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
                 "id": f"qa_{qa_start_id:03d}",
                 "prolific_id": prolific_id,
                 "demographics": demo_info,
-                "context_qas": context_qas,  # All context QAs without filtering
+                "context_qas": context_qas,
                 "topic": topic,
                 "task_type": "belief_update",
                 "question_id": survey_qa["question_id"],
@@ -401,7 +416,7 @@ def generate_multiple_belief_attribution_questions(context_qas, prolific_id):
     try:
         llm = QwenLLM(model="qwen-plus")
         
-        # Filter context QAs to only include those with causal/effect patterns
+        # Filter context QAs to only include those with "How strong is this effect?" pattern
         filtered_qas = [qa for qa in context_qas if is_weak_causal_sign_question(qa['question'])]
         
         if not filtered_qas:
