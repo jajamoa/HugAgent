@@ -208,6 +208,9 @@ class FilterMechanisms:
     @staticmethod
     def different_results(result):
         """Keep if two predictions are different"""
+        # Skip if there are errors
+        if ('error' in result['no_context'] or 'error' in result['with_context']):
+            return False
         no_ctx = result['no_context']['generated_answer']
         with_ctx = result['with_context']['generated_answer']
         return no_ctx != with_ctx
@@ -215,6 +218,9 @@ class FilterMechanisms:
     @staticmethod
     def first_wrong_second_correct(result):
         """Keep if first prediction wrong and second correct"""
+        # Skip if there are errors
+        if ('error' in result['no_context'] or 'error' in result['with_context']):
+            return False
         no_ctx_correct = result['no_context']['is_correct']
         with_ctx_correct = result['with_context']['is_correct']
         return (not no_ctx_correct) and with_ctx_correct
@@ -222,6 +228,9 @@ class FilterMechanisms:
     @staticmethod
     def context_improves(result):
         """Keep if context/demographics improves correctness"""
+        # Skip if there are errors
+        if ('error' in result['no_context'] or 'error' in result['with_context']):
+            return False
         no_ctx_correct = result['no_context']['is_correct']
         with_ctx_correct = result['with_context']['is_correct']
         return (not no_ctx_correct) and with_ctx_correct
@@ -229,6 +238,9 @@ class FilterMechanisms:
     @staticmethod
     def context_degrades(result):
         """Keep if context/demographics makes prediction worse"""
+        # Skip if there are errors
+        if ('error' in result['no_context'] or 'error' in result['with_context']):
+            return False
         no_ctx_correct = result['no_context']['is_correct']
         with_ctx_correct = result['with_context']['is_correct']
         return no_ctx_correct and (not with_ctx_correct)
@@ -236,6 +248,9 @@ class FilterMechanisms:
     @staticmethod
     def both_wrong(result):
         """Keep if both predictions are wrong"""
+        # Skip if there are errors
+        if ('error' in result['no_context'] or 'error' in result['with_context']):
+            return False
         no_ctx_correct = result['no_context']['is_correct']
         with_ctx_correct = result['with_context']['is_correct']
         return (not no_ctx_correct) and (not with_ctx_correct)
@@ -243,9 +258,154 @@ class FilterMechanisms:
     @staticmethod
     def both_correct(result):
         """Keep if both predictions are correct"""
+        # Skip if there are errors
+        if ('error' in result['no_context'] or 'error' in result['with_context']):
+            return False
         no_ctx_correct = result['no_context']['is_correct']
         with_ctx_correct = result['with_context']['is_correct']
         return no_ctx_correct and with_ctx_correct
+    
+    @staticmethod
+    def has_errors(result):
+        """Keep if there are processing errors"""
+        return ('error' in result['no_context'] or 'error' in result['with_context'])
+
+def analyze_accuracy_by_task_and_condition(results):
+    """Analyze accuracy by task type and test conditions"""
+    
+    # Group results by task type
+    task_stats = {}
+    processed_count = 0
+    error_count = 0
+    
+    for result in results:
+        if result is None:
+            continue
+            
+        vqa = result['vqa']
+        task_type = vqa.get('task_type', 'unknown')
+        
+        if task_type not in task_stats:
+            task_stats[task_type] = {
+                'total': 0,
+                'no_context_correct': 0,
+                'with_context_correct': 0,
+                'both_correct': 0,
+                'both_wrong': 0,
+                'context_improves': 0,
+                'context_degrades': 0,
+                'different_results': 0,
+                'errors': 0
+            }
+        
+        stats = task_stats[task_type]
+        stats['total'] += 1
+        processed_count += 1
+        
+        # Check for errors
+        has_error = ('error' in result['no_context'] or 'error' in result['with_context'])
+        if has_error:
+            stats['errors'] += 1
+            error_count += 1
+            continue
+        
+        no_ctx_correct = result['no_context']['is_correct']
+        with_ctx_correct = result['with_context']['is_correct']
+        
+        if no_ctx_correct:
+            stats['no_context_correct'] += 1
+        if with_ctx_correct:
+            stats['with_context_correct'] += 1
+        
+        # Analyze different conditions
+        if no_ctx_correct and with_ctx_correct:
+            stats['both_correct'] += 1
+        elif not no_ctx_correct and not with_ctx_correct:
+            stats['both_wrong'] += 1
+        elif not no_ctx_correct and with_ctx_correct:
+            stats['context_improves'] += 1
+        elif no_ctx_correct and not with_ctx_correct:
+            stats['context_degrades'] += 1
+        
+        # Check if results are different
+        no_ctx_answer = result['no_context']['generated_answer']
+        with_ctx_answer = result['with_context']['generated_answer']
+        if no_ctx_answer != with_ctx_answer:
+            stats['different_results'] += 1
+    
+    print(f"Analysis summary: {processed_count} processed, {error_count} had errors")
+    return task_stats
+
+def print_accuracy_report(task_stats):
+    """Print detailed accuracy report"""
+    
+    print(f"\n{'='*80}")
+    print(f"ACCURACY ANALYSIS BY TASK TYPE AND CONDITIONS")
+    print(f"{'='*80}")
+    
+    overall_stats = {
+        'total': 0,
+        'no_context_correct': 0,
+        'with_context_correct': 0,
+        'both_correct': 0,
+        'both_wrong': 0,
+        'context_improves': 0,
+        'context_degrades': 0,
+        'different_results': 0
+    }
+    
+    for task_type, stats in task_stats.items():
+        # Update overall stats
+        for key in overall_stats:
+            overall_stats[key] += stats[key]
+        
+        print(f"\nTask Type: {task_type.upper()}")
+        print(f"{'='*50}")
+        print(f"Total questions: {stats['total']}")
+        
+        if 'errors' in stats and stats['errors'] > 0:
+            print(f"Processing errors: {stats['errors']} ({stats['errors']/stats['total']:.1%})")
+        
+        if stats['total'] > 0:
+            # Calculate accuracy based on successfully processed questions
+            valid_count = stats['total'] - stats.get('errors', 0)
+            if valid_count > 0:
+                no_ctx_acc = stats['no_context_correct'] / valid_count
+                with_ctx_acc = stats['with_context_correct'] / valid_count
+                
+                print(f"No context accuracy: {no_ctx_acc:.2%} ({stats['no_context_correct']}/{valid_count})")
+                print(f"With context accuracy: {with_ctx_acc:.2%} ({stats['with_context_correct']}/{valid_count})")
+                print(f"Context improvement: {with_ctx_acc - no_ctx_acc:+.2%}")
+                
+                print(f"\nCondition breakdown (valid responses only):")
+                print(f"  Both correct: {stats['both_correct']/valid_count:.1%} ({stats['both_correct']})")
+                print(f"  Both wrong: {stats['both_wrong']/valid_count:.1%} ({stats['both_wrong']})")
+                print(f"  Context improves: {stats['context_improves']/valid_count:.1%} ({stats['context_improves']})")
+                print(f"  Context degrades: {stats['context_degrades']/valid_count:.1%} ({stats['context_degrades']})")
+                print(f"  Different results: {stats['different_results']/valid_count:.1%} ({stats['different_results']})")
+            else:
+                print("No valid responses for analysis")
+    
+    # Overall summary
+    if overall_stats['total'] > 0:
+        print(f"\n{'='*50}")
+        print(f"OVERALL SUMMARY")
+        print(f"{'='*50}")
+        print(f"Total questions: {overall_stats['total']}")
+        
+        overall_no_ctx_acc = overall_stats['no_context_correct'] / overall_stats['total']
+        overall_with_ctx_acc = overall_stats['with_context_correct'] / overall_stats['total']
+        
+        print(f"Overall no context accuracy: {overall_no_ctx_acc:.2%}")
+        print(f"Overall with context accuracy: {overall_with_ctx_acc:.2%}")
+        print(f"Overall context improvement: {overall_with_ctx_acc - overall_no_ctx_acc:+.2%}")
+        
+        print(f"\nOverall condition breakdown:")
+        print(f"  Both correct: {overall_stats['both_correct']/overall_stats['total']:.1%}")
+        print(f"  Both wrong: {overall_stats['both_wrong']/overall_stats['total']:.1%}")
+        print(f"  Context improves: {overall_stats['context_improves']/overall_stats['total']:.1%}")
+        print(f"  Context degrades: {overall_stats['context_degrades']/overall_stats['total']:.1%}")
+        print(f"  Different results: {overall_stats['different_results']/overall_stats['total']:.1%}")
 
 def filter_jsonl(input_path, output_path, model, filter_names, temperature=0, max_workers=3):
     """Filter JSONL based on dual predictions and filter rules"""
@@ -287,37 +447,197 @@ def filter_jsonl(input_path, output_path, model, filter_names, temperature=0, ma
         print("No valid filters specified")
         return
     
-    # Process all VQAs in parallel
+    # Process all VQAs in parallel - maintain order
     print(f"Processing with model: {model}")
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = []
-        for vqa in vqa_dataset:
+        for i, vqa in enumerate(vqa_dataset):
             future = executor.submit(process_vqa_pair, model, vqa, temperature)
-            futures.append(future)
+            futures.append((i, future))
         
-        results = []
-        for future in tqdm(as_completed(futures), total=len(futures), desc="Processing"):
-            result = future.result()
-            results.append(result)
+        # Initialize results array to maintain order and ensure all questions are included
+        results = [None] * len(vqa_dataset)
+        completed_count = 0
+        failed_count = 0
+        
+        for i, future in tqdm(futures, desc="Processing"):
+            try:
+                result = future.result()
+                results[i] = result
+                completed_count += 1
+            except Exception as e:
+                # Create a default result for failed processing
+                print(f"Warning: Failed to process question {i+1}: {e}")
+                failed_count += 1
+                results[i] = {
+                    'vqa': vqa_dataset[i],
+                    'no_context': {
+                        'generated_answer': None,
+                        'generated_response': None,
+                        'correct_answer': vqa_dataset[i].get('answer') or vqa_dataset[i].get('user_answer', ''),
+                        'is_correct': False,
+                        'error': str(e)
+                    },
+                    'with_context': {
+                        'generated_answer': None,
+                        'generated_response': None,
+                        'correct_answer': vqa_dataset[i].get('answer') or vqa_dataset[i].get('user_answer', ''),
+                        'is_correct': False,
+                        'error': str(e)
+                    }
+                }
+    
+    print(f"Processing summary: {completed_count} successful, {failed_count} failed, {len(results)} total")
+    assert len(results) == len(vqa_dataset), f"Results count {len(results)} != input count {len(vqa_dataset)}"
+    
+    # Analyze accuracy before filtering
+    print(f"\n{'='*60}")
+    print(f"ANALYSIS OF ALL PREDICTIONS")
+    print(f"{'='*60}")
+    
+    task_stats = analyze_accuracy_by_task_and_condition(results)
+    print_accuracy_report(task_stats)
     
     # Apply filters
     filtered_results = []
+    filtered_raw_results = []
     for result in results:
         # Check if any filter matches
         if any(filter_func(result) for filter_func in filter_funcs):
             filtered_results.append(result['vqa'])
+            filtered_raw_results.append(result)
     
+    print(f"\n{'='*60}")
+    print(f"FILTERING RESULTS")
+    print(f"{'='*60}")
+    print(f"Applied filters: {', '.join(filter_names)}")
     print(f"Filtered down to {len(filtered_results)} questions ({len(filtered_results)/len(vqa_dataset)*100:.1f}%)")
+    
+    # Analyze accuracy of filtered results
+    if filtered_raw_results:
+        print(f"\n{'='*60}")
+        print(f"ANALYSIS OF FILTERED PREDICTIONS")
+        print(f"{'='*60}")
+        
+        filtered_task_stats = analyze_accuracy_by_task_and_condition(filtered_raw_results)
+        print_accuracy_report(filtered_task_stats)
     
     # Save filtered results
     with open(output_path, 'w') as f:
         for vqa in filtered_results:
             f.write(json.dumps(vqa) + '\n')
     
-    print(f"Saved filtered results to {output_path}")
+    print(f"\nSaved filtered results to {output_path}")
+    
+    # Return statistics for further analysis
+    return {
+        'all_results': task_stats,
+        'filtered_results': filtered_task_stats if filtered_raw_results else {},
+        'total_questions': len(vqa_dataset),
+        'filtered_questions': len(filtered_results)
+    }
+
+def analyze_only(input_path, model, temperature=0, max_workers=3):
+    """Only analyze accuracy without filtering"""
+    
+    # Load data
+    vqa_dataset = []
+    with open(input_path, "r") as file:
+        content = file.read().strip()
+        
+        json_objects = []
+        current_object = ""
+        brace_count = 0
+        
+        for line in content.split('\n'):
+            current_object += line + '\n'
+            brace_count += line.count('{') - line.count('}')
+            
+            if brace_count == 0 and current_object.strip():
+                try:
+                    json_obj = json.loads(current_object.strip())
+                    json_objects.append(json_obj)
+                    current_object = ""
+                except json.JSONDecodeError:
+                    continue
+        
+        vqa_dataset = json_objects
+    
+    print(f"Loaded {len(vqa_dataset)} questions from {input_path}")
+    
+    # Process all VQAs in parallel - maintain order
+    print(f"Processing with model: {model}")
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = []
+        for i, vqa in enumerate(vqa_dataset):
+            future = executor.submit(process_vqa_pair, model, vqa, temperature)
+            futures.append((i, future))
+        
+        # Initialize results array to maintain order and ensure all questions are included
+        results = [None] * len(vqa_dataset)
+        completed_count = 0
+        failed_count = 0
+        
+        for i, future in tqdm(futures, desc="Processing"):
+            try:
+                result = future.result()
+                results[i] = result
+                completed_count += 1
+            except Exception as e:
+                # Create a default result for failed processing
+                print(f"Warning: Failed to process question {i+1}: {e}")
+                failed_count += 1
+                results[i] = {
+                    'vqa': vqa_dataset[i],
+                    'no_context': {
+                        'generated_answer': None,
+                        'generated_response': None,
+                        'correct_answer': vqa_dataset[i].get('answer') or vqa_dataset[i].get('user_answer', ''),
+                        'is_correct': False,
+                        'error': str(e)
+                    },
+                    'with_context': {
+                        'generated_answer': None,
+                        'generated_response': None,
+                        'correct_answer': vqa_dataset[i].get('answer') or vqa_dataset[i].get('user_answer', ''),
+                        'is_correct': False,
+                        'error': str(e)
+                    }
+                }
+    
+    print(f"Processing summary: {completed_count} successful, {failed_count} failed, {len(results)} total")
+    assert len(results) == len(vqa_dataset), f"Results count {len(results)} != input count {len(vqa_dataset)}"
+    
+    # Analyze accuracy
+    task_stats = analyze_accuracy_by_task_and_condition(results)
+    print_accuracy_report(task_stats)
+    
+    # Save detailed results to JSON for further analysis
+    base_name = input_path.replace('.jsonl', '')
+    clean_model_name = model.replace("/", "-")
+    results_filename = f"{base_name}_analysis_{clean_model_name}.json"
+    
+    analysis_results = {
+        'model': model,
+        'total_questions': len(vqa_dataset),
+        'task_stats': task_stats,
+        'summary': {
+            'overall_no_context_accuracy': sum(stats['no_context_correct'] for stats in task_stats.values()) / len(vqa_dataset),
+            'overall_with_context_accuracy': sum(stats['with_context_correct'] for stats in task_stats.values()) / len(vqa_dataset),
+            'context_improvement_rate': sum(stats['context_improves'] for stats in task_stats.values()) / len(vqa_dataset),
+            'context_degradation_rate': sum(stats['context_degrades'] for stats in task_stats.values()) / len(vqa_dataset),
+            'different_results_rate': sum(stats['different_results'] for stats in task_stats.values()) / len(vqa_dataset)
+        }
+    }
+    
+    with open(results_filename, 'w') as f:
+        json.dump(analysis_results, f, indent=2)
+    
+    print(f"\nDetailed analysis saved to {results_filename}")
+    return analysis_results
 
 def main():
-    parser = argparse.ArgumentParser(description="Filter JSONL based on dual predictions")
+    parser = argparse.ArgumentParser(description="Filter JSONL based on dual predictions or analyze accuracy")
     parser.add_argument("input_path", help="Path to input JSONL file")
     parser.add_argument("--model", type=str, default="qwen-plus", 
                        help="Model to use for predictions")
@@ -327,25 +647,35 @@ def main():
                        help="Number of parallel workers")
     parser.add_argument("--filters", nargs='+', 
                        choices=['different_results', 'first_wrong_second_correct', 
-                               'context_improves', 'context_degrades', 'both_wrong', 'both_correct'],
-                       default=['different_results'],
-                       help="Filter mechanisms to apply")
+                               'context_improves', 'context_degrades', 'both_wrong', 'both_correct', 'has_errors'],
+                       help="Filter mechanisms to apply (if not specified, only analyze)")
+    parser.add_argument("--analyze-only", action="store_true",
+                       help="Only analyze accuracy without filtering")
     
     args = parser.parse_args()
     
-    # Generate output filename
-    base_name = args.input_path.replace('.jsonl', '')
-    filter_suffix = '_'.join(args.filters)
-    output_path = f"{base_name}_filtered_{filter_suffix}.jsonl"
-    
-    filter_jsonl(
-        input_path=args.input_path,
-        output_path=output_path,
-        model=args.model,
-        filter_names=args.filters,
-        temperature=args.temperature,
-        max_workers=args.max_workers
-    )
+    if args.analyze_only or not args.filters:
+        # Only analyze accuracy
+        analyze_only(
+            input_path=args.input_path,
+            model=args.model,
+            temperature=args.temperature,
+            max_workers=args.max_workers
+        )
+    else:
+        # Filter and analyze
+        base_name = args.input_path.replace('.jsonl', '')
+        filter_suffix = '_'.join(args.filters)
+        output_path = f"{base_name}_filtered_{filter_suffix}.jsonl"
+        
+        filter_jsonl(
+            input_path=args.input_path,
+            output_path=output_path,
+            model=args.model,
+            filter_names=args.filters,
+            temperature=args.temperature,
+            max_workers=args.max_workers
+        )
 
 if __name__ == "__main__":
     main()

@@ -35,7 +35,7 @@ def is_weak_causal_sign_question(text):
     # Only use effect strength trigger
     return bool(EFFECT_STRENGTH_TRIGGER.search(t))
 
-def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_type="belief_attribution", topic="zoning"):
+def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_type="belief_attribution", topic="zoning", exclude_no_effect=False):
     """Process single user folder and generate QA data for specified topic and task type
     Returns: (qa_pairs, next_qa_id)
     """
@@ -86,7 +86,15 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
             context_qas = extract_context_qas(transcript_path)
         
         # Generate multiple belief attribution questions using LLM
-        belief_qas = generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic)
+        belief_qas = generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic, exclude_no_effect)
+        
+        # Filter out "C" answers if exclude_no_effect is enabled
+        if exclude_no_effect:
+            original_count = len(belief_qas)
+            belief_qas = [qa for qa in belief_qas if qa.get("answer") != "C"]
+            filtered_count = len(belief_qas)
+            if original_count > filtered_count:
+                print(f"Filtered out {original_count - filtered_count} 'NO SIGNIFICANT effect' questions for user {prolific_id}")
         
         # Generate three context length versions for each belief attribution question
         # Note: Shorter context = harder to infer beliefs with limited information
@@ -118,6 +126,19 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
                 else:
                     context_length_context = context_without_current_source[:config["context_size"]]
                 
+                # Create answer options based on exclude_no_effect setting
+                if exclude_no_effect:
+                    answer_options = {
+                        "A": "POSITIVE effect",
+                        "B": "NEGATIVE effect"
+                    }
+                else:
+                    answer_options = {
+                        "A": "POSITIVE effect",
+                        "B": "NEGATIVE effect", 
+                        "C": "NO SIGNIFICANT effect"
+                    }
+                
                 # Create QA entry with LLM-generated question
                 qa_entry = {
                     "id": f"qa_{qa_start_id:03d}",
@@ -128,11 +149,7 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
                     "topic": topic,
                     "task_type": "belief_attribution",
                     "task_question": belief_qa["question"],
-                    "answer_options": {
-                        "A": "POSITIVE effect",
-                        "B": "NEGATIVE effect", 
-                        "C": "NO SIGNIFICANT effect"
-                    },
+                    "answer_options": answer_options,
                     "answer": belief_qa["answer"],
                     "source_qa": belief_qa.get("source_qa", {}),
                     "reasoning": belief_qa.get("reasoning", "")
@@ -434,7 +451,7 @@ Return only the question text, nothing else.
         print(f"Error in parallel reason question generation: {e}")
         return []
 
-def generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic="zoning"):
+def generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic="zoning", exclude_no_effect=False):
     """Generate multiple belief attribution questions using LLM based on context QAs"""
     if not context_qas:
         return []
@@ -466,6 +483,15 @@ def generate_multiple_belief_attribution_questions(context_qas, prolific_id, top
         
         conversation_topic = topic_descriptions.get(topic, "urban zoning and housing development")
         
+        # Define answer options based on exclude_no_effect setting
+        if exclude_no_effect:
+            answer_options_text = """- A: POSITIVE effect
+- B: NEGATIVE effect"""
+        else:
+            answer_options_text = """- A: POSITIVE effect
+- B: NEGATIVE effect  
+- C: NO SIGNIFICANT effect"""
+        
         prompt = f"""
 Based on the following conversation about {conversation_topic}, identify ALL question-answer pairs that reveal the person's beliefs about causal relationships between different factors.
 
@@ -496,10 +522,7 @@ Return JSON format as an array:
 ...
 ]
 
-Where the answer options are:
-- A: POSITIVE effect
-- B: NEGATIVE effect  
-- C: NO SIGNIFICANT effect
+{answer_options_text}
 
 Use simple, everyday language for the factors. Examples by topic:
 Zoning: "building more housing" instead of "upzoning policies", "traffic congestion", "neighborhood character"
@@ -554,6 +577,8 @@ def main():
                        help='Maximum number of parallel workers (default: 6)')
     parser.add_argument('--max-users', type=int, default=10,
                        help='Maximum number of user folders to process (default: 10)')
+    parser.add_argument('--exclude-no-effect', action='store_true',
+                       help='Exclude belief attribution questions with answer "C" (NO SIGNIFICANT effect)')
     args = parser.parse_args()
     # Set up paths (relative to current working directory)
     pilot_dir = Path("./pilot_36users")
@@ -580,7 +605,7 @@ def main():
         
         # Process current user's data
         qa_pairs, next_counter = process_user_folder(
-            user_folder, current_counter, args.context_lengths, args.task_type, args.topic
+            user_folder, current_counter, args.context_lengths, args.task_type, args.topic, args.exclude_no_effect
         )
         
         # Update global counter thread-safely
@@ -609,6 +634,11 @@ def main():
             f.write(json.dumps(qa_pair, indent=2, ensure_ascii=False) + '\n')
     
     print(f"Total QA pairs generated: {len(all_qa_pairs)}")
+    
+    # Show filtering statistics for belief_attribution
+    if args.task_type == "belief_attribution" and args.exclude_no_effect:
+        print(f"Applied --exclude-no-effect filter: removed all 'NO SIGNIFICANT effect' questions")
+    
     print(f"Output saved to {output_file}")
 
 if __name__ == "__main__":

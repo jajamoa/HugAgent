@@ -7,7 +7,11 @@ set -e  # Exit on any error
 
 # Configuration
 # BENCHMARK_PATH="sample_belief_update_zoning.jsonl"
-BENCHMARK_PATH="sample_belief_attribution_zoning.jsonl"
+# BENCHMARK_PATH="sample_belief_attribution_zoning.jsonl"
+BENCHMARK_PATH="sample_belief_attribution_healthcare_filtered_first_wrong_second_correct.jsonl"
+# BENCHMARK_PATH="sample_belief_attribution_healthcare.jsonl"
+# BENCHMARK_PATH="sample_belief_update_zoning_filtered_different_results.jsonl"
+# BENCHMARK_PATH="sample_belief_attribution_healthcare.jsonl"
 TEMPERATURE=0.1
 MAX_WORKERS=6
 LOG_DIR="logs"
@@ -64,7 +68,7 @@ run_evaluation() {
             # Extract and display accuracy summary
             if command -v jq >/dev/null 2>&1; then
                 echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} Summary for $model:"
-                jq -r '(.long.accuracy // null) as $l | (.short.accuracy // null) as $s | if $l != null and $s != null then "  Long: \($l*100|floor)%  Short: \($s*100|floor)%" elif $l != null then "  Long: \($l*100|floor)%" elif $s != null then "  Short: \($s*100|floor)%" else "  No accuracy data available" end' "$results_file"
+                jq -r '(.all.accuracy // null) as $a | (.long.accuracy // null) as $l | (.short.accuracy // null) as $s | if $a != null then "  Overall: \($a*100|floor)%" elif $l != null and $s != null then "  Long: \($l*100|floor)%  Short: \($s*100|floor)%" elif $l != null then "  Long: \($l*100|floor)%" elif $s != null then "  Short: \($s*100|floor)%" else "  No accuracy data available" end' "$results_file"
             fi
         fi
     else
@@ -110,17 +114,46 @@ main() {
     echo -e "${YELLOW}[$(date '+%H:%M:%S')]${NC} All evaluations started, waiting for completion..."
     echo ""
     
-    # Wait for all processes and check results
+    # Wait for all processes and check results with timeout
+    local timeout_seconds=1800  # 30 minutes timeout
+    local wait_start=$(date +%s)
+    
     for i in "${!pids[@]}"; do
         local pid=${pids[$i]}
         local model=${MODELS[$i]}
         
-        if wait $pid; then
-            echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} Process for $model completed successfully"
-        else
-            echo -e "${RED}[$(date '+%H:%M:%S')]${NC} Process for $model failed"
-            failed_models+=("$model")
-        fi
+        echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} Waiting for $model (PID: $pid)..."
+        
+        # Wait with timeout using background monitoring
+        local wait_success=false
+        while true; do
+            if ! kill -0 "$pid" 2>/dev/null; then
+                # Process has ended
+                wait "$pid" 2>/dev/null
+                local exit_code=$?
+                if [[ $exit_code -eq 0 ]]; then
+                    echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} Process for $model completed successfully"
+                    wait_success=true
+                else
+                    echo -e "${RED}[$(date '+%H:%M:%S')]${NC} Process for $model failed (exit code: $exit_code)"
+                    failed_models+=("$model")
+                fi
+                break
+            fi
+            
+            # Check timeout
+            local current_time=$(date +%s)
+            if [[ $((current_time - wait_start)) -gt $timeout_seconds ]]; then
+                echo -e "${RED}[$(date '+%H:%M:%S')]${NC} Timeout waiting for $model, killing process..."
+                kill -TERM "$pid" 2>/dev/null
+                sleep 2
+                kill -KILL "$pid" 2>/dev/null
+                failed_models+=("$model")
+                break
+            fi
+            
+            sleep 1
+        done
     done
     
     local overall_end=$(date +%s)

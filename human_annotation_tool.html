@@ -128,13 +128,13 @@
             gap: 20px;
         }
 
-        .difficulty-selector {
+        .context-selector {
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        .difficulty-tabs {
+        .context-tabs {
             display: flex;
             gap: 0;
             border-radius: 8px;
@@ -142,7 +142,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        .difficulty-tab {
+        .context-tab {
             padding: 10px 20px;
             background: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -152,11 +152,11 @@
             font-weight: 500;
         }
 
-        .difficulty-tab:not(:first-child) {
+        .context-tab:not(:first-child) {
             border-left: none;
         }
 
-        .difficulty-tab.active {
+        .context-tab.active {
             background: #3b82f6;
             color: white;
             border-color: #3b82f6;
@@ -482,12 +482,10 @@
         <!-- Control Panel -->
         <div class="control-panel" id="controlPanel">
             <div class="control-row">
-                <div class="difficulty-selector">
-                    <span style="font-weight: 500; color: #374151;">Difficulty:</span>
-                    <div class="difficulty-tabs">
-                        <div class="difficulty-tab active" data-difficulty="simple">Simple</div>
-                        <div class="difficulty-tab" data-difficulty="medium">Medium</div>
-                        <div class="difficulty-tab" data-difficulty="hard">Hard</div>
+                <div class="context-selector">
+                    <span style="font-weight: 500; color: #374151;">Context Length:</span>
+                    <div class="context-tabs" id="context-tabs">
+                        <!-- Context length tabs will be populated dynamically -->
                     </div>
                 </div>
                 
@@ -584,7 +582,7 @@
     <script>
         // Global variables
         let questionsData = {};
-        let currentDifficulty = 'simple';
+        let currentContextLength = null; // Will be set dynamically
         let currentQuestionIndex = 0;
         let userAnswers = {};
         let showScoreEnabled = false;
@@ -682,16 +680,20 @@
             reader.readAsText(file);
         }
 
-        // Parse questions data by difficulty
+        // Parse questions data by context length with backward compatibility
         function parseQuestionsData(data) {
-            const parsed = { simple: [], medium: [], hard: [] };
+            const parsed = {};
             
             data.forEach((item, index) => {
-                if (item.difficulty && item.task_question) {
+                // Support both new and old context length field names
+                const contextLength = item.context_length || item.difficulty || 'unknown';
+                const questionText = item.task_question || item.question;
+                
+                if (questionText) {
                     const questionInfo = {
                         id: item.id || `q_${index}`,
                         prolific_id: item.prolific_id || '',
-                        question: item.task_question,
+                        question: questionText,
                         answer_options: item.answer_options || {},
                         standard_answer: item.answer || '',  // Use 'answer' field as standard answer
                         topic: item.topic || '',
@@ -699,29 +701,59 @@
                         context_qas: item.context_qas || [],
                         demographics: item.demographics || {},
                         source_qa: item.source_qa || {},
-                        reasoning: item.reasoning || ''
+                        reasoning: item.reasoning || '',
+                        context_length: contextLength,
+                        // Keep original field for backward compatibility
+                        difficulty: item.difficulty || contextLength
                     };
                     
-                    if (parsed[item.difficulty]) {
-                        parsed[item.difficulty].push(questionInfo);
+                    if (!parsed[contextLength]) {
+                        parsed[contextLength] = [];
                     }
+                    parsed[contextLength].push(questionInfo);
                 }
             });
             
             return parsed;
         }
 
-        // Setup event listeners
-        function setupEventListeners() {
-            // Difficulty tabs
-            document.querySelectorAll('.difficulty-tab').forEach(tab => {
+        // Update context tabs based on available data
+        function updateContextTabs() {
+            const tabsContainer = document.getElementById('context-tabs');
+            tabsContainer.innerHTML = '';
+            
+            const availableContexts = Object.keys(questionsData);
+            if (availableContexts.length === 0) return;
+            
+            // Set initial currentContextLength if not set
+            if (!currentContextLength || !availableContexts.includes(currentContextLength)) {
+                currentContextLength = availableContexts[0];
+            }
+            
+            availableContexts.forEach((contextLength, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'context-tab';
+                tab.dataset.contextLength = contextLength;
+                tab.textContent = contextLength.charAt(0).toUpperCase() + contextLength.slice(1);
+                
+                if (contextLength === currentContextLength) {
+                    tab.classList.add('active');
+                }
+                
                 tab.addEventListener('click', function() {
-                    document.querySelectorAll('.difficulty-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.context-tab').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
-                    currentDifficulty = this.dataset.difficulty;
+                    currentContextLength = this.dataset.contextLength;
                     resetQuiz();
                 });
+                
+                tabsContainer.appendChild(tab);
             });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Context tabs are now handled dynamically in updateContextTabs()
         }
 
         // Update data status
@@ -731,9 +763,10 @@
             
             if (hasData) {
                 statusElement.className = 'data-status ready';
-                statusElement.innerHTML = '✅ Data loaded successfully! Select difficulty level and start the quiz.';
+                statusElement.innerHTML = '✅ Data loaded successfully! Select context length and start the quiz.';
                 document.getElementById('controlPanel').style.display = 'block';
                 document.getElementById('quizContainer').classList.add('visible');
+                updateContextTabs();
             } else {
                 statusElement.className = 'data-status incomplete';
                 statusElement.innerHTML = '📋 Please upload a JSONL file to start the quiz';
@@ -758,7 +791,7 @@
         function updateScoreDisplay() {
             if (!showScoreEnabled) return;
             
-            const currentQuestions = questionsData[currentDifficulty] || [];
+            const currentQuestions = questionsData[currentContextLength] || [];
             const totalQuestions = currentQuestions.length;
             
             // Count answered questions
@@ -766,7 +799,7 @@
             let correctCount = 0;
             
             for (let i = 0; i < totalQuestions; i++) {
-                const userAnswer = userAnswers[`${currentDifficulty}_${i}`];
+                const userAnswer = userAnswers[`${currentContextLength}_${i}`];
                 if (userAnswer !== undefined) {
                     answeredCount++;
                     const question = currentQuestions[i];
@@ -794,16 +827,16 @@
 
         // Show current question
         function showCurrentQuestion() {
-            const currentQuestions = questionsData[currentDifficulty] || [];
+            const currentQuestions = questionsData[currentContextLength] || [];
             
             if (currentQuestions.length === 0) {
                 document.getElementById('quizContainer').innerHTML = 
-                    '<div style="text-align: center; padding: 40px; color: #64748b;">No questions available for this difficulty level.</div>';
+                    '<div style="text-align: center; padding: 40px; color: #64748b;">No questions available for this context length.</div>';
                 return;
             }
             
             const question = currentQuestions[currentQuestionIndex];
-            const userAnswer = userAnswers[`${currentDifficulty}_${currentQuestionIndex}`];
+            const userAnswer = userAnswers[`${currentContextLength}_${currentQuestionIndex}`];
             
             // Update question counter
             document.getElementById('questionCounter').textContent = 
@@ -870,11 +903,11 @@
 
         // Select an answer
         function selectAnswer(selectedOption) {
-            const currentQuestions = questionsData[currentDifficulty] || [];
+            const currentQuestions = questionsData[currentContextLength] || [];
             const question = currentQuestions[currentQuestionIndex];
             
             // Store user answer
-            userAnswers[`${currentDifficulty}_${currentQuestionIndex}`] = selectedOption;
+            userAnswers[`${currentContextLength}_${currentQuestionIndex}`] = selectedOption;
             
             // Update answer options styling
             const options = document.querySelectorAll('.answer-option');
@@ -914,14 +947,14 @@
         // Update answer feedback
         function updateAnswerFeedback() {
             const feedback = document.getElementById('answerFeedback');
-            const userAnswer = userAnswers[`${currentDifficulty}_${currentQuestionIndex}`];
+            const userAnswer = userAnswers[`${currentContextLength}_${currentQuestionIndex}`];
             
             if (!showScoreEnabled || userAnswer === undefined) {
                 feedback.classList.remove('visible');
                 return;
             }
             
-            const currentQuestions = questionsData[currentDifficulty] || [];
+            const currentQuestions = questionsData[currentContextLength] || [];
             const question = currentQuestions[currentQuestionIndex];
             const isCorrect = userAnswer === question.standard_answer;
             
@@ -976,7 +1009,7 @@
 
         // Update navigation buttons
         function updateNavigationButtons() {
-            const currentQuestions = questionsData[currentDifficulty] || [];
+            const currentQuestions = questionsData[currentContextLength] || [];
             const prevButton = document.getElementById('prevButton');
             const nextButton = document.getElementById('nextButton');
             
@@ -1000,7 +1033,7 @@
 
         // Navigate to next question
         function nextQuestion() {
-            const currentQuestions = questionsData[currentDifficulty] || [];
+            const currentQuestions = questionsData[currentContextLength] || [];
             if (currentQuestionIndex < currentQuestions.length - 1) {
                 currentQuestionIndex++;
                 showCurrentQuestion();
@@ -1009,7 +1042,7 @@
 
         // Update context section (always expanded)
         function updateContext() {
-            const currentQuestions = questionsData[currentDifficulty] || [];
+            const currentQuestions = questionsData[currentContextLength] || [];
             const question = currentQuestions[currentQuestionIndex];
             const contextContainer = document.getElementById('contextContainer');
             
@@ -1046,7 +1079,7 @@
 
         // Update demographics section
         function updateDemographics() {
-            const currentQuestions = questionsData[currentDifficulty] || [];
+            const currentQuestions = questionsData[currentContextLength] || [];
             const question = currentQuestions[currentQuestionIndex];
             const demographicsContainer = document.getElementById('demographicsContainer');
             
@@ -1127,7 +1160,7 @@
         // Update display
         function updateDisplay() {
             updateDataStatus();
-            if (questionsData[currentDifficulty] && questionsData[currentDifficulty].length > 0) {
+            if (questionsData[currentContextLength] && questionsData[currentContextLength].length > 0) {
                 showCurrentQuestion();
             }
         }

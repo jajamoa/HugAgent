@@ -574,11 +574,9 @@
                 <!-- Left side: Difficulty selector and stats -->
                 <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
                     <div class="difficulty-selector">
-                        <span style="font-weight: 500; color: #374151;">Difficulty:</span>
-                        <div class="difficulty-tabs">
-                            <div class="difficulty-tab active" data-difficulty="simple">Simple</div>
-                            <div class="difficulty-tab" data-difficulty="medium">Medium</div>
-                            <div class="difficulty-tab" data-difficulty="hard">Hard</div>
+                        <span style="font-weight: 500; color: #374151;">Context Length:</span>
+                        <div class="difficulty-tabs" id="context-tabs">
+                            <!-- Context length tabs will be populated dynamically -->
                         </div>
                     </div>
                     
@@ -635,7 +633,7 @@
             <div class="legend">
                 <div class="legend-item">
                     <div class="legend-color" style="background: #10b981;"></div>
-                    <span>All models correct</span>
+                    <span>All selected models correct</span>
                 </div>
                 <div class="legend-item">
                     <div class="legend-color" style="background: #ef4444;"></div>
@@ -667,7 +665,7 @@
         let modelData = {};
         let questionsData = {};
         let uploadedFiles = {};
-        let currentDifficulty = 'simple';
+        let currentDifficulty = null; // Will be set dynamically based on available data
         let selectedModels = [];
         let dataReady = false;
 
@@ -713,6 +711,85 @@
         function clearCache() {
             Object.values(CACHE_KEYS).forEach(key => {
                 localStorage.removeItem(key);
+            });
+        }
+
+        // Validate question data structure
+        function validateQuestionData(item, index) {
+            const issues = [];
+            
+            if (!item.task_question && !item.question) {
+                issues.push('Missing question text (task_question or question field)');
+            }
+            
+            if (!item.context_length && !item.difficulty) {
+                issues.push('Missing context length or difficulty field');
+            }
+            
+            if (item.answer_options && typeof item.answer_options !== 'object') {
+                issues.push('answer_options should be an object');
+            }
+            
+            return {
+                isValid: issues.length === 0,
+                issues: issues,
+                itemIndex: index
+            };
+        }
+
+        // Show detailed error message
+        function showDetailedError(title, error, suggestion) {
+            const errorDetails = `
+                <div style="max-width: 500px; text-align: left; line-height: 1.6;">
+                    <h3 style="color: #dc2626; margin-bottom: 15px;">${title}</h3>
+                    
+                    <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 15px; margin-bottom: 15px;">
+                        <strong>Error:</strong> ${error.message}
+                    </div>
+                    
+                    <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 6px; padding: 15px; margin-bottom: 15px;">
+                        <strong>💡 Suggestion:</strong> ${suggestion}
+                    </div>
+                    
+                    <details style="margin-top: 15px;">
+                        <summary style="cursor: pointer; color: #6b7280;">Technical Details</summary>
+                        <pre style="background: #f9fafb; padding: 10px; border-radius: 4px; margin-top: 10px; font-size: 0.8rem; overflow-x: auto;">${error.stack || error.message}</pre>
+                    </details>
+                </div>
+            `;
+            
+            // Create modal-like error display
+            const errorModal = document.createElement('div');
+            errorModal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+                background: rgba(0,0,0,0.5); z-index: 10000; 
+                display: flex; align-items: center; justify-content: center;
+            `;
+            
+            const errorContent = document.createElement('div');
+            errorContent.style.cssText = `
+                background: white; padding: 30px; border-radius: 12px; 
+                max-width: 90%; max-height: 80%; overflow-y: auto;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            `;
+            
+            errorContent.innerHTML = errorDetails + `
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="this.closest('[style*=\"position: fixed\"]').remove()" 
+                            style="background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                        OK
+                    </button>
+                </div>
+            `;
+            
+            errorModal.appendChild(errorContent);
+            document.body.appendChild(errorModal);
+            
+            // Close on background click
+            errorModal.addEventListener('click', (e) => {
+                if (e.target === errorModal) {
+                    errorModal.remove();
+                }
             });
         }
 
@@ -774,7 +851,11 @@
                 } else if (file.name.endsWith('.jsonl')) {
                     handleSampleFile(file);
                 } else {
-                    alert('Please upload only JSON (evaluation results) or JSONL (sample data) files');
+                    showDetailedError(
+                        `Unsupported file type: ${file.name}`,
+                        new Error(`File extension "${file.name.split('.').pop()}" is not supported`),
+                        'Please upload only JSON files (evaluation results) or JSONL files (sample data). JSON files should contain model evaluation results, and JSONL files should contain question data with one JSON object per line.'
+                    );
                 }
             });
         }
@@ -793,7 +874,7 @@
                     updateDataStatus();
                     saveToCache();
                 } catch (error) {
-                    alert(`Error parsing ${file.name}: ${error.message}`);
+                    showDetailedError(`Error parsing evaluation file ${file.name}`, error, 'JSON format expected. Please ensure the file contains valid JSON data from model evaluation results.');
                 }
             };
             reader.readAsText(file);
@@ -818,7 +899,16 @@
                         // If that fails, try to parse as JSONL (one JSON object per line)
                         try {
                             const lines = content.split('\n').filter(line => line.trim());
-                            data = lines.map(line => JSON.parse(line));
+                            if (lines.length === 0) {
+                                throw new Error('File is empty or contains only whitespace');
+                            }
+                            data = lines.map((line, index) => {
+                                try {
+                                    return JSON.parse(line);
+                                } catch (lineError) {
+                                    throw new Error(`Invalid JSON on line ${index + 1}: ${lineError.message}`);
+                                }
+                            });
                         } catch (jsonlError) {
                             // If both fail, try to split by '}\n{' pattern for formatted JSON objects
                             try {
@@ -829,13 +919,22 @@
                                         let jsonStr = obj.trim();
                                         if (index > 0) jsonStr = '{' + jsonStr;
                                         if (index < jsonObjects.length - 1) jsonStr = jsonStr + '}';
-                                        return JSON.parse(jsonStr);
+                                        try {
+                                            return JSON.parse(jsonStr);
+                                        } catch (objError) {
+                                            throw new Error(`Invalid JSON object ${index + 1}: ${objError.message}`);
+                                        }
                                     });
                                 } else {
-                                    throw new Error('Unable to parse file format');
+                                    // Provide specific error based on what we found
+                                    const parseErrors = [
+                                        `Single JSON parse: ${singleJsonError.message}`,
+                                        `JSONL parse: ${jsonlError.message}`
+                                    ];
+                                    throw new Error(`Multiple parse attempts failed:\n${parseErrors.join('\n')}`);
                                 }
                             } catch (formattedError) {
-                                throw new Error(`Unable to parse file: ${formattedError.message}`);
+                                throw formattedError;
                             }
                         }
                     }
@@ -846,7 +945,7 @@
                     updateDataStatus();
                     saveToCache();
                 } catch (error) {
-                    alert(`Error parsing ${file.name}: ${error.message}`);
+                    showDetailedError(`Error parsing sample data file ${file.name}`, error, 'JSONL format expected. The file should contain one JSON object per line, or a single JSON array.');
                 }
             };
             reader.readAsText(file);
@@ -860,28 +959,53 @@
             return name;
         }
 
-        // Parse questions data by difficulty
+        // Parse questions data by context length with backward compatibility
         function parseQuestionsData(data) {
-            const parsed = { simple: [], medium: [], hard: [] };
+            const parsed = {};
+            const warnings = [];
             
             data.forEach((item, index) => {
-                if (item.difficulty && item.task_question) {
+                // Validate item structure
+                const validation = validateQuestionData(item, index);
+                if (!validation.isValid) {
+                    warnings.push(`Item ${index + 1}: ${validation.issues.join(', ')}`);
+                }
+                
+                // Support both old and new context length field names
+                const contextLength = item.context_length || item.difficulty || 'unknown';
+                
+                // Support both task_question and question field names
+                const questionText = item.task_question || item.question;
+                
+                if (questionText) {
                     const questionInfo = {
                         id: item.id || `q_${index}`,
                         prolific_id: item.prolific_id || '',
-                        question: item.task_question,
+                        question: questionText,
                         answer_options: item.answer_options || {},
                         topic: item.topic || '',
                         task_type: item.task_type || '',
-                        context_qas: item.context_qas || [],  // 取全部context，不再限制数量
-                        demographics: item.demographics || {}
+                        context_qas: item.context_qas || [],
+                        demographics: item.demographics || {},
+                        context_length: contextLength,
+                        // Keep original field for backward compatibility
+                        difficulty: item.difficulty || contextLength,
+                        // Store original item for debugging
+                        _original: item
                     };
                     
-                    if (parsed[item.difficulty]) {
-                        parsed[item.difficulty].push(questionInfo);
+                    if (!parsed[contextLength]) {
+                        parsed[contextLength] = [];
                     }
+                    parsed[contextLength].push(questionInfo);
                 }
             });
+            
+            // Show warnings if any
+            if (warnings.length > 0) {
+                console.warn('Data parsing warnings:', warnings);
+                // You could optionally show a non-blocking notification to the user
+            }
             
             return parsed;
         }
@@ -970,8 +1094,15 @@
             
             if (hasEvaluationData && hasSampleData) {
                 statusElement.className = 'data-status ready';
-                statusElement.innerHTML = '✅ Data loaded successfully! Select models and difficulty level to start analysis.';
+                statusElement.innerHTML = '✅ Data loaded successfully! Select models and context length to start analysis.';
                 dataReady = true;
+                updateContextTabs();
+            } else if (hasSampleData && !hasEvaluationData) {
+                // Allow sample-only mode for data inspection
+                statusElement.className = 'data-status ready';
+                statusElement.innerHTML = '📋 Sample data loaded. Upload evaluation results (JSON) to enable model performance analysis, or continue with data inspection only.';
+                dataReady = true;
+                updateContextTabs();
             } else {
                 statusElement.className = 'data-status incomplete';
                 const missing = [];
@@ -993,18 +1124,43 @@
             }
         }
 
-        function setupEventListeners() {
-            // Model checkboxes are now handled dynamically in updateModelSelector()
-
-            // Difficulty tabs
-            document.querySelectorAll('.difficulty-tab').forEach(tab => {
+        // Update context tabs based on available data
+        function updateContextTabs() {
+            const tabsContainer = document.getElementById('context-tabs');
+            tabsContainer.innerHTML = '';
+            
+            const availableContexts = Object.keys(questionsData);
+            if (availableContexts.length === 0) return;
+            
+            // Set initial currentDifficulty if not set
+            if (!currentDifficulty || !availableContexts.includes(currentDifficulty)) {
+                currentDifficulty = availableContexts[0];
+            }
+            
+            availableContexts.forEach((contextLength, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'difficulty-tab';
+                tab.dataset.difficulty = contextLength;
+                tab.textContent = contextLength.charAt(0).toUpperCase() + contextLength.slice(1);
+                
+                if (contextLength === currentDifficulty) {
+                    tab.classList.add('active');
+                }
+                
                 tab.addEventListener('click', function() {
                     document.querySelectorAll('.difficulty-tab').forEach(t => t.classList.remove('active'));
                     this.classList.add('active');
                     currentDifficulty = this.dataset.difficulty;
                     updateVisualization();
                 });
+                
+                tabsContainer.appendChild(tab);
             });
+        }
+
+        function setupEventListeners() {
+            // Model checkboxes are now handled dynamically in updateModelSelector()
+            // Context tabs are now handled dynamically in updateContextTabs()
 
             // Modal
             const modal = document.getElementById('questionModal');
@@ -1081,23 +1237,39 @@
                 cell.textContent = i + 1;
                 cell.dataset.questionIndex = i;
 
-                // Determine cell status based on selected models
-                let errorCount = 0;
-                selectedModels.forEach(model => {
-                    const modelResults = modelData[model];
-                    if (modelResults && modelResults[currentDifficulty] && modelResults[currentDifficulty].answers) {
-                        if (modelResults[currentDifficulty].answers[i] === 0) {
-                            errorCount++;
-                        }
-                    }
-                });
-
-                if (errorCount === 0) {
-                    cell.classList.add('correct');
-                } else if (errorCount >= 2) {
-                    cell.classList.add('error-multiple');
+                // If no evaluation data, show all cells as neutral (for data inspection)
+                if (Object.keys(modelData).length === 0 || selectedModels.length === 0) {
+                    cell.style.background = '#f8fafc';
+                    cell.style.border = '2px solid #cbd5e1';
+                    cell.style.color = '#64748b';
                 } else {
-                    cell.classList.add('error');
+                    // Determine cell status based on selected models
+                    let errorCount = 0;
+                    let totalEvaluated = 0;
+                    
+                    selectedModels.forEach(model => {
+                        const modelResults = modelData[model];
+                        if (modelResults && modelResults[currentDifficulty] && modelResults[currentDifficulty].answers) {
+                            totalEvaluated++;
+                            if (modelResults[currentDifficulty].answers[i] === 0) {
+                                errorCount++;
+                            }
+                        }
+                    });
+
+                    if (totalEvaluated === 0) {
+                        // No evaluation data for this context length
+                        cell.style.background = '#fef3c7';
+                        cell.style.border = '2px solid #fde68a';
+                        cell.style.color = '#92400e';
+                        cell.title = 'No evaluation data available for this context length';
+                    } else if (errorCount === 0) {
+                        cell.classList.add('correct');
+                    } else if (errorCount >= 2) {
+                        cell.classList.add('error-multiple');
+                    } else {
+                        cell.classList.add('error');
+                    }
                 }
 
                 cell.addEventListener('click', () => showQuestionDetail(i));
@@ -1122,7 +1294,7 @@
             let html = `
                 <div class="question-section">
                     <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 15px;">
-                        <h3>Question ${questionIndex + 1} (${currentDifficulty.toUpperCase()})</h3>
+                        <h3>Question ${questionIndex + 1} (${currentDifficulty ? currentDifficulty.toUpperCase() : 'UNKNOWN'})</h3>
                         <div style="text-align: right; color: #6b7280; font-size: 0.9rem;">
                             <div><strong>ID:</strong> ${question.id}</div>
                             ${question.prolific_id ? `<div><strong>Prolific ID:</strong> ${question.prolific_id}</div>` : ''}
@@ -1134,9 +1306,12 @@
                     </div>
             `;
             
-            // Add answer options if available
+            // Add answer options if available (supports 2, 3, or more options)
             if (question.answer_options && Object.keys(question.answer_options).length > 0) {
-                html += '<div class="answer-options" style="margin-top: 15px;">';
+                const optionCount = Object.keys(question.answer_options).length;
+                html += `<div class="answer-options" style="margin-top: 15px;">`;
+                html += `<div style="font-weight: 600; margin-bottom: 8px; color: #374151;">Answer Options (${optionCount}):</div>`;
+                
                 Object.entries(question.answer_options).forEach(([key, value]) => {
                     html += `<div class="answer-option"><strong>${key}:</strong> ${value}</div>`;
                 });
