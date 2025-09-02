@@ -7,11 +7,14 @@ set -e  # Exit on any error
 
 # Configuration
 # BENCHMARK_PATH="sample_belief_attribution_zoning.jsonl"
-BENCHMARK_PATH="sample_belief_attribution_zoning_filtered_different_results.jsonl"
+# BENCHMARK_PATH="sample_belief_attribution_zoning_filtered_different_results.jsonl"
 # BENCHMARK_PATH="sample_belief_attribution_surveillance.jsonl"
 # BENCHMARK_PATH="sample_belief_attribution_surveillance_filtered_different_results.jsonl"
 # BENCHMARK_PATH="sample_belief_attribution_healthcare.jsonl"
 # BENCHMARK_PATH="sample_belief_attribution_healthcare_filtered_different_results.jsonl"
+BENCHMARK_PATH="sample_belief_update_zoning.jsonl"
+# BENCHMARK_PATH="sample_belief_update_zoning.jsonl"
+
 TEMPERATURE=0.1
 MAX_WORKERS=6
 LOG_DIR="logs"
@@ -65,10 +68,19 @@ run_evaluation() {
         if [[ -f "$results_file" ]]; then
             echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} Results saved to $results_file"
             
-            # Extract and display accuracy summary
+            # Extract and display accuracy/MAE summary
             if command -v jq >/dev/null 2>&1; then
                 echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} Summary for $model:"
-                jq -r '(.all.accuracy // null) as $a | (.long.accuracy // null) as $l | (.short.accuracy // null) as $s | if $a != null then "  Overall: \($a*100|floor)%" elif $l != null and $s != null then "  Long: \($l*100|floor)%  Short: \($s*100|floor)%" elif $l != null then "  Long: \($l*100|floor)%" elif $s != null then "  Short: \($s*100|floor)%" else "  No accuracy data available" end' "$results_file"
+                # Check if this is belief_update (has MAE) or belief_attribution (has accuracy)
+                local has_mae=$(jq -r 'if (.all.mae // null) != null or (.long.mae // null) != null or (.short.mae // null) != null then "true" else "false" end' "$results_file")
+                
+                if [[ "$has_mae" == "true" ]]; then
+                    # Belief update format - show MAE
+                    jq -r '(.all.mae // null) as $mae_all | (.all.accuracy // null) as $acc_all | (.long.mae // null) as $mae_l | (.long.accuracy // null) as $acc_l | (.short.mae // null) as $mae_s | (.short.accuracy // null) as $acc_s | if $mae_all != null and $acc_all != null then "  Overall: \($acc_all*100|floor)%, MAE: \($mae_all|.*1000|floor/1000)" elif $mae_l != null and $acc_l != null and $mae_s != null and $acc_s != null then "  Long: \($acc_l*100|floor)%, MAE: \($mae_l|.*1000|floor/1000)  Short: \($acc_s*100|floor)%, MAE: \($mae_s|.*1000|floor/1000)" elif $mae_l != null and $acc_l != null then "  Long: \($acc_l*100|floor)%, MAE: \($mae_l|.*1000|floor/1000)" elif $mae_s != null and $acc_s != null then "  Short: \($acc_s*100|floor)%, MAE: \($mae_s|.*1000|floor/1000)" else "  No performance data available" end' "$results_file"
+                else
+                    # Belief attribution format - show accuracy only
+                    jq -r '(.all.accuracy // null) as $a | (.long.accuracy // null) as $l | (.short.accuracy // null) as $s | if $a != null then "  Overall: \($a*100|floor)%" elif $l != null and $s != null then "  Long: \($l*100|floor)%  Short: \($s*100|floor)%" elif $l != null then "  Long: \($l*100|floor)%" elif $s != null then "  Short: \($s*100|floor)%" else "  No accuracy data available" end' "$results_file"
+                fi
             fi
         fi
     else

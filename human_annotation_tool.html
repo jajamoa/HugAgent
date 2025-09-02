@@ -1059,14 +1059,28 @@
             }
         }
 
-        // Update scores for belief update data (MAE)
+        // Calculate tolerance based on scale range (same logic as evaluate_qwen.py)
+        function calculateTolerance(scale) {
+            const scaleRange = scale[1] - scale[0];
+            return scaleRange <= 5 ? 1 : 2;  // Stricter tolerance for smaller scales
+        }
+        
+        // Check if answer is correct within tolerance
+        function isAnswerCorrectWithTolerance(userAnswer, correctAnswer, scale) {
+            if (userAnswer == null || correctAnswer == null) return false;
+            const tolerance = calculateTolerance(scale);
+            return Math.abs(userAnswer - correctAnswer) <= tolerance;
+        }
+
+        // Update scores for belief update data (MAE and Accuracy)
         function updateBeliefUpdateScores(currentQuestions) {
             let answeredCount = 0;
             let totalAbsoluteError = 0;
+            let correctCount = 0;
             
-            // Hide quiz-specific metrics
-            document.getElementById('correctAnswersContainer').style.display = 'none';
-            document.getElementById('accuracyContainer').style.display = 'none';
+            // Show both accuracy and MAE for belief update
+            document.getElementById('correctAnswersContainer').style.display = 'block';
+            document.getElementById('accuracyContainer').style.display = 'block';
             document.getElementById('maeContainer').style.display = 'block';
             
             for (let i = 0; i < currentQuestions.length; i++) {
@@ -1077,12 +1091,21 @@
                     answeredCount++;
                     const absoluteError = Math.abs(userAnswer - question.user_answer);
                     totalAbsoluteError += absoluteError;
+                    
+                    // Check if answer is correct within tolerance
+                    const scale = question.scale || [1, 10];
+                    if (isAnswerCorrectWithTolerance(userAnswer, question.user_answer, scale)) {
+                        correctCount++;
+                    }
                 }
             }
             
             const mae = answeredCount > 0 ? (totalAbsoluteError / answeredCount).toFixed(2) : '0.00';
+            const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
             
             document.getElementById('answeredQuestions').textContent = answeredCount;
+            document.getElementById('correctAnswers').textContent = correctCount;
+            document.getElementById('accuracy').textContent = accuracy + '%';
             document.getElementById('mae').textContent = mae;
         }
 
@@ -1150,6 +1173,7 @@
             if (dataType === 'belief_update') {
                 let answeredCount = 0;
                 let totalAbsoluteError = 0;
+                let correctCount = 0;
                 
                 for (let i = 0; i < currentQuestions.length; i++) {
                     const userAnswer = userAnswers[`${currentContextLength}_${i}`];
@@ -1159,11 +1183,19 @@
                         answeredCount++;
                         const absoluteError = Math.abs(userAnswer - question.user_answer);
                         totalAbsoluteError += absoluteError;
+                        
+                        // Check if answer is correct within tolerance
+                        const scale = question.scale || [1, 10];
+                        if (isAnswerCorrectWithTolerance(userAnswer, question.user_answer, scale)) {
+                            correctCount++;
+                        }
                     }
                 }
                 
                 exportData.performance = {
                     mae: answeredCount > 0 ? parseFloat((totalAbsoluteError / answeredCount).toFixed(2)) : 0,
+                    accuracy: answeredCount > 0 ? parseFloat((correctCount / answeredCount * 100).toFixed(2)) : 0,
+                    correctAnswers: correctCount,
                     totalAbsoluteError: totalAbsoluteError,
                     answeredWithGroundTruth: answeredCount
                 };
@@ -1217,6 +1249,12 @@
                         exportData.answers[answerKey].originalAnswer = question.user_answer;
                         if (userAnswer !== undefined && question.user_answer !== undefined) {
                             exportData.answers[answerKey].absoluteError = Math.abs(userAnswer - question.user_answer);
+                            
+                            // Add tolerance-based correctness check
+                            const scale = question.scale || [1, 10];
+                            const tolerance = calculateTolerance(scale);
+                            exportData.answers[answerKey].tolerance = tolerance;
+                            exportData.answers[answerKey].correct = isAnswerCorrectWithTolerance(userAnswer, question.user_answer, scale);
                         }
                     } else if (dataType === 'quiz' && question.standard_answer) {
                         exportData.answers[answerKey].standardAnswer = question.standard_answer;

@@ -344,11 +344,25 @@ def process_belief_update_questions(user_folder, topic="zoning"):
         question_id = question_data["id"]
         
         if question_id in opinions:
-            # Create opinion question
+            # Create opinion question with modified wording for annotation task
+            original_text = question_data["text"]
+            # Convert from direct question to annotation question
+            if "how much do you support or oppose" in original_text.lower():
+                # Replace "you" with "this person" and ask for annotation
+                modified_text = original_text.replace("how much do you support or oppose", "how much does this person support or oppose")
+                modified_text = modified_text.replace("your neighborhood", "their neighborhood")
+                annotation_text = f"Based on their responses, {modified_text.lower()}"
+            elif "how would this affect your stance" in original_text.lower():
+                # For scenario questions, ask about the person's likely response
+                annotation_text = f"Based on their responses, how do you think this scenario would affect this person's stance? {original_text}"
+            else:
+                # Generic conversion for other question types
+                annotation_text = f"Based on their responses, what do you think this person would answer to: {original_text}"
+            
             opinion_qa = {
                 "question_id": question_id,
                 "question_type": "opinion",
-                "question_text": question_data["text"],
+                "question_text": annotation_text,
                 "user_answer": opinions[question_id],
                 "scale": question_data["scale"]
             }
@@ -364,7 +378,7 @@ def process_belief_update_questions(user_folder, topic="zoning"):
     return qa_pairs
 
 def generate_reason_questions(question_data, user_reasons, reason_mapping, base_question_id):
-    """Generate individual reason evaluation questions using LLM with parallel processing"""
+    """Generate individual reason evaluation questions using string templates (no LLM needed)"""
     if "followup" not in question_data:
         return []
     
@@ -386,70 +400,82 @@ def generate_reason_questions(question_data, user_reasons, reason_mapping, base_
     if not mapped_reasons:
         return []
     
-    # Use LLM to generate individual questions for each reason in parallel
-    def generate_single_reason_question(reason):
-        """Generate question for a single reason"""
-        try:
-            llm = QwenLLM(model="qwen-plus")
-            
-            prompt = f"""
-Create a direct question that asks about how much this specific reason influences this person's opinion.
-
-Original survey question: {question_data["text"]}
-Specific reason: {reason["text"]}
-
-Format: "How much does [specific reason] influence this person's opinion on [topic]?"
-
-Make it:
-- Direct and specific about influence level
-- Start with "How much does..."
-- Clearly state what influences what
-- Use everyday language
-- Focus on the degree/level of influence
-
-Return only the question text, nothing else.
-"""
-            
-            response = llm.generate_response(
-                prompt,
-                system_message="You are an expert at creating clear survey questions about policy opinions."
-            )
-            
-            if response and response.strip():
-                return {
-                    "question_id": f"{base_question_id}r_{reason['code']}",
-                    "question_type": "reason_evaluation",
-                    "question_text": response.strip(),
-                    "reason_code": reason["code"],
-                    "reason_text": reason["text"],
-                    "user_answer": reason["user_score"],
-                    "scale": [1, 5]
-                }
-            else:
-                print(f"Failed to generate question for reason {reason['code']}")
-                return None
-                
-        except Exception as e:
-            print(f"Error generating question for reason {reason['code']}: {e}")
-            return None
+    # Generate questions using simple string templates - no LLM needed
+    reason_questions = []
     
-    # Process all reasons in parallel
-    try:
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            futures = [executor.submit(generate_single_reason_question, reason) 
-                      for reason in mapped_reasons]
-            
-            reason_questions = []
-            for future in futures:
-                result = future.result()
-                if result is not None:
-                    reason_questions.append(result)
+    # Extract the main topic from the original question for better templates
+    original_question = question_data["text"].lower()
+    
+    # Topic-specific templates
+    if "apartment buildings" in original_question or "upzoning" in original_question:
+        template = "How much does {reason} influence this person's opinion on allowing bigger, taller apartment buildings in their neighborhood?"
+    elif "rent" in original_question and "drop" in original_question:
+        template = "How much does {reason} influence this person's opinion on allowing more apartments in low-density areas?"
+    elif "design" in original_question and "rules" in original_question:
+        template = "How much does {reason} influence this person's opinion on new buildings with design rules?"
+    elif "surveillance" in original_question or "camera" in original_question:
+        template = "How much does {reason} influence this person's opinion on surveillance cameras?"
+    elif "healthcare" in original_question or "universal" in original_question:
+        template = "How much does {reason} influence this person's opinion on universal healthcare?"
+    else:
+        # Generic template
+        template = "How much does {reason} influence this person's opinion?"
+    
+    for reason in mapped_reasons:
+        # Clean up reason text for better question flow
+        reason_text = reason["text"]
+        if reason_text.endswith("."):
+            reason_text = reason_text[:-1]
         
-        return reason_questions
+        # Make reason text flow better in question by converting to a noun phrase
+        if reason_text.startswith("I'm worried about"):
+            reason_text = reason_text.replace("I'm worried about", "worrying about")
+        elif reason_text.startswith("I care about"):
+            reason_text = reason_text.replace("I care about", "caring about") 
+        elif reason_text.startswith("I'd worry about"):
+            reason_text = reason_text.replace("I'd worry about", "worrying about")
+        elif reason_text.endswith("helps with the housing crisis"):
+            reason_text = "the idea that " + reason_text.lower()
+        elif reason_text.endswith("benefit when more people live nearby"):
+            reason_text = "the fact that " + reason_text.lower()
+        elif reason_text.endswith("more housing choices for middle- and lower-income people"):
+            reason_text = "the fact that " + reason_text.lower()
+        elif reason_text.endswith("might change the look and feel of the neighborhood"):
+            reason_text = "the idea that " + reason_text.lower()
+        elif reason_text.endswith("could make the area more walkable and convenient"):
+            reason_text = "the idea that " + reason_text.lower()
+        elif reason_text.endswith("could mean more noise or crowding"):
+            reason_text = "the possibility of " + reason_text.lower().replace("could mean", "having")
+        elif reason_text.endswith("should pitch in when it comes to new development"):
+            reason_text = "the idea that " + reason_text.lower()
+        elif reason_text.endswith("could mean more traffic and harder parking"):
+            reason_text = "the concern about " + reason_text.lower().replace("could mean", "having")
+        elif reason_text.startswith("More") and ("traffic" in reason_text or "concern" in reason_text):
+            reason_text = "the concern about " + reason_text.lower()
+        elif not reason_text.startswith(("the ", "worrying", "caring")):
+            # Add appropriate article for other cases
+            reason_text = "the idea that " + reason_text.lower()
         
-    except Exception as e:
-        print(f"Error in parallel reason question generation: {e}")
-        return []
+        # Generate the question using template
+        question_text = template.format(reason=reason_text)
+        
+        reason_question = {
+            "question_id": f"{base_question_id}r_{reason['code']}",
+            "question_type": "reason_evaluation",
+            "question_text": question_text,
+            "reason_code": reason["code"],
+            "reason_text": reason["text"],
+            "user_answer": reason["user_score"],
+            "scale": [1, 5]
+        }
+        
+        reason_questions.append(reason_question)
+        
+        # Debug output
+        print(f"Generated reason question: {question_text}")
+    
+    print(f"Generated {len(reason_questions)} reason evaluation questions")
+    return reason_questions
 
 def generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic="zoning", exclude_no_effect=False):
     """Generate multiple belief attribution questions using LLM based on context QAs"""
