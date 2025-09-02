@@ -507,13 +507,17 @@
                     <div class="stat-value" id="answeredQuestions">0</div>
                     <div class="stat-label">Answered</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" id="correctAnswersContainer">
                     <div class="stat-value" id="correctAnswers">0</div>
                     <div class="stat-label">Correct</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item" id="accuracyContainer">
                     <div class="stat-value" id="accuracy">0%</div>
                     <div class="stat-label">Accuracy</div>
+                </div>
+                <div class="stat-item" id="maeContainer" style="display: none;">
+                    <div class="stat-value" id="mae">0.0</div>
+                    <div class="stat-label">MAE</div>
                 </div>
             </div>
         </div>
@@ -544,8 +548,11 @@
                     ← Previous
                 </button>
                 <div style="display: flex; gap: 10px;">
-                    <button class="nav-button btn-secondary" onclick="resetQuiz()">
+                    <button class="nav-button btn-secondary" onclick="showResetConfirmation()">
                         Reset Quiz
+                    </button>
+                    <button class="nav-button btn-secondary" onclick="exportAnswers()" style="background: #059669; color: white;">
+                        📥 Export
                     </button>
                     <button class="nav-button btn-primary" id="nextButton" onclick="nextQuestion()">
                         Next →
@@ -586,6 +593,7 @@
         let currentQuestionIndex = 0;
         let userAnswers = {};
         let showScoreEnabled = false;
+        let dataType = 'quiz'; // 'quiz' or 'belief_update'
         
         // Initialize the application
         function init() {
@@ -796,6 +804,108 @@
         function parseQuestionsData(data) {
             const parsed = {};
             
+            // Detect data type
+            const hasBeliefUpdate = data.some(item => item.task_type === 'belief_update');
+            if (hasBeliefUpdate) {
+                dataType = 'belief_update';
+                return parseBeliefUpdateData(data);
+            } else {
+                dataType = 'quiz';
+                return parseQuizData(data);
+            }
+        }
+
+        // Parse belief update data
+        function parseBeliefUpdateData(data) {
+            const parsed = {};
+            const participantGroups = {};
+            
+            // Group by participant and context length
+            data.forEach((item, index) => {
+                const contextLength = item.context_length || 'unknown';
+                const prolificId = item.prolific_id || 'unknown';
+                const questionId = item.question_id || `q_${index}`;
+                
+                if (!participantGroups[prolificId]) {
+                    participantGroups[prolificId] = {};
+                }
+                if (!participantGroups[prolificId][contextLength]) {
+                    participantGroups[prolificId][contextLength] = {
+                        demographics: item.demographics || {},
+                        context_qas: item.context_qas || [],
+                        questions: []
+                    };
+                }
+                
+                const questionInfo = {
+                    id: item.id || `${prolificId}_${questionId}`,
+                    prolific_id: prolificId,
+                    question_id: questionId,
+                    question_type: item.question_type,
+                    question: item.task_question,
+                    user_answer: item.user_answer,
+                    scale: item.scale || [1, 10],
+                    reason_code: item.reason_code || '',
+                    reason_text: item.reason_text || '',
+                    topic: item.topic || '',
+                    task_type: item.task_type,
+                    context_length: contextLength,
+                    demographics: item.demographics || {},
+                    context_qas: item.context_qas || [],
+                    _original: item
+                };
+                
+                participantGroups[prolificId][contextLength].questions.push(questionInfo);
+            });
+            
+            // Convert to the expected format for display
+            Object.keys(participantGroups).forEach(prolificId => {
+                Object.keys(participantGroups[prolificId]).forEach(contextLength => {
+                    const participantData = participantGroups[prolificId][contextLength];
+                    
+                    if (!parsed[contextLength]) {
+                        parsed[contextLength] = [];
+                    }
+                    
+                    // Group questions by opinion questions and their related reason evaluations
+                    const opinionQuestions = participantData.questions.filter(q => q.question_type === 'opinion');
+                    const reasonQuestions = participantData.questions.filter(q => q.question_type === 'reason_evaluation');
+                    
+                    opinionQuestions.forEach(opinionQ => {
+                        // Find related reason evaluations
+                        const relatedReasons = reasonQuestions.filter(reasonQ => 
+                            reasonQ.question_id.startsWith(opinionQ.question_id + 'r_')
+                        );
+                        
+                        // Add opinion question
+                        parsed[contextLength].push({
+                            ...opinionQ,
+                            demographics: participantData.demographics,
+                            context_qas: participantData.context_qas,
+                            isOpinion: true
+                        });
+                        
+                        // Add related reason evaluations
+                        relatedReasons.forEach(reasonQ => {
+                            parsed[contextLength].push({
+                                ...reasonQ,
+                                demographics: participantData.demographics,
+                                context_qas: participantData.context_qas,
+                                isReasonEvaluation: true,
+                                relatedOpinion: opinionQ
+                            });
+                        });
+                    });
+                });
+            });
+            
+            return parsed;
+        }
+
+        // Parse traditional quiz data
+        function parseQuizData(data) {
+            const parsed = {};
+            
             data.forEach((item, index) => {
                 // Support both new and old context length field names
                 const contextLength = item.context_length || item.difficulty || 'unknown';
@@ -900,10 +1010,19 @@
             
             if (hasData) {
                 statusElement.className = 'data-status ready';
-                statusElement.innerHTML = '✅ Data loaded successfully! Select context length and start the quiz.';
+                const actionText = dataType === 'belief_update' ? 'annotation session' : 'quiz';
+                statusElement.innerHTML = `✅ ${dataType === 'belief_update' ? 'Belief Update' : 'Quiz'} data loaded successfully! Select context length and start the ${actionText}.`;
                 document.getElementById('controlPanel').style.display = 'block';
                 document.getElementById('quizContainer').classList.add('visible');
                 updateContextTabs();
+                
+                // Update header title based on data type
+                const headerTitle = document.querySelector('.header h1');
+                if (dataType === 'belief_update') {
+                    headerTitle.textContent = 'Human Annotation Tool - Belief Update';
+                } else {
+                    headerTitle.textContent = 'Human Annotation and Quiz Tool';
+                }
             } else {
                 statusElement.className = 'data-status incomplete';
                 statusElement.innerHTML = '📋 Please upload a JSONL file to start the quiz';
@@ -931,11 +1050,53 @@
             const currentQuestions = questionsData[currentContextLength] || [];
             const totalQuestions = currentQuestions.length;
             
-            // Count answered questions
+            document.getElementById('totalQuestions').textContent = totalQuestions;
+            
+            if (dataType === 'belief_update') {
+                updateBeliefUpdateScores(currentQuestions);
+            } else {
+                updateQuizScores(currentQuestions);
+            }
+        }
+
+        // Update scores for belief update data (MAE)
+        function updateBeliefUpdateScores(currentQuestions) {
+            let answeredCount = 0;
+            let totalAbsoluteError = 0;
+            
+            // Hide quiz-specific metrics
+            document.getElementById('correctAnswersContainer').style.display = 'none';
+            document.getElementById('accuracyContainer').style.display = 'none';
+            document.getElementById('maeContainer').style.display = 'block';
+            
+            for (let i = 0; i < currentQuestions.length; i++) {
+                const userAnswer = userAnswers[`${currentContextLength}_${i}`];
+                const question = currentQuestions[i];
+                
+                if (userAnswer !== undefined && question.user_answer !== undefined) {
+                    answeredCount++;
+                    const absoluteError = Math.abs(userAnswer - question.user_answer);
+                    totalAbsoluteError += absoluteError;
+                }
+            }
+            
+            const mae = answeredCount > 0 ? (totalAbsoluteError / answeredCount).toFixed(2) : '0.00';
+            
+            document.getElementById('answeredQuestions').textContent = answeredCount;
+            document.getElementById('mae').textContent = mae;
+        }
+
+        // Update scores for quiz data (accuracy)
+        function updateQuizScores(currentQuestions) {
             let answeredCount = 0;
             let correctCount = 0;
             
-            for (let i = 0; i < totalQuestions; i++) {
+            // Show quiz-specific metrics
+            document.getElementById('correctAnswersContainer').style.display = 'block';
+            document.getElementById('accuracyContainer').style.display = 'block';
+            document.getElementById('maeContainer').style.display = 'none';
+            
+            for (let i = 0; i < currentQuestions.length; i++) {
                 const userAnswer = userAnswers[`${currentContextLength}_${i}`];
                 if (userAnswer !== undefined) {
                     answeredCount++;
@@ -948,10 +1109,21 @@
             
             const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
             
-            document.getElementById('totalQuestions').textContent = totalQuestions;
             document.getElementById('answeredQuestions').textContent = answeredCount;
             document.getElementById('correctAnswers').textContent = correctCount;
             document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+
+        // Show reset confirmation dialog
+        function showResetConfirmation() {
+            const answeredCount = Object.keys(userAnswers).length;
+            const message = answeredCount > 0 
+                ? `Are you sure you want to reset? This will clear all ${answeredCount} saved answers.`
+                : 'Are you sure you want to reset?';
+            
+            if (confirm(message)) {
+                resetQuiz();
+            }
         }
 
         // Reset quiz to beginning
@@ -960,6 +1132,123 @@
             userAnswers = {};
             showCurrentQuestion();
             updateScoreDisplay();
+        }
+
+        // Export answers as JSON
+        function exportAnswers() {
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const exportData = {
+                dataType: dataType,
+                contextLength: currentContextLength,
+                timestamp: new Date().toISOString(),
+                totalQuestions: currentQuestions.length,
+                answeredQuestions: Object.keys(userAnswers).length,
+                answers: {}
+            };
+
+            // Add performance metrics based on data type
+            if (dataType === 'belief_update') {
+                let answeredCount = 0;
+                let totalAbsoluteError = 0;
+                
+                for (let i = 0; i < currentQuestions.length; i++) {
+                    const userAnswer = userAnswers[`${currentContextLength}_${i}`];
+                    const question = currentQuestions[i];
+                    
+                    if (userAnswer !== undefined && question.user_answer !== undefined) {
+                        answeredCount++;
+                        const absoluteError = Math.abs(userAnswer - question.user_answer);
+                        totalAbsoluteError += absoluteError;
+                    }
+                }
+                
+                exportData.performance = {
+                    mae: answeredCount > 0 ? parseFloat((totalAbsoluteError / answeredCount).toFixed(2)) : 0,
+                    totalAbsoluteError: totalAbsoluteError,
+                    answeredWithGroundTruth: answeredCount
+                };
+            } else {
+                // Quiz mode performance metrics
+                let correctCount = 0;
+                let answeredCount = 0;
+                
+                for (let i = 0; i < currentQuestions.length; i++) {
+                    const userAnswer = userAnswers[`${currentContextLength}_${i}`];
+                    if (userAnswer !== undefined) {
+                        answeredCount++;
+                        const question = currentQuestions[i];
+                        if (userAnswer === question.standard_answer) {
+                            correctCount++;
+                        }
+                    }
+                }
+                
+                exportData.performance = {
+                    accuracy: answeredCount > 0 ? parseFloat((correctCount / answeredCount * 100).toFixed(2)) : 0,
+                    correctAnswers: correctCount,
+                    totalAnswered: answeredCount
+                };
+            }
+
+            // Include question details with answers
+            if (questionsData[currentContextLength]) {
+                questionsData[currentContextLength].forEach((question, index) => {
+                    const answerKey = `${currentContextLength}_${index}`;
+                    const userAnswer = userAnswers[answerKey];
+                    
+                    exportData.answers[answerKey] = {
+                        questionIndex: index,
+                        questionId: question.question_id || question.id,
+                        questionType: question.question_type || 'quiz',
+                        question: question.question,
+                        userAnswer: userAnswer,
+                        answered: userAnswer !== undefined,
+                        prolificId: question.prolific_id,
+                        reasonCode: question.reason_code,
+                        reasonText: question.reason_text,
+                        scale: question.scale,
+                        isOpinion: question.isOpinion || false,
+                        isReasonEvaluation: question.isReasonEvaluation || false,
+                        relatedOpinionId: question.relatedOpinion ? question.relatedOpinion.question_id : null
+                    };
+                    
+                    // Add performance metrics based on data type
+                    if (dataType === 'belief_update') {
+                        exportData.answers[answerKey].originalAnswer = question.user_answer;
+                        if (userAnswer !== undefined && question.user_answer !== undefined) {
+                            exportData.answers[answerKey].absoluteError = Math.abs(userAnswer - question.user_answer);
+                        }
+                    } else if (dataType === 'quiz' && question.standard_answer) {
+                        exportData.answers[answerKey].standardAnswer = question.standard_answer;
+                        exportData.answers[answerKey].correct = userAnswer === question.standard_answer;
+                    }
+                });
+            }
+
+            // Create and download file
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            link.download = `annotation_export_${dataType}_${currentContextLength}_${timestamp}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            const exportButton = event.target;
+            const originalText = exportButton.innerHTML;
+            exportButton.innerHTML = '✅ Exported!';
+            exportButton.style.background = '#059669';
+            
+            setTimeout(() => {
+                exportButton.innerHTML = originalText;
+                exportButton.style.background = '#059669';
+            }, 2000);
         }
 
         // Show current question
@@ -981,18 +1270,199 @@
             
             // Update question info
             const questionInfo = document.getElementById('questionInfo');
-            questionInfo.innerHTML = `
-                <span class="info-badge">ID: ${question.id}</span>
-                ${question.topic ? `<span class="info-badge">Topic: ${question.topic}</span>` : ''}
-                ${question.task_type ? `<span class="info-badge">Type: ${question.task_type}</span>` : ''}
-            `;
+            let infoHtml = `<span class="info-badge">ID: ${question.id}</span>`;
+            if (question.topic) infoHtml += `<span class="info-badge">Topic: ${question.topic}</span>`;
+            if (question.task_type) infoHtml += `<span class="info-badge">Type: ${question.task_type}</span>`;
+            if (question.question_type) infoHtml += `<span class="info-badge">Question Type: ${question.question_type}</span>`;
+            if (question.prolific_id) infoHtml += `<span class="info-badge">Participant: ${question.prolific_id}</span>`;
+            questionInfo.innerHTML = infoHtml;
             
             // Update question text
             document.getElementById('questionText').textContent = question.question;
             
-            // Update answer options
+            // Show related opinion for reason evaluation questions
+            if (dataType === 'belief_update' && question.isReasonEvaluation && question.relatedOpinion) {
+                showRelatedOpinion(question.relatedOpinion);
+            } else {
+                hideRelatedOpinion();
+            }
+            
+            // Update answer options based on data type
+            if (dataType === 'belief_update') {
+                showBeliefUpdateAnswerOptions(question, userAnswer);
+            } else {
+                showQuizAnswerOptions(question, userAnswer);
+            }
+            
+            // Update answer feedback
+            updateAnswerFeedback();
+            
+            // Update navigation buttons
+            updateNavigationButtons();
+            
+            // Update demographics
+            updateDemographics();
+            
+            // Update context
+            updateContext();
+        }
+
+        // Show related opinion for reason evaluation questions
+        function showRelatedOpinion(relatedOpinion) {
             const answerOptions = document.getElementById('answerOptions');
-            answerOptions.innerHTML = '';
+            
+            // Check if already exists to avoid duplication
+            const existingOpinion = document.getElementById('relatedOpinion');
+            if (existingOpinion) {
+                return; // Don't add if already exists
+            }
+            
+            const opinionDiv = document.createElement('div');
+            opinionDiv.id = 'relatedOpinion';
+            opinionDiv.style.cssText = `
+                margin-bottom: 25px; 
+                padding: 20px; 
+                background: #f0f9ff; 
+                border: 2px solid #0ea5e9; 
+                border-radius: 12px;
+            `;
+            
+            // Find the related opinion question index to get user's annotation
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const relatedOpinionIndex = currentQuestions.findIndex(q => 
+                q.question_id === relatedOpinion.question_id && q.isOpinion
+            );
+            
+            // Get user's annotation for this opinion question
+            const userOpinionAnswer = relatedOpinionIndex >= 0 
+                ? userAnswers[`${currentContextLength}_${relatedOpinionIndex}`] 
+                : null;
+            
+            // Display user's annotation if available, otherwise show original answer
+            const displayAnswer = userOpinionAnswer !== null && userOpinionAnswer !== undefined 
+                ? `${userOpinionAnswer}/${relatedOpinion.scale[1]} (Your annotation)`
+                : `${relatedOpinion.user_answer}/${relatedOpinion.scale[1]} (Original participant answer)`;
+            
+            opinionDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <span style="font-size: 1.2em;">💭</span>
+                    <strong style="color: #0369a1; font-size: 1.1rem;">Related Opinion Context</strong>
+                </div>
+                <div style="color: #374151; font-weight: 500; margin-bottom: 8px;">
+                    ${relatedOpinion.question}
+                </div>
+                <div style="color: #0369a1; font-weight: 600; font-size: 1.1rem;">
+                    Answer: ${displayAnswer}
+                </div>
+            `;
+            
+            answerOptions.insertBefore(opinionDiv, answerOptions.firstChild);
+        }
+
+        // Hide related opinion display
+        function hideRelatedOpinion() {
+            const existingOpinion = document.getElementById('relatedOpinion');
+            if (existingOpinion) {
+                existingOpinion.remove();
+            }
+        }
+
+        // Show belief update answer options (scale-based)
+        function showBeliefUpdateAnswerOptions(question, userAnswer) {
+            const answerOptions = document.getElementById('answerOptions');
+            
+            // Remove existing scale options only, keep related opinion if present
+            const existingOptions = answerOptions.querySelectorAll('.scale-options, .answer-option:not(#relatedOpinion *)');
+            existingOptions.forEach(option => {
+                if (option.id !== 'relatedOpinion') {
+                    option.remove();
+                }
+            });
+            
+            const scaleDiv = document.createElement('div');
+            scaleDiv.className = 'scale-options';
+            scaleDiv.style.cssText = 'margin-top: 20px;';
+            
+            const scaleMin = question.scale[0];
+            const scaleMax = question.scale[1];
+            
+            // Add header
+            const headerDiv = document.createElement('div');
+            headerDiv.style.cssText = 'margin-bottom: 20px; font-weight: 600; color: #374151; font-size: 1rem;';
+            
+            if (question.isReasonEvaluation) {
+                headerDiv.innerHTML = `
+                    <div style="margin-bottom: 10px;">Rate the influence of this reason (${scaleMin}-${scaleMax}):</div>
+                    <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #f59e0b; font-weight: 500;">
+                        📝 <strong>Reason:</strong> ${question.reason_text}
+                    </div>
+                `;
+            } else {
+                headerDiv.textContent = `Rate your opinion (${scaleMin}-${scaleMax}):`;
+            }
+            
+            scaleDiv.appendChild(headerDiv);
+            
+            // Create scale buttons
+            const scaleContainer = document.createElement('div');
+            scaleContainer.style.cssText = `
+                display: grid; 
+                grid-template-columns: repeat(${scaleMax - scaleMin + 1}, 1fr); 
+                gap: 8px; 
+                margin-bottom: 15px;
+            `;
+            
+            for (let i = scaleMin; i <= scaleMax; i++) {
+                const button = document.createElement('button');
+                button.className = 'answer-option scale-button';
+                button.style.cssText = `
+                    padding: 12px 8px; 
+                    text-align: center; 
+                    font-weight: 600; 
+                    min-height: 50px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                button.textContent = i.toString();
+                button.onclick = () => selectScaleAnswer(i);
+                
+                if (userAnswer === i) {
+                    button.classList.add('selected');
+                }
+                
+                scaleContainer.appendChild(button);
+            }
+            
+            scaleDiv.appendChild(scaleContainer);
+            
+            // Add scale labels
+            const labelsDiv = document.createElement('div');
+            labelsDiv.style.cssText = 'display: flex; justify-content: space-between; color: #6b7280; font-size: 0.9rem; margin-top: 5px;';
+            
+            if (question.isReasonEvaluation) {
+                labelsDiv.innerHTML = `
+                    <span>No influence (${scaleMin})</span>
+                    <span>Strong influence (${scaleMax})</span>
+                `;
+            } else {
+                labelsDiv.innerHTML = `
+                    <span>Strongly oppose (${scaleMin})</span>
+                    <span>Strongly support (${scaleMax})</span>
+                `;
+            }
+            
+            scaleDiv.appendChild(labelsDiv);
+            answerOptions.appendChild(scaleDiv);
+        }
+
+        // Show traditional quiz answer options
+        function showQuizAnswerOptions(question, userAnswer) {
+            const answerOptions = document.getElementById('answerOptions');
+            
+            // Remove existing scale options if any
+            const existingOptions = answerOptions.querySelectorAll('.scale-options, .answer-option');
+            existingOptions.forEach(option => option.remove());
             
             if (question.answer_options && Object.keys(question.answer_options).length > 0) {
                 // Add header showing number of options
@@ -1031,18 +1501,6 @@
             } else {
                 answerOptions.innerHTML = '<div style="text-align: center; color: #64748b;">No answer options available for this question.</div>';
             }
-            
-            // Update answer feedback
-            updateAnswerFeedback();
-            
-            // Update navigation buttons
-            updateNavigationButtons();
-            
-            // Update demographics
-            updateDemographics();
-            
-            // Update context
-            updateContext();
         }
 
         // Select an answer
@@ -1086,6 +1544,44 @@
             
             updateAnswerFeedback();
             updateScoreDisplay();
+        }
+
+        // Select a scale answer for belief update questions
+        function selectScaleAnswer(selectedValue) {
+            // Store user answer
+            userAnswers[`${currentContextLength}_${currentQuestionIndex}`] = selectedValue;
+            
+            // Update scale button styling
+            const scaleButtons = document.querySelectorAll('.scale-button');
+            scaleButtons.forEach(button => {
+                button.classList.remove('selected');
+            });
+            
+            // Mark selected button
+            const selectedButton = Array.from(scaleButtons).find(button => 
+                parseInt(button.textContent) === selectedValue
+            );
+            if (selectedButton) {
+                selectedButton.classList.add('selected');
+            }
+            
+            // If this is an opinion question, update any related opinion contexts that might be displayed
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const currentQuestion = currentQuestions[currentQuestionIndex];
+            if (currentQuestion && currentQuestion.isOpinion) {
+                updateRelatedOpinionContexts();
+            }
+            
+            updateScoreDisplay();
+        }
+
+        // Update related opinion contexts when opinion answers change
+        function updateRelatedOpinionContexts() {
+            const relatedOpinion = document.getElementById('relatedOpinion');
+            if (relatedOpinion) {
+                // Remove the existing context and it will be recreated with updated answer
+                relatedOpinion.remove();
+            }
         }
 
         // Update answer feedback
