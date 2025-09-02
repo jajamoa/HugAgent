@@ -1,6 +1,6 @@
-# HugToM-QA: Towards Human-grounded Theory of Mind Question Answering
+# HugAgent: A Benchmark for Human-Grounded Agent Beliefs in Realistic Social Contexts
 
-A benchmark for evaluating LLM theory of mind capabilities through human-grounded question answering tasks. Tests belief inference across three difficulty levels using real participant conversation data.
+A benchmark for evaluating LLM theory of mind capabilities in realistic social contexts using real human conversation data. The benchmark includes belief attribution and belief update tasks across multiple difficulty levels, designed to assess model performance on complex, long-term social reasoning scenarios.
 
 ## Usage
 
