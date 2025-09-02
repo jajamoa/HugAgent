@@ -12,8 +12,8 @@ set -e  # Exit on any error
 # BENCHMARK_PATH="sample_belief_attribution_surveillance_filtered_different_results.jsonl"
 # BENCHMARK_PATH="sample_belief_attribution_healthcare.jsonl"
 # BENCHMARK_PATH="sample_belief_attribution_healthcare_filtered_different_results.jsonl"
-BENCHMARK_PATH="sample_belief_update_zoning.jsonl"
 # BENCHMARK_PATH="sample_belief_update_zoning.jsonl"
+BENCHMARK_PATH="sample_belief_update_zoning_filtered_both_wrong_context_improves.jsonl" 
 
 TEMPERATURE=0.1
 MAX_WORKERS=6
