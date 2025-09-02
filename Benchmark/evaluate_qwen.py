@@ -4,7 +4,7 @@ import argparse
 import asyncio
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from tqdm import tqdm
-from llm_utils import QwenLLM, Colors
+from llm_utils import QwenLLM, LlamaLLM, GeminiLLM, Colors
 
 def build_belief_attribution_prompt(vqa, demographics, context_qas, include_demographics, include_context):
     """Build prompt for belief attribution task"""
@@ -102,9 +102,20 @@ def build_belief_update_prompt(vqa, demographics, context_qas, include_demograph
     
     return " ".join(system_parts), "\n\n".join(prompt_parts)
 
-def process_single_question(llm, vqa, include_demographics, include_context, temperature, debug=False, swap_data=None, max_retries=3):
+def process_single_question(llm_or_model, vqa, include_demographics, include_context, temperature, debug=False, swap_data=None, max_retries=3):
     """Process a single question and return the result"""
     try:
+        # Create a new LLM instance for each thread if model name is passed
+        if isinstance(llm_or_model, str):
+            model = llm_or_model
+            if model.startswith("meta-llama"):
+                llm = LlamaLLM(model=model)
+            elif model.startswith("gemini"):
+                llm = GeminiLLM(model=model)
+            else:
+                llm = QwenLLM(model=model)
+        else:
+            llm = llm_or_model
         # Use swapped data if swap experiment is enabled
         if swap_data:
             demographics = swap_data.get("demographics", {})
@@ -247,8 +258,13 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
     """
     Evaluate Theory of Mind belief inference questions using Qwen model
     """
-    # Initialize Qwen LLM
-    llm = QwenLLM(model=model)
+    # Initialize appropriate LLM based on model type
+    if model.startswith("meta-llama"):
+        llm = LlamaLLM(model=model)
+    elif model.startswith("gemini"):
+        llm = GeminiLLM(model=model)
+    else:
+        llm = QwenLLM(model=model)
     
     # Load benchmark data
     vqa_dataset = []
@@ -326,7 +342,7 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
         
         # Process questions (parallel or sequential based on debug mode)
         if debug:
-            # Sequential processing for debug mode
+            # Sequential processing for debug mode - use LLM instance for debug mode
             results = []
             for i, vqa in enumerate(dataset):
                 print(f"\n{Colors.format('[DEBUG]', Colors.BOLD + Colors.YELLOW)} Processing question {Colors.format(str(i+1), Colors.CYAN)}/{Colors.format(str(len(dataset)), Colors.CYAN)} in {Colors.format(difficulty, Colors.GREEN)} difficulty")
@@ -340,7 +356,7 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
                 result = process_single_question(llm, vqa, include_demographics, include_context, temperature, debug, swap_data, max_retries=5)
                 results.append(result)
         else:
-            # Parallel processing for normal mode
+            # Parallel processing for normal mode - pass model name to create separate instances
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
                 # Submit all questions
                 future_to_index = {}
@@ -351,7 +367,7 @@ def evaluate_belief_inference(benchmark_path, model="qwen-plus", temperature=0, 
                         pid = vqa.get("prolific_id", "")
                         swap_data = swap_mapping.get(pid)
                     
-                    future = executor.submit(process_single_question, llm, vqa, include_demographics, include_context, temperature, debug, swap_data, max_retries=5)
+                    future = executor.submit(process_single_question, model, vqa, include_demographics, include_context, temperature, debug, swap_data, max_retries=5)
                     future_to_index[future] = i
             
                 # Process completed results
@@ -490,9 +506,12 @@ def main():
                            "qwen2.5-7b-instruct",
                            "qwen2.5-3b-instruct",
                            "qwen2.5-1.5b-instruct",
-                           "qwen2.5-0.5b-instruct"
+                           "qwen2.5-0.5b-instruct",
+                           "meta-llama/llama-3.3-70b-instruct",
+                           "gemini-1.5-pro",
+                           "gemini-1.5-flash"
                        ], 
-                       help="Qwen model to use")
+                       help="Model to use for evaluation")
     parser.add_argument("--temperature", type=float, default=0.1, 
                        help="Temperature for generation")
     parser.add_argument("--no-demographics", action="store_true",
@@ -520,9 +539,11 @@ def main():
             swap_experiment=args.swap_experiment
         )
         
-        # Save results
-        suffix = "_swap" if args.swap_experiment else ""
-        results_filename = f"evaluation_results_{args.model}_by_difficulty{suffix}.json"
+        # Save results (baseline configuration only)
+        # Clean model name and extract benchmark name for file naming
+        clean_model_name = args.model.replace("/", "-")
+        benchmark_name = args.benchmark_path.split("/")[-1].replace(".jsonl", "")
+        results_filename = f"evaluation_results_{clean_model_name}_{benchmark_name}_by_difficulty.json"
         with open(results_filename, "w") as f:
             json.dump(results, f, indent=2)
         

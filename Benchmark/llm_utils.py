@@ -186,7 +186,7 @@ class QwenLLM:
 class GeminiLLM:
     """Minimal Gemini LLM client for generating benchmark questions"""
 
-    def __init__(self, api_key=None, model="gemini-1.5-flash"):
+    def __init__(self, api_key=None, model="gemini-1.5-pro"):
         # Try to load API key from environment files
         parent_env_path = Path(__file__).parent.parent / ".env"
         parent_env_local_path = Path(__file__).parent.parent / ".env.local"
@@ -218,7 +218,8 @@ class GeminiLLM:
         system_message: str = "You are a helpful assistant.",
         temperature: Optional[float] = None,
         return_json: bool = False,
-        debug: bool = False
+        debug: bool = False,
+        max_retries: int = 3
     ) -> Optional[str]:
         """
         Generate response from Gemini LLM
@@ -334,6 +335,8 @@ class LlamaLLM:
         self.client = OpenAI(
             base_url="https://api.novita.ai/openai",
             api_key=api_key,
+            max_retries=0,  # Handle retries manually
+            timeout=60.0,   # Increase timeout for better reliability
         )
         self.model = model
         
@@ -347,10 +350,11 @@ class LlamaLLM:
         system_message: str = "You are a helpful assistant.",
         temperature: Optional[float] = None,
         return_json: bool = False,
-        debug: bool = False
+        debug: bool = False,
+        max_retries: int = 3
     ) -> Optional[str]:
         """
-        Generate response from Llama LLM
+        Generate response from Llama LLM with retry logic
         
         Args:
             prompt: User prompt
@@ -358,69 +362,82 @@ class LlamaLLM:
             temperature: Sampling temperature (0.0-1.0), uses default if None
             return_json: Whether to parse response as JSON
             debug: If True, print full prompt and response
+            max_retries: Maximum number of retry attempts
             
         Returns:
             Response string or parsed JSON dict
         """
-        try:
-            # Use default temperature if not specified
-            if temperature is None:
-                temperature = self.default_temperature
-            
-            if debug:
-                print(f"\n{Colors.format('='*80, Colors.HEADER)}")
-                print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Model: {Colors.format(self.model, Colors.CYAN)}")
-                print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Temperature: {Colors.format(str(temperature), Colors.YELLOW)}, Seed: {Colors.format(str(self.random_seed), Colors.YELLOW)}")
-                print(f"{Colors.format('='*80, Colors.HEADER)}")
-                print(f"{Colors.format('[SYSTEM PROMPT]:', Colors.GREEN + Colors.BOLD)}")
-                print(f"{Colors.format(system_message, Colors.GREEN)}")
-                print(f"{Colors.format('-'*80, Colors.BLUE)}")
-                print(f"{Colors.format('[USER PROMPT]:', Colors.CYAN + Colors.BOLD)}")
-                print(f"{Colors.format(prompt, Colors.CYAN)}")
-                print(f"{Colors.format('='*80, Colors.HEADER)}")
-                input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to send request...")
+        # Use default temperature if not specified
+        if temperature is None:
+            temperature = self.default_temperature
+        
+        if debug:
+            print(f"\n{Colors.format('='*80, Colors.HEADER)}")
+            print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Model: {Colors.format(self.model, Colors.CYAN)}")
+            print(f"{Colors.format('[DEBUG]', Colors.BOLD)} Temperature: {Colors.format(str(temperature), Colors.YELLOW)}, Seed: {Colors.format(str(self.random_seed), Colors.YELLOW)}")
+            print(f"{Colors.format('='*80, Colors.HEADER)}")
+            print(f"{Colors.format('[SYSTEM PROMPT]:', Colors.GREEN + Colors.BOLD)}")
+            print(f"{Colors.format(system_message, Colors.GREEN)}")
+            print(f"{Colors.format('-'*80, Colors.BLUE)}")
+            print(f"{Colors.format('[USER PROMPT]:', Colors.CYAN + Colors.BOLD)}")
+            print(f"{Colors.format(prompt, Colors.CYAN)}")
+            print(f"{Colors.format('='*80, Colors.HEADER)}")
+            input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to send request...")
+        
+        # Retry logic with exponential backoff
+        for attempt in range(max_retries + 1):
+            try:
+                logger.info(f"Sending prompt to {self.model} (temp={temperature}, seed={self.random_seed})")
+                if attempt > 0:
+                    logger.info(f"Retry attempt {attempt}/{max_retries}")
                 
-            logger.info(f"Sending prompt to {self.model} (temp={temperature}, seed={self.random_seed})")
-            
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": prompt},
-                ],
-                temperature=temperature,
-                seed=self.random_seed,
-                stream=False
-            )
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": prompt},
+                    ],
+                    temperature=temperature,
+                    seed=self.random_seed,
+                    stream=False
+                )
 
-            if response and response.choices:
-                content = response.choices[0].message.content
-                logger.info("Successfully received response")
-                
-                if debug:
-                    print(f"\n{Colors.format('[RESPONSE]:', Colors.RED + Colors.BOLD)}")
-                    print(f"{Colors.format(content, Colors.RED)}")
-                    print(f"{Colors.format('='*80, Colors.HEADER)}")
-                    input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to continue...")
-                
-                if return_json:
-                    try:
-                        cleaned_json = self._clean_json_string(content)
-                        logger.info(f"Attempting to parse JSON: {cleaned_json[:200]}...")
-                        return json.loads(cleaned_json)
-                    except json.JSONDecodeError as e:
-                        logger.error(f"Failed to parse JSON response: {e}")
-                        logger.error(f"Raw response: {content}")
-                        return None
-                
-                return content
-            else:
-                logger.error("API call failed - no response received")
-                return None
+                if response and response.choices:
+                    content = response.choices[0].message.content
+                    logger.info("Successfully received response")
+                    
+                    if debug:
+                        print(f"\n{Colors.format('[RESPONSE]:', Colors.RED + Colors.BOLD)}")
+                        print(f"{Colors.format(content, Colors.RED)}")
+                        print(f"{Colors.format('='*80, Colors.HEADER)}")
+                        input(f"{Colors.format('[DEBUG]', Colors.BOLD)} Press {Colors.format('Enter', Colors.YELLOW)} to continue...")
+                    
+                    if return_json:
+                        try:
+                            cleaned_json = self._clean_json_string(content)
+                            logger.info(f"Attempting to parse JSON: {cleaned_json[:200]}...")
+                            return json.loads(cleaned_json)
+                        except json.JSONDecodeError as e:
+                            logger.error(f"Failed to parse JSON response: {e}")
+                            logger.error(f"Raw response: {content}")
+                            return None
+                    
+                    return content
+                else:
+                    logger.error("API call failed - no response received")
+                    return None
 
-        except Exception as e:
-            logger.error(f"Error calling Llama API: {e}")
-            return None
+            except Exception as e:
+                if attempt < max_retries:
+                    wait_time = (2 ** attempt) + random.uniform(0, 1)
+                    logger.error(f"Error calling Llama API: {e}. Retrying in {wait_time:.2f}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    logger.error(f"Error calling Llama API after {max_retries} retries: {e}")
+                    return None
+        
+        return None
 
     def _clean_json_string(self, json_str: str) -> str:
         """Extract JSON from response string"""
@@ -462,7 +479,9 @@ class DeepSeekLLM:
         
         self.client = OpenAI(
             api_key=api_key,
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
+            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+            max_retries=0,  # Handle retries manually
+            timeout=60.0,   # Increase timeout for better reliability
         )
         self.model = model
         
@@ -476,7 +495,8 @@ class DeepSeekLLM:
         system_message: str = "You are a helpful assistant.",
         temperature: Optional[float] = None,
         return_json: bool = False,
-        debug: bool = False
+        debug: bool = False,
+        max_retries: int = 3
     ) -> Optional[str]:
         """
         Generate response from DeepSeek LLM
