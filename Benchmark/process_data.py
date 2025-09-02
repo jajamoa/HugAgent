@@ -159,8 +159,14 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
                                  
     elif task_type == "belief_update":
         # New belief update logic
-        # Read transcript CSV data for context
-        transcript_path = user_folder / "transcript" / "raw" / f"{topic}.csv"
+        # Read transcript CSV data for context - map topic to file name
+        transcript_files = {
+            "zoning": "zoning.csv",
+            "surveillance": "camera.csv",  # surveillance topic uses camera.csv file
+            "healthcare": "healthcare.csv"
+        }
+        transcript_file = transcript_files.get(topic, f"{topic}.csv")
+        transcript_path = user_folder / "transcript" / "raw" / transcript_file
         context_qas = []
         if transcript_path.exists():
             context_qas = extract_context_qas(transcript_path)
@@ -371,13 +377,13 @@ def process_belief_update_questions(user_folder, topic="zoning"):
             # Process follow-up reason questions if they exist
             if question_data.get("has_reason_followup") and question_id in reasons:
                 reason_questions = generate_reason_questions(
-                    question_data, reasons[question_id], reason_mapping, question_id
+                    question_data, reasons[question_id], reason_mapping, question_id, annotation_text
                 )
                 qa_pairs.extend(reason_questions)
     
     return qa_pairs
 
-def generate_reason_questions(question_data, user_reasons, reason_mapping, base_question_id):
+def generate_reason_questions(question_data, user_reasons, reason_mapping, base_question_id, opinion_question_text):
     """Generate individual reason evaluation questions using string templates (no LLM needed)"""
     if "followup" not in question_data:
         return []
@@ -459,10 +465,13 @@ def generate_reason_questions(question_data, user_reasons, reason_mapping, base_
         # Generate the question using template
         question_text = template.format(reason=reason_text)
         
+        # Combine opinion question context with reason evaluation question
+        combined_question_text = f"Context: {opinion_question_text}\n\nBased on this context, {question_text.lower()}"
+        
         reason_question = {
             "question_id": f"{base_question_id}r_{reason['code']}",
             "question_type": "reason_evaluation",
-            "question_text": question_text,
+            "question_text": combined_question_text,
             "reason_code": reason["code"],
             "reason_text": reason["text"],
             "user_answer": reason["user_score"],

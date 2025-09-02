@@ -396,6 +396,49 @@ class FilterMechanisms:
                 return False
         
         return True
+    
+    # Global variable to store dataset for filtering
+    _dataset_for_filtering = None
+    
+    @classmethod
+    def set_dataset_for_filtering(cls, dataset):
+        """Set the dataset to be used by filters that need access to all data"""
+        cls._dataset_for_filtering = dataset
+    
+    @classmethod
+    def has_matching_opinion_question(cls, result):
+        """Keep only questions that have proper opinion-reason pairing (matches HTML tool logic)"""
+        if cls._dataset_for_filtering is None:
+            return True  # If no dataset set, keep all questions
+            
+        vqa = result['vqa']
+        question_type = vqa.get('question_type', '')
+        question_id = vqa.get('question_id', '')
+        prolific_id = vqa.get('prolific_id', '')
+        context_length = vqa.get('context_length', '')
+        
+        # Always keep opinion questions
+        if question_type == 'opinion':
+            return True
+        
+        # For reason_evaluation questions, check if there's a matching opinion question
+        if question_type == 'reason_evaluation':
+            # Extract base question ID (remove 'r_X' suffix)
+            base_question_id = question_id.replace('r_', '').split('_')[0] if 'r_' in question_id else question_id
+            
+            # Look for matching opinion question in the same participant and context
+            for other_vqa in cls._dataset_for_filtering:
+                if (other_vqa.get('prolific_id') == prolific_id and 
+                    other_vqa.get('context_length') == context_length and
+                    other_vqa.get('question_type') == 'opinion' and
+                    other_vqa.get('question_id') == base_question_id):
+                    return True
+            
+            # No matching opinion question found
+            return False
+        
+        # Keep other question types
+        return True
 
 def analyze_accuracy_by_task_and_condition(results):
     """Analyze accuracy by task type and test conditions"""
@@ -616,6 +659,9 @@ def filter_jsonl_multi_model(input_path, output_path, models, filter_names, temp
     
     print(f"Loaded {len(vqa_dataset)} questions from {input_path}")
     
+    # Set dataset for filters that need access to all data
+    FilterMechanisms.set_dataset_for_filtering(vqa_dataset)
+    
     # Get filter functions
     filter_funcs = []
     for filter_name in filter_names:
@@ -753,6 +799,9 @@ def filter_jsonl(input_path, output_path, model, filter_names, temperature=0, ma
         vqa_dataset = json_objects
     
     print(f"Loaded {len(vqa_dataset)} questions from {input_path}")
+    
+    # Set dataset for filters that need access to all data
+    FilterMechanisms.set_dataset_for_filtering(vqa_dataset)
     
     # Get filter functions
     filter_funcs = []
@@ -970,7 +1019,7 @@ def main():
                        choices=['different_results', 'first_wrong_second_correct', 
                                'context_improves', 'context_degrades', 'both_wrong', 'both_correct', 'has_errors',
                                'all_models_both_wrong', 'all_models_context_improves', 'all_models_context_degrades',
-                               'all_models_both_correct', 'all_models_different_results'],
+                               'all_models_both_correct', 'all_models_different_results', 'has_matching_opinion_question'],
                        help="Filter mechanisms to apply (if not specified, only analyze)")
     parser.add_argument("--analyze-only", action="store_true",
                        help="Only analyze accuracy without filtering")
