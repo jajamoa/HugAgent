@@ -199,8 +199,34 @@ def process_vqa_pair(model_name, vqa, temperature=0):
     
     return {
         'vqa': vqa,
+        'model': model_name,
         'no_context': result_no_context,
         'with_context': result_with_context
+    }
+
+def process_vqa_multi_model(models, vqa, temperature=0):
+    """Process single VQA with multiple models"""
+    results = {}
+    
+    for model_name in models:
+        # Prediction without context and demographics
+        result_no_context = predict_single_question(
+            model_name, vqa, include_demographics=False, include_context=False, temperature=temperature
+        )
+        
+        # Prediction with context and demographics
+        result_with_context = predict_single_question(
+            model_name, vqa, include_demographics=True, include_context=True, temperature=temperature
+        )
+        
+        results[model_name] = {
+            'no_context': result_no_context,
+            'with_context': result_with_context
+        }
+    
+    return {
+        'vqa': vqa,
+        'models': results
     }
 
 # Filter mechanisms
@@ -269,6 +295,107 @@ class FilterMechanisms:
     def has_errors(result):
         """Keep if there are processing errors"""
         return ('error' in result['no_context'] or 'error' in result['with_context'])
+    
+    # Multi-model voting filters
+    @staticmethod
+    def all_models_both_wrong(result):
+        """Keep if ALL models have both predictions wrong (voting consensus)"""
+        if 'models' not in result:
+            return False
+        
+        for model_name, model_result in result['models'].items():
+            # Skip if there are errors
+            if ('error' in model_result['no_context'] or 'error' in model_result['with_context']):
+                return False
+            
+            no_ctx_correct = model_result['no_context']['is_correct']
+            with_ctx_correct = model_result['with_context']['is_correct']
+            
+            # If this model doesn't have both wrong, return False
+            if no_ctx_correct or with_ctx_correct:
+                return False
+        
+        return True
+    
+    @staticmethod
+    def all_models_context_improves(result):
+        """Keep if ALL models show context improvement (voting consensus)"""
+        if 'models' not in result:
+            return False
+        
+        for model_name, model_result in result['models'].items():
+            # Skip if there are errors
+            if ('error' in model_result['no_context'] or 'error' in model_result['with_context']):
+                return False
+            
+            no_ctx_correct = model_result['no_context']['is_correct']
+            with_ctx_correct = model_result['with_context']['is_correct']
+            
+            # If this model doesn't show improvement, return False
+            if not ((not no_ctx_correct) and with_ctx_correct):
+                return False
+        
+        return True
+    
+    @staticmethod
+    def all_models_context_degrades(result):
+        """Keep if ALL models show context degradation (voting consensus)"""
+        if 'models' not in result:
+            return False
+        
+        for model_name, model_result in result['models'].items():
+            # Skip if there are errors
+            if ('error' in model_result['no_context'] or 'error' in model_result['with_context']):
+                return False
+            
+            no_ctx_correct = model_result['no_context']['is_correct']
+            with_ctx_correct = model_result['with_context']['is_correct']
+            
+            # If this model doesn't show degradation, return False
+            if not (no_ctx_correct and (not with_ctx_correct)):
+                return False
+        
+        return True
+    
+    @staticmethod
+    def all_models_both_correct(result):
+        """Keep if ALL models have both predictions correct (voting consensus)"""
+        if 'models' not in result:
+            return False
+        
+        for model_name, model_result in result['models'].items():
+            # Skip if there are errors
+            if ('error' in model_result['no_context'] or 'error' in model_result['with_context']):
+                return False
+            
+            no_ctx_correct = model_result['no_context']['is_correct']
+            with_ctx_correct = model_result['with_context']['is_correct']
+            
+            # If this model doesn't have both correct, return False
+            if not (no_ctx_correct and with_ctx_correct):
+                return False
+        
+        return True
+    
+    @staticmethod
+    def all_models_different_results(result):
+        """Keep if ALL models have different results between conditions (voting consensus)"""
+        if 'models' not in result:
+            return False
+        
+        for model_name, model_result in result['models'].items():
+            # Skip if there are errors
+            if ('error' in model_result['no_context'] or 'error' in model_result['with_context']):
+                return False
+            
+            no_ctx = model_result['no_context']['generated_answer']
+            with_ctx = model_result['with_context']['generated_answer']
+            
+            # If this model doesn't have different results, return False
+            if no_ctx == with_ctx:
+                return False
+        
+        return True
 
 def analyze_accuracy_by_task_and_condition(results):
     """Analyze accuracy by task type and test conditions"""
@@ -285,53 +412,107 @@ def analyze_accuracy_by_task_and_condition(results):
         vqa = result['vqa']
         task_type = vqa.get('task_type', 'unknown')
         
-        if task_type not in task_stats:
-            task_stats[task_type] = {
-                'total': 0,
-                'no_context_correct': 0,
-                'with_context_correct': 0,
-                'both_correct': 0,
-                'both_wrong': 0,
-                'context_improves': 0,
-                'context_degrades': 0,
-                'different_results': 0,
-                'errors': 0
-            }
+        # Handle both single model and multi-model results
+        if 'models' in result:
+            # Multi-model result - analyze each model separately
+            for model_name, model_result in result['models'].items():
+                model_task_key = f"{task_type}_{model_name}"
+                
+                if model_task_key not in task_stats:
+                    task_stats[model_task_key] = {
+                        'total': 0,
+                        'no_context_correct': 0,
+                        'with_context_correct': 0,
+                        'both_correct': 0,
+                        'both_wrong': 0,
+                        'context_improves': 0,
+                        'context_degrades': 0,
+                        'different_results': 0,
+                        'errors': 0
+                    }
+                
+                stats = task_stats[model_task_key]
+                stats['total'] += 1
+                
+                # Check for errors
+                has_error = ('error' in model_result['no_context'] or 'error' in model_result['with_context'])
+                if has_error:
+                    stats['errors'] += 1
+                    continue
+                
+                no_ctx_correct = model_result['no_context']['is_correct']
+                with_ctx_correct = model_result['with_context']['is_correct']
+                
+                if no_ctx_correct:
+                    stats['no_context_correct'] += 1
+                if with_ctx_correct:
+                    stats['with_context_correct'] += 1
+                
+                # Analyze different conditions
+                if no_ctx_correct and with_ctx_correct:
+                    stats['both_correct'] += 1
+                elif not no_ctx_correct and not with_ctx_correct:
+                    stats['both_wrong'] += 1
+                elif not no_ctx_correct and with_ctx_correct:
+                    stats['context_improves'] += 1
+                elif no_ctx_correct and not with_ctx_correct:
+                    stats['context_degrades'] += 1
+                
+                # Check if results are different
+                no_ctx_answer = model_result['no_context']['generated_answer']
+                with_ctx_answer = model_result['with_context']['generated_answer']
+                if no_ctx_answer != with_ctx_answer:
+                    stats['different_results'] += 1
+        else:
+            # Single model result (backward compatibility)
+            if task_type not in task_stats:
+                task_stats[task_type] = {
+                    'total': 0,
+                    'no_context_correct': 0,
+                    'with_context_correct': 0,
+                    'both_correct': 0,
+                    'both_wrong': 0,
+                    'context_improves': 0,
+                    'context_degrades': 0,
+                    'different_results': 0,
+                    'errors': 0
+                }
+            
+            stats = task_stats[task_type]
+            stats['total'] += 1
+            
+            # Check for errors
+            has_error = ('error' in result['no_context'] or 'error' in result['with_context'])
+            if has_error:
+                stats['errors'] += 1
+                error_count += 1
+                continue
+            
+            no_ctx_correct = result['no_context']['is_correct']
+            with_ctx_correct = result['with_context']['is_correct']
+            
+            if no_ctx_correct:
+                stats['no_context_correct'] += 1
+            if with_ctx_correct:
+                stats['with_context_correct'] += 1
+            
+            # Analyze different conditions
+            if no_ctx_correct and with_ctx_correct:
+                stats['both_correct'] += 1
+            elif not no_ctx_correct and not with_ctx_correct:
+                stats['both_wrong'] += 1
+            elif not no_ctx_correct and with_ctx_correct:
+                stats['context_improves'] += 1
+            elif no_ctx_correct and not with_ctx_correct:
+                stats['context_degrades'] += 1
+            
+            # Check if results are different
+            no_ctx_answer = result['no_context']['generated_answer']
+            with_ctx_answer = result['with_context']['generated_answer']
+            if no_ctx_answer != with_ctx_answer:
+                stats['different_results'] += 1
         
-        stats = task_stats[task_type]
-        stats['total'] += 1
         processed_count += 1
-        
-        # Check for errors
-        has_error = ('error' in result['no_context'] or 'error' in result['with_context'])
-        if has_error:
-            stats['errors'] += 1
-            error_count += 1
-            continue
-        
-        no_ctx_correct = result['no_context']['is_correct']
-        with_ctx_correct = result['with_context']['is_correct']
-        
-        if no_ctx_correct:
-            stats['no_context_correct'] += 1
-        if with_ctx_correct:
-            stats['with_context_correct'] += 1
-        
-        # Analyze different conditions
-        if no_ctx_correct and with_ctx_correct:
-            stats['both_correct'] += 1
-        elif not no_ctx_correct and not with_ctx_correct:
-            stats['both_wrong'] += 1
-        elif not no_ctx_correct and with_ctx_correct:
-            stats['context_improves'] += 1
-        elif no_ctx_correct and not with_ctx_correct:
-            stats['context_degrades'] += 1
-        
-        # Check if results are different
-        no_ctx_answer = result['no_context']['generated_answer']
-        with_ctx_answer = result['with_context']['generated_answer']
-        if no_ctx_answer != with_ctx_answer:
-            stats['different_results'] += 1
     
     print(f"Analysis summary: {processed_count} processed, {error_count} had errors")
     return task_stats
@@ -406,6 +587,144 @@ def print_accuracy_report(task_stats):
         print(f"  Context improves: {overall_stats['context_improves']/overall_stats['total']:.1%}")
         print(f"  Context degrades: {overall_stats['context_degrades']/overall_stats['total']:.1%}")
         print(f"  Different results: {overall_stats['different_results']/overall_stats['total']:.1%}")
+
+def filter_jsonl_multi_model(input_path, output_path, models, filter_names, temperature=0, max_workers=3):
+    """Filter JSONL based on multi-model dual predictions and filter rules"""
+    
+    # Load data
+    vqa_dataset = []
+    with open(input_path, "r") as file:
+        content = file.read().strip()
+        
+        json_objects = []
+        current_object = ""
+        brace_count = 0
+        
+        for line in content.split('\n'):
+            current_object += line + '\n'
+            brace_count += line.count('{') - line.count('}')
+            
+            if brace_count == 0 and current_object.strip():
+                try:
+                    json_obj = json.loads(current_object.strip())
+                    json_objects.append(json_obj)
+                    current_object = ""
+                except json.JSONDecodeError:
+                    continue
+        
+        vqa_dataset = json_objects
+    
+    print(f"Loaded {len(vqa_dataset)} questions from {input_path}")
+    
+    # Get filter functions
+    filter_funcs = []
+    for filter_name in filter_names:
+        if hasattr(FilterMechanisms, filter_name):
+            filter_funcs.append(getattr(FilterMechanisms, filter_name))
+        else:
+            print(f"Warning: Unknown filter '{filter_name}', skipping")
+    
+    if not filter_funcs:
+        print("No valid filters specified")
+        return
+    
+    # Process all VQAs in parallel with multiple models - maintain order
+    print(f"Processing with models: {', '.join(models)}")
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = []
+        for i, vqa in enumerate(vqa_dataset):
+            future = executor.submit(process_vqa_multi_model, models, vqa, temperature)
+            futures.append((i, future))
+        
+        # Initialize results array to maintain order and ensure all questions are included
+        results = [None] * len(vqa_dataset)
+        completed_count = 0
+        failed_count = 0
+        
+        for i, future in tqdm(futures, desc="Processing"):
+            try:
+                result = future.result()
+                results[i] = result
+                completed_count += 1
+            except Exception as e:
+                # Create a default result for failed processing
+                print(f"Warning: Failed to process question {i+1}: {e}")
+                failed_count += 1
+                
+                # Create error result for all models
+                model_results = {}
+                for model in models:
+                    model_results[model] = {
+                        'no_context': {
+                            'generated_answer': None,
+                            'generated_response': None,
+                            'correct_answer': vqa_dataset[i].get('answer') or vqa_dataset[i].get('user_answer', ''),
+                            'is_correct': False,
+                            'error': str(e)
+                        },
+                        'with_context': {
+                            'generated_answer': None,
+                            'generated_response': None,
+                            'correct_answer': vqa_dataset[i].get('answer') or vqa_dataset[i].get('user_answer', ''),
+                            'is_correct': False,
+                            'error': str(e)
+                        }
+                    }
+                
+                results[i] = {
+                    'vqa': vqa_dataset[i],
+                    'models': model_results
+                }
+    
+    print(f"Processing summary: {completed_count} successful, {failed_count} failed, {len(results)} total")
+    assert len(results) == len(vqa_dataset), f"Results count {len(results)} != input count {len(vqa_dataset)}"
+    
+    # Analyze accuracy before filtering
+    print(f"\n{'='*60}")
+    print(f"ANALYSIS OF ALL PREDICTIONS")
+    print(f"{'='*60}")
+    
+    task_stats = analyze_accuracy_by_task_and_condition(results)
+    print_accuracy_report(task_stats)
+    
+    # Apply filters
+    filtered_results = []
+    filtered_raw_results = []
+    for result in results:
+        # Check if any filter matches
+        if any(filter_func(result) for filter_func in filter_funcs):
+            filtered_results.append(result['vqa'])
+            filtered_raw_results.append(result)
+    
+    print(f"\n{'='*60}")
+    print(f"FILTERING RESULTS")
+    print(f"{'='*60}")
+    print(f"Applied filters: {', '.join(filter_names)}")
+    print(f"Filtered down to {len(filtered_results)} questions ({len(filtered_results)/len(vqa_dataset)*100:.1f}%)")
+    
+    # Analyze accuracy of filtered results
+    if filtered_raw_results:
+        print(f"\n{'='*60}")
+        print(f"ANALYSIS OF FILTERED PREDICTIONS")
+        print(f"{'='*60}")
+        
+        filtered_task_stats = analyze_accuracy_by_task_and_condition(filtered_raw_results)
+        print_accuracy_report(filtered_task_stats)
+    
+    # Save filtered results
+    with open(output_path, 'w') as f:
+        for vqa in filtered_results:
+            f.write(json.dumps(vqa) + '\n')
+    
+    print(f"\nSaved filtered results to {output_path}")
+    
+    # Return statistics for further analysis
+    return {
+        'all_results': task_stats,
+        'filtered_results': filtered_task_stats if filtered_raw_results else {},
+        'total_questions': len(vqa_dataset),
+        'filtered_questions': len(filtered_results)
+    }
 
 def filter_jsonl(input_path, output_path, model, filter_names, temperature=0, max_workers=3):
     """Filter JSONL based on dual predictions and filter rules"""
@@ -640,25 +959,54 @@ def main():
     parser = argparse.ArgumentParser(description="Filter JSONL based on dual predictions or analyze accuracy")
     parser.add_argument("input_path", help="Path to input JSONL file")
     parser.add_argument("--model", type=str, default="qwen-plus", 
-                       help="Model to use for predictions")
+                       help="Model to use for predictions (single model mode)")
+    parser.add_argument("--models", nargs='+', 
+                       help="Multiple models for voting consensus filtering (e.g., qwen-plus qwen2.5-32b-instruct)")
     parser.add_argument("--temperature", type=float, default=0, 
                        help="Temperature for generation")
     parser.add_argument("--max-workers", type=int, default=3,
                        help="Number of parallel workers")
     parser.add_argument("--filters", nargs='+', 
                        choices=['different_results', 'first_wrong_second_correct', 
-                               'context_improves', 'context_degrades', 'both_wrong', 'both_correct', 'has_errors'],
+                               'context_improves', 'context_degrades', 'both_wrong', 'both_correct', 'has_errors',
+                               'all_models_both_wrong', 'all_models_context_improves', 'all_models_context_degrades',
+                               'all_models_both_correct', 'all_models_different_results'],
                        help="Filter mechanisms to apply (if not specified, only analyze)")
     parser.add_argument("--analyze-only", action="store_true",
                        help="Only analyze accuracy without filtering")
     
     args = parser.parse_args()
     
+    # Determine if using multi-model mode
+    use_multi_model = args.models is not None
+    
+    if use_multi_model:
+        models = args.models
+        print(f"Using multi-model voting consensus with models: {', '.join(models)}")
+        
+        # Check if multi-model filters are used
+        multi_model_filters = [f for f in (args.filters or []) if f.startswith('all_models_')]
+        if args.filters and not multi_model_filters:
+            print("Warning: Using multiple models but no all_models_* filters specified.")
+            print("Consider using all_models_both_wrong, all_models_context_improves, etc.")
+    else:
+        models = [args.model]
+        print(f"Using single model: {args.model}")
+        
+        # Check if single-model filters are incompatible
+        multi_model_filters = [f for f in (args.filters or []) if f.startswith('all_models_')]
+        if multi_model_filters:
+            print(f"Error: Multi-model filters {multi_model_filters} cannot be used with single model mode.")
+            print("Use --models to specify multiple models for voting consensus.")
+            return
+    
     if args.analyze_only or not args.filters:
         # Only analyze accuracy
+        if use_multi_model:
+            print("Multi-model analysis not yet implemented. Using first model for analysis.")
         analyze_only(
             input_path=args.input_path,
-            model=args.model,
+            model=models[0],
             temperature=args.temperature,
             max_workers=args.max_workers
         )
@@ -666,16 +1014,30 @@ def main():
         # Filter and analyze
         base_name = args.input_path.replace('.jsonl', '')
         filter_suffix = '_'.join(args.filters)
-        output_path = f"{base_name}_filtered_{filter_suffix}.jsonl"
         
-        filter_jsonl(
-            input_path=args.input_path,
-            output_path=output_path,
-            model=args.model,
-            filter_names=args.filters,
-            temperature=args.temperature,
-            max_workers=args.max_workers
-        )
+        if use_multi_model:
+            model_suffix = '_'.join([m.replace('/', '-').replace('.', '-') for m in models])
+            output_path = f"{base_name}_filtered_{filter_suffix}_voting_{model_suffix}.jsonl"
+            
+            filter_jsonl_multi_model(
+                input_path=args.input_path,
+                output_path=output_path,
+                models=models,
+                filter_names=args.filters,
+                temperature=args.temperature,
+                max_workers=args.max_workers
+            )
+        else:
+            output_path = f"{base_name}_filtered_{filter_suffix}.jsonl"
+            
+            filter_jsonl(
+                input_path=args.input_path,
+                output_path=output_path,
+                model=args.model,
+                filter_names=args.filters,
+                temperature=args.temperature,
+                max_workers=args.max_workers
+            )
 
 if __name__ == "__main__":
     main()

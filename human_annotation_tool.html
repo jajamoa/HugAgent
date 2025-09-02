@@ -867,34 +867,32 @@
                         parsed[contextLength] = [];
                     }
                     
-                    // Group questions by opinion questions and their related reason evaluations
-                    const opinionQuestions = participantData.questions.filter(q => q.question_type === 'opinion');
-                    const reasonQuestions = participantData.questions.filter(q => q.question_type === 'reason_evaluation');
-                    
-                    opinionQuestions.forEach(opinionQ => {
-                        // Find related reason evaluations
-                        const relatedReasons = reasonQuestions.filter(reasonQ => 
-                            reasonQ.question_id.startsWith(opinionQ.question_id + 'r_')
-                        );
-                        
-                        // Add opinion question
-                        parsed[contextLength].push({
-                            ...opinionQ,
+                    // Add all questions instead of trying to group them
+                    // This ensures no questions are lost due to mismatched pairing logic
+                    participantData.questions.forEach(question => {
+                        const processedQuestion = {
+                            ...question,
                             demographics: participantData.demographics,
-                            context_qas: participantData.context_qas,
-                            isOpinion: true
-                        });
+                            context_qas: participantData.context_qas
+                        };
                         
-                        // Add related reason evaluations
-                        relatedReasons.forEach(reasonQ => {
-                            parsed[contextLength].push({
-                                ...reasonQ,
-                                demographics: participantData.demographics,
-                                context_qas: participantData.context_qas,
-                                isReasonEvaluation: true,
-                                relatedOpinion: opinionQ
-                            });
-                        });
+                        // Mark question types for UI purposes
+                        if (question.question_type === 'opinion') {
+                            processedQuestion.isOpinion = true;
+                        } else if (question.question_type === 'reason_evaluation') {
+                            processedQuestion.isReasonEvaluation = true;
+                            
+                            // Try to find related opinion question for context
+                            const baseQuestionId = question.question_id.replace(/r_[A-Z]$/, '');
+                            const relatedOpinion = participantData.questions.find(q => 
+                                q.question_type === 'opinion' && q.question_id === baseQuestionId
+                            );
+                            if (relatedOpinion) {
+                                processedQuestion.relatedOpinion = relatedOpinion;
+                            }
+                        }
+                        
+                        parsed[contextLength].push(processedQuestion);
                     });
                 });
             });
