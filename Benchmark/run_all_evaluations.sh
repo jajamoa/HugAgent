@@ -6,7 +6,8 @@
 set -e  # Exit on any error
 
 # Configuration
-BENCHMARK_PATH="sample_prompt_v3_10q_regu1.jsonl"
+# BENCHMARK_PATH="sample_belief_update_zoning.jsonl"
+BENCHMARK_PATH="sample_belief_attribution_zoning.jsonl"
 TEMPERATURE=0.1
 MAX_WORKERS=6
 LOG_DIR="logs"
@@ -17,7 +18,7 @@ MODELS=(
     "qwen-plus" 
     "qwen2.5-32b-instruct"
     "qwen2.5-7b-instruct"
-    "qwen2.5-0.5b-instruct"
+    # "qwen2.5-0.5b-instruct"
 )
 
 # Colors for output
@@ -39,30 +40,35 @@ run_evaluation() {
     echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} Starting evaluation for ${YELLOW}$model${NC}"
     
     # Run evaluation and capture both stdout and stderr
-    if python evaluate_qwen.py \
+    python evaluate_qwen.py \
         --benchmark_path "$BENCHMARK_PATH" \
         --model "$model" \
         --temperature "$TEMPERATURE" \
         --max-workers "$MAX_WORKERS" \
-        > "$log_file" 2>&1; then
+        > "$log_file" 2>&1
+    
+    local exit_code=$?
+    local results_file="evaluation_results_${model}.json"
+    
+    # Check success based on both exit code and results file existence
+    if [[ $exit_code -eq 0 ]] && [[ -f "$results_file" ]]; then
         
         local end_time=$(date +%s)
         local duration=$((end_time - start_time))
         echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} ✓ Completed ${YELLOW}$model${NC} in ${duration}s"
         
-        # Extract accuracy from results file
-        local results_file="evaluation_results_${model}_by_difficulty.json"
+        # Display results file info
         if [[ -f "$results_file" ]]; then
             echo -e "${GREEN}[$(date '+%H:%M:%S')]${NC} Results saved to $results_file"
             
             # Extract and display accuracy summary
             if command -v jq >/dev/null 2>&1; then
                 echo -e "${BLUE}[$(date '+%H:%M:%S')]${NC} Summary for $model:"
-                jq -r '.simple.accuracy as $s | .medium.accuracy as $m | .hard.accuracy as $h | "  Simple: \($s*100|floor)%  Medium: \($m*100|floor)%  Hard: \($h*100|floor)%"' "$results_file"
+                jq -r '(.long.accuracy // null) as $l | (.short.accuracy // null) as $s | if $l != null and $s != null then "  Long: \($l*100|floor)%  Short: \($s*100|floor)%" elif $l != null then "  Long: \($l*100|floor)%" elif $s != null then "  Short: \($s*100|floor)%" else "  No accuracy data available" end' "$results_file"
             fi
         fi
     else
-        echo -e "${RED}[$(date '+%H:%M:%S')]${NC} ✗ Failed ${YELLOW}$model${NC} (check $log_file)"
+        echo -e "${RED}[$(date '+%H:%M:%S')]${NC} ✗ Failed ${YELLOW}$model${NC} (exit code: $exit_code, results file: $(test -f "$results_file" && echo "exists" || echo "missing"), check $log_file)"
         return 1
     fi
 }
@@ -135,7 +141,7 @@ main() {
     echo ""
     echo -e "${BLUE}Result Files:${NC}"
     for model in "${MODELS[@]}"; do
-        local results_file="evaluation_results_${model}_by_difficulty.json"
+        local results_file="evaluation_results_${model}.json"
         if [[ -f "$results_file" ]]; then
             local size=$(ls -lh "$results_file" | awk '{print $5}')
             echo -e "  ✓ $results_file ($size)"

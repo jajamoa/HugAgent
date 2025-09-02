@@ -12,8 +12,14 @@ cd Benchmark/
 python process_data.py
 # Processes pilot_36users/ folder and generates sample.jsonl
 
-# With options
+# With options (space-separated context lengths)
 python process_data.py --context-lengths short medium --max-workers 5 --max-users 20
+
+# Single context length
+python process_data.py --context-lengths long --task-type belief_attribution --topic zoning
+
+# All context lengths (default)
+python process_data.py --task-type belief_update --topic healthcare
 ```
 
 #### Model Evaluation  
@@ -39,8 +45,10 @@ python evaluate_qwen.py --model qwen-plus --debug
 - `--swap-experiment`: Use next participant's data for prediction (extreme test)
 
 **Data Processing Options:**
-- `--context-lengths`: Context lengths to generate (choices: short, medium, long; default: all)
-- `--max-workers`: Maximum parallel workers (default: 3)
+- `--task-type`: Task type (choices: belief_attribution, belief_update; default: belief_attribution)
+- `--topic`: Topic to process (choices: zoning, surveillance, healthcare; default: zoning)
+- `--context-lengths`: Context lengths to generate (choices: short, medium, long; default: all; multiple values separated by spaces)
+- `--max-workers`: Maximum parallel workers (default: 6)
 - `--max-users`: Maximum user folders to process (default: 10)
 
 ### Visualization Tool

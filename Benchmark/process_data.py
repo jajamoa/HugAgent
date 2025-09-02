@@ -57,22 +57,36 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
     
     if task_type == "belief_attribution":
         # Original belief attribution logic
-        # Read zoning reaction data
-        zoning_path = user_folder / "survey" / "zoning_reaction.json"
-        if not zoning_path.exists():
+        # Map topic to survey file name
+        survey_files = {
+            "zoning": "zoning_reaction.json",
+            "surveillance": "camera_reaction.json",
+            "healthcare": "healthcare_reaction.json"
+        }
+        
+        # Read topic-specific reaction data
+        survey_file = survey_files.get(topic, "zoning_reaction.json")
+        survey_path = user_folder / "survey" / survey_file
+        if not survey_path.exists():
             return [], qa_start_id
             
-        with open(zoning_path, 'r') as f:
-            zoning_data = json.load(f)
+        with open(survey_path, 'r') as f:
+            survey_data = json.load(f)
         
-        # Read transcript CSV data
-        transcript_path = user_folder / "transcript" / "raw" / f"{topic}.csv"
+        # Read transcript CSV data - map topic to file name
+        transcript_files = {
+            "zoning": "zoning.csv",
+            "surveillance": "camera.csv",  # surveillance topic uses camera.csv file
+            "healthcare": "healthcare.csv"
+        }
+        transcript_file = transcript_files.get(topic, f"{topic}.csv")
+        transcript_path = user_folder / "transcript" / "raw" / transcript_file
         context_qas = []
         if transcript_path.exists():
             context_qas = extract_context_qas(transcript_path)
         
         # Generate multiple belief attribution questions using LLM
-        belief_qas = generate_multiple_belief_attribution_questions(context_qas, prolific_id)
+        belief_qas = generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic)
         
         # Generate three context length versions for each belief attribution question
         # Note: Shorter context = harder to infer beliefs with limited information
@@ -125,7 +139,7 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
                 }
                 qa_pairs.append(qa_entry)
                 qa_start_id += 1
-                
+                                 
     elif task_type == "belief_update":
         # New belief update logic
         # Read transcript CSV data for context
@@ -134,41 +148,53 @@ def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_t
         if transcript_path.exists():
             context_qas = extract_context_qas(transcript_path)
         
-        # Apply context length filtering for belief_update if specified
-        if context_lengths and len(context_lengths) == 1:
-            # If only one context length specified, use it
-            length_name = context_lengths[0]
-            if length_name == "short":
-                context_qas = context_qas[:5]
-            elif length_name == "medium":
-                context_qas = context_qas[:10]
-            # "long" uses all context_qas
+        # Generate three context length versions for each belief update question
+        all_context_configs = [
+            {"name": "long", "context_size": len(context_qas)},  # All available context
+            {"name": "medium", "context_size": 10},  # Medium context
+            {"name": "short", "context_size": 5}  # Minimal context
+        ]
+        
+        # Filter context configs based on input parameter
+        if context_lengths is None:
+            context_lengths = ["short", "medium", "long"]
+        
+        context_configs = [config for config in all_context_configs 
+                          if config["name"] in context_lengths]
         
         # Process belief update questions from survey data
         survey_qas = process_belief_update_questions(user_folder, topic)
         
         for survey_qa in survey_qas:
-            qa_entry = {
-                "id": f"qa_{qa_start_id:03d}",
-                "prolific_id": prolific_id,
-                "demographics": demo_info,
-                "context_qas": context_qas,
-                "topic": topic,
-                "task_type": "belief_update",
-                "question_id": survey_qa["question_id"],
-                "question_type": survey_qa["question_type"],
-                "task_question": survey_qa["question_text"],
-                "user_answer": survey_qa["user_answer"],
-                "scale": survey_qa["scale"]
-            }
-            
-            # Add reason-specific fields if it's a reason evaluation question
-            if survey_qa["question_type"] == "reason_evaluation":
-                qa_entry["reason_code"] = survey_qa["reason_code"]
-                qa_entry["reason_text"] = survey_qa["reason_text"]
-            
-            qa_pairs.append(qa_entry)
-            qa_start_id += 1
+            for config in context_configs:
+                # Apply context length filtering
+                if config["context_size"] >= len(context_qas):
+                    context_length_context = context_qas
+                else:
+                    context_length_context = context_qas[:config["context_size"]]
+                
+                qa_entry = {
+                    "id": f"qa_{qa_start_id:03d}",
+                    "prolific_id": prolific_id,
+                    "demographics": demo_info,
+                    "context_qas": context_length_context,
+                    "context_length": config["name"],
+                    "topic": topic,
+                    "task_type": "belief_update",
+                    "question_id": survey_qa["question_id"],
+                    "question_type": survey_qa["question_type"],
+                    "task_question": survey_qa["question_text"],
+                    "user_answer": survey_qa["user_answer"],
+                    "scale": survey_qa["scale"]
+                }
+                
+                # Add reason-specific fields if it's a reason evaluation question
+                if survey_qa["question_type"] == "reason_evaluation":
+                    qa_entry["reason_code"] = survey_qa["reason_code"]
+                    qa_entry["reason_text"] = survey_qa["reason_text"]
+                
+                qa_pairs.append(qa_entry)
+                qa_start_id += 1
     
     return qa_pairs, qa_start_id
 
@@ -408,7 +434,7 @@ Return only the question text, nothing else.
         print(f"Error in parallel reason question generation: {e}")
         return []
 
-def generate_multiple_belief_attribution_questions(context_qas, prolific_id):
+def generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic="zoning"):
     """Generate multiple belief attribution questions using LLM based on context QAs"""
     if not context_qas:
         return []
@@ -431,8 +457,17 @@ def generate_multiple_belief_attribution_questions(context_qas, prolific_id):
             for qa in filtered_qas
         ])
         
+        # Topic-specific conversation descriptions
+        topic_descriptions = {
+            "zoning": "urban zoning and housing development",
+            "surveillance": "surveillance cameras and public safety", 
+            "healthcare": "healthcare policy and universal coverage"
+        }
+        
+        conversation_topic = topic_descriptions.get(topic, "urban zoning and housing development")
+        
         prompt = f"""
-Based on the following conversation about urban zoning and housing development, identify ALL question-answer pairs that reveal the person's beliefs about causal relationships between different factors.
+Based on the following conversation about {conversation_topic}, identify ALL question-answer pairs that reveal the person's beliefs about causal relationships between different factors.
 
 Conversation:
 {context_text}
@@ -466,17 +501,26 @@ Where the answer options are:
 - B: NEGATIVE effect  
 - C: NO SIGNIFICANT effect
 
-Use simple, everyday language for the factors. For example:
-- "building more housing" instead of "upzoning policies"
-- "traffic congestion" instead of "transportation systems impact"
-- "neighborhood character" instead of "community identity factors"
+Use simple, everyday language for the factors. Examples by topic:
+Zoning: "building more housing" instead of "upzoning policies", "traffic congestion", "neighborhood character"
+Surveillance: "installing cameras" instead of "surveillance systems", "crime rates", "privacy concerns"  
+Healthcare: "universal coverage" instead of "healthcare policy", "wait times", "healthcare costs"
 
 Return up to 10 belief inference questions maximum.
 """
 
+        # Topic-specific system messages
+        topic_system_messages = {
+            "zoning": "You are an expert at analyzing conversations about urban policy to extract causal beliefs.",
+            "surveillance": "You are an expert at analyzing conversations about surveillance and public safety to extract causal beliefs.",
+            "healthcare": "You are an expert at analyzing conversations about healthcare policy to extract causal beliefs."
+        }
+        
+        system_message = topic_system_messages.get(topic, "You are an expert at analyzing conversations about urban policy to extract causal beliefs.")
+        
         response = llm.generate_response(
             prompt,
-            system_message="You are an expert at analyzing conversations about urban policy to extract causal beliefs.",
+            system_message=system_message,
             return_json=True
         )
         

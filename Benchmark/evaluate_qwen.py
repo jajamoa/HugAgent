@@ -542,8 +542,7 @@ def main():
         # Save results (baseline configuration only)
         # Clean model name and extract benchmark name for file naming
         clean_model_name = args.model.replace("/", "-")
-        benchmark_name = args.benchmark_path.split("/")[-1].replace(".jsonl", "")
-        results_filename = f"evaluation_results_{clean_model_name}_{benchmark_name}_by_difficulty.json"
+        results_filename = f"evaluation_results_{clean_model_name}.json"
         with open(results_filename, "w") as f:
             json.dump(results, f, indent=2)
         
