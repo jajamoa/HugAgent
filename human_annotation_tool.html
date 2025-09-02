@@ -626,7 +626,12 @@
         // Handle uploaded JSONL file
         function handleFile(file) {
             if (!file.name.endsWith('.jsonl')) {
-                alert('Please upload only JSONL files');
+                showDetailedError(
+                    'Unsupported File Type',
+                    `The file "${file.name}" is not a JSONL file.`,
+                    'Please upload a file with .jsonl extension containing question data.',
+                    `File type: ${file.type || 'unknown'}\nFile size: ${file.size} bytes`
+                );
                 return;
             }
 
@@ -634,6 +639,17 @@
             reader.onload = (e) => {
                 try {
                     const content = e.target.result.trim();
+                    
+                    if (!content) {
+                        showDetailedError(
+                            'Empty File',
+                            'The uploaded file is empty.',
+                            'Please upload a JSONL file containing question data.',
+                            `File: ${file.name}`
+                        );
+                        return;
+                    }
+                    
                     let data;
                     
                     // Try to parse as a single JSON array first
@@ -647,7 +663,18 @@
                         // If that fails, try to parse as JSONL (one JSON object per line)
                         try {
                             const lines = content.split('\n').filter(line => line.trim());
-                            data = lines.map(line => JSON.parse(line));
+                            if (lines.length === 0) {
+                                throw new Error('No valid JSON lines found');
+                            }
+                            
+                            data = [];
+                            lines.forEach((line, index) => {
+                                try {
+                                    data.push(JSON.parse(line));
+                                } catch (lineError) {
+                                    throw new Error(`Invalid JSON on line ${index + 1}: ${lineError.message}`);
+                                }
+                            });
                         } catch (jsonlError) {
                             // If both fail, try to split by '}\n{' pattern for formatted JSON objects
                             try {
@@ -664,20 +691,105 @@
                                     throw new Error('Unable to parse file format');
                                 }
                             } catch (formattedError) {
-                                throw new Error(`Unable to parse file: ${formattedError.message}`);
+                                showDetailedError(
+                                    'File Parsing Error',
+                                    'Unable to parse the uploaded file as valid JSON or JSONL.',
+                                    'Please ensure the file contains valid JSON objects, either as an array or one object per line.',
+                                    `Original error: ${jsonlError.message}\nFormatted parse error: ${formattedError.message}`
+                                );
+                                return;
                             }
                         }
                     }
                     
                     questionsData = parseQuestionsData(data);
+                    
+                    // Check if we successfully parsed any questions
+                    const totalQuestions = Object.values(questionsData).reduce((sum, questions) => sum + questions.length, 0);
+                    if (totalQuestions === 0) {
+                        showDetailedError(
+                            'No Valid Questions Found',
+                            'The file was parsed successfully but contains no valid questions.',
+                            'Please ensure your file contains objects with "task_question" or "question" fields and "answer_options".',
+                            `Parsed ${data.length} objects from file, but none contained valid question data.`
+                        );
+                        return;
+                    }
+                    
                     updateDataStatus();
                     resetQuiz();
                     
                 } catch (error) {
-                    alert(`Error parsing file: ${error.message}`);
+                    showDetailedError(
+                        'Unexpected Error',
+                        'An unexpected error occurred while processing the file.',
+                        'Please check the file format and try again.',
+                        `Error: ${error.message}\nStack: ${error.stack}`
+                    );
                 }
             };
             reader.readAsText(file);
+        }
+
+        // Show detailed error modal
+        function showDetailedError(title, error, suggestion, technicalDetails) {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.5); z-index: 10000;
+                display: flex; align-items: center; justify-content: center;
+                padding: 20px;
+            `;
+            
+            // Create modal content
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white; border-radius: 12px; max-width: 600px; width: 100%;
+                max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            `;
+            
+            modal.innerHTML = `
+                <div style="padding: 24px; border-bottom: 1px solid #e5e7eb;">
+                    <h2 style="margin: 0; color: #dc2626; font-size: 1.5rem; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2em;">⚠️</span>
+                        ${title}
+                    </h2>
+                </div>
+                <div style="padding: 24px;">
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 8px 0; color: #374151; font-size: 1.1rem;">Error Details:</h3>
+                        <p style="margin: 0; color: #6b7280; line-height: 1.5;">${error}</p>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 8px 0; color: #374151; font-size: 1.1rem;">Suggestion:</h3>
+                        <p style="margin: 0; color: #6b7280; line-height: 1.5;">${suggestion}</p>
+                    </div>
+                    <details style="margin-bottom: 20px;">
+                        <summary style="cursor: pointer; color: #6b7280; font-weight: 500;">Technical Details</summary>
+                        <pre style="margin: 12px 0 0 0; padding: 12px; background: #f3f4f6; border-radius: 6px; 
+                                   font-size: 0.875rem; color: #374151; overflow-x: auto; white-space: pre-wrap;">${technicalDetails}</pre>
+                    </details>
+                </div>
+                <div style="padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; 
+                           border-radius: 0 0 12px 12px; text-align: right;">
+                    <button onclick="this.closest('[style*=\"position: fixed\"]').remove()" 
+                            style="background: #3b82f6; color: white; padding: 8px 16px; border: none; 
+                                   border-radius: 6px; cursor: pointer; font-weight: 500;">
+                        Close
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
         }
 
         // Parse questions data by context length with backward compatibility
@@ -689,13 +801,36 @@
                 const contextLength = item.context_length || item.difficulty || 'unknown';
                 const questionText = item.task_question || item.question;
                 
+                // Validate that we have a question to work with
                 if (questionText) {
+                    // Handle different answer option formats
+                    let answerOptions = {};
+                    if (item.answer_options && typeof item.answer_options === 'object') {
+                        answerOptions = item.answer_options;
+                    } else if (item.answer_options && typeof item.answer_options === 'string') {
+                        // Handle case where answer_options might be a string
+                        try {
+                            answerOptions = JSON.parse(item.answer_options);
+                        } catch (e) {
+                            answerOptions = {};
+                        }
+                    }
+                    
+                    // Ensure we have at least some answer options for quizzes
+                    if (Object.keys(answerOptions).length === 0) {
+                        // Default to A/B format if no options are provided
+                        answerOptions = {
+                            "A": "Option A",
+                            "B": "Option B"
+                        };
+                    }
+                    
                     const questionInfo = {
                         id: item.id || `q_${index}`,
                         prolific_id: item.prolific_id || '',
                         question: questionText,
-                        answer_options: item.answer_options || {},
-                        standard_answer: item.answer || '',  // Use 'answer' field as standard answer
+                        answer_options: answerOptions,
+                        standard_answer: item.answer || Object.keys(answerOptions)[0], // Use first option as fallback
                         topic: item.topic || '',
                         task_type: item.task_type || '',
                         context_qas: item.context_qas || [],
@@ -704,7 +839,9 @@
                         reasoning: item.reasoning || '',
                         context_length: contextLength,
                         // Keep original field for backward compatibility
-                        difficulty: item.difficulty || contextLength
+                        difficulty: item.difficulty || contextLength,
+                        // Store original item for debugging
+                        _original: item
                     };
                     
                     if (!parsed[contextLength]) {
@@ -858,6 +995,13 @@
             answerOptions.innerHTML = '';
             
             if (question.answer_options && Object.keys(question.answer_options).length > 0) {
+                // Add header showing number of options
+                const optionCount = Object.keys(question.answer_options).length;
+                const headerDiv = document.createElement('div');
+                headerDiv.style.cssText = 'margin-bottom: 15px; font-weight: 600; color: #374151; font-size: 1rem;';
+                headerDiv.textContent = `Answer Options (${optionCount}):`;
+                answerOptions.appendChild(headerDiv);
+                
                 Object.entries(question.answer_options).forEach(([key, value]) => {
                     const button = document.createElement('button');
                     button.className = 'answer-option';
