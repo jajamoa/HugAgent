@@ -1,0 +1,30 @@
+{
+  "task_type": "belief_update",
+  "model": "global-majority",
+  "topics": {
+    "healthcare": {
+      "accuracy": 0.501628664495114,
+      "correct": 154,
+      "total": 307,
+      "mae": 2.9446254071661238
+    },
+    "surveillance": {
+      "accuracy": 0.5487804878048781,
+      "correct": 135,
+      "total": 246,
+      "mae": 2.9227642276422765
+    },
+    "zoning": {
+      "accuracy": 0.6763005780346821,
+      "correct": 234,
+      "total": 346,
+      "mae": 1.9132947976878614
+    }
+  },
+  "average": {
+    "accuracy": 0.5817575083426029,
+    "correct": 523,
+    "total": 899,
+    "mae": 2.5417130144605116
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "task_type": "belief_attribution",
+  "model": "random-guess",
+  "topics": {
+    "healthcare": {
+      "accuracy": 0.5185185185185185,
+      "correct": 28,
+      "total": 54,
+      "mae": null
+    },
+    "surveillance": {
+      "accuracy": 0.5268817204301075,
+      "correct": 49,
+      "total": 93,
+      "mae": null
+    },
+    "zoning": {
+      "accuracy": 0.4666666666666667,
+      "correct": 35,
+      "total": 75,
+      "mae": null
+    }
+  },
+  "average": {
+    "accuracy": 0.5045045045045045,
+    "correct": 112,
+    "total": 222,
+    "mae": null
+  }
+}
