@@ -6,17 +6,7 @@
 set -e  # Exit on any error
 
 # Configuration
-# BENCHMARK_PATH="sample_belief_attribution_zoning.jsonl"
-# BENCHMARK_PATH="sample_belief_attribution_zoning_filtered_different_results.jsonl"
-# BENCHMARK_PATH="sample_belief_attribution_surveillance.jsonl"
-# BENCHMARK_PATH="sample_belief_attribution_surveillance_filtered_different_results.jsonl"
-# BENCHMARK_PATH="sample_belief_attribution_healthcare.jsonl"
-# BENCHMARK_PATH="sample_belief_attribution_healthcare_filtered_different_results.jsonl"
-# BENCHMARK_PATH="sample_belief_update_zoning.jsonl"
-# BENCHMARK_PATH="sample_belief_update_zoning_filtered_context_improves.jsonl" 
-# BENCHMARK_PATH="sample_belief_update_surveillance_filtered_context_improves.jsonl" 
-# BENCHMARK_PATH="sample_belief_update_healthcare_filtered_context_improves.jsonl" 
-BENCHMARK_PATH="sample_belief_update_zoning_filtered_both_wrong_context_improves.jsonl" 
+BENCHMARK_PATH="sample_belief_attribution_zoning.jsonl"
 
 TEMPERATURE=0.1
 MAX_WORKERS=6

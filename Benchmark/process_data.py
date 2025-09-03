@@ -281,7 +281,7 @@ def extract_context_qas(csv_path):
 
 def load_survey_data(topic="zoning"):
     """Load survey questions and reason mappings"""
-    survey_path = Path("survey_content/surveys.json")
+    survey_path = Path("../raw_data/survey_content/surveys.json")
     
     # Map topic to reason mapping file
     reason_mapping_files = {
@@ -291,7 +291,7 @@ def load_survey_data(topic="zoning"):
     }
     
     reason_mapping_file = reason_mapping_files.get(topic, "housing_reason_mapping.json")
-    reason_mapping_path = Path(f"survey_content/{reason_mapping_file}")
+    reason_mapping_path = Path(f"../raw_data/survey_content/{reason_mapping_file}")
     
     with open(survey_path, 'r') as f:
         survey_data = json.load(f)
@@ -616,7 +616,7 @@ def main():
                        help='Exclude belief attribution questions with answer "C" (NO SIGNIFICANT effect)')
     args = parser.parse_args()
     # Set up paths (relative to current working directory)
-    pilot_dir = Path("./pilot_36users")
+    pilot_dir = Path("../raw_data/main_raw_data")
     output_dir = Path("./")
     
     # Get all user folders

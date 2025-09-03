@@ -1,6 +1,6 @@
-# HugAgent: A Benchmark for Human-Grounded Agent Beliefs in Realistic Social Contexts
+# HugAgent: Human-Grounded Benchmarking of Agent Beliefs in Social Contexts
 
-A benchmark for evaluating LLM theory of mind capabilities in realistic social contexts using real human conversation data. The benchmark includes belief attribution and belief update tasks across multiple difficulty levels, designed to assess model performance on complex, long-term social reasoning scenarios.
+The first benchmark that evaluates models on belief attribution and belief updating using real participant surveys and interviews in socially salient domains (healthcare, surveillance, housing). Each instance combines demographic background with first-person self-reports, preserving individual variation instead of collapsing it into a single label.
 
 ## Usage
 
@@ -8,9 +8,9 @@ A benchmark for evaluating LLM theory of mind capabilities in realistic social c
 
 #### Data Processing
 ```bash
-cd Benchmark/
+cd benchmark/
 python process_data.py
-# Processes pilot_36users/ folder and generates sample.jsonl
+# Processes ../raw_data/main_raw_data/ folder and generates sample.jsonl
 
 # With options (space-separated context lengths)
 python process_data.py --context-lengths short medium --max-workers 5 --max-users 20
@@ -24,8 +24,9 @@ python process_data.py --task-type belief_update --topic healthcare
 
 #### Model Evaluation  
 ```bash
+cd benchmark/
 # Single model
-python evaluate_qwen.py --model qwen-plus --benchmark_path sample_150.jsonl
+python evaluate_qwen.py --model qwen-plus --benchmark_path sample_belief_attribution_healthcare.jsonl
 
 # Debug mode (sequential, interactive)
 python evaluate_qwen.py --model qwen-plus --debug
@@ -35,7 +36,7 @@ python evaluate_qwen.py --model qwen-plus --debug
 ```
 
 **Evaluation Options:**
-- `--benchmark_path`: JSONL file path (default: sample.jsonl)
+- `--benchmark_path`: JSONL file path (default: sample_belief_attribution_healthcare.jsonl)
 - `--model`: qwen-max, qwen-plus, qwen-turbo, qwen2.5-{72b,32b,14b,7b,3b,1.5b,0.5b}-instruct
 - `--temperature`: Generation temperature 0.0-1.0 (default: 0.1)
 - `--no-demographics`: Exclude participant demographics from prompt
@@ -51,43 +52,43 @@ python evaluate_qwen.py --model qwen-plus --debug
 - `--max-workers`: Maximum parallel workers (default: 6)
 - `--max-users`: Maximum user folders to process (default: 10)
 
-### Visualization Tool
+### Human Annotation Tool
 
-Launch interactive analysis interface:
+Launch interactive annotation interface:
 ```bash
 # Open in browser
-open visualization.html
+open human_annotation_tool.html
 
 # Or serve locally
 python -m http.server 8000
 ```
 
 **Usage:**
-1. Drag evaluation JSON + sample JSONL files
-2. Select models and difficulty 
-3. Click grid cells for question details
+1. Drag JSONL data files (belief attribution or belief update)
+2. Select context length and start annotation
+3. Export your annotations as JSON for analysis
 
-## Benchmark Structure
+## Benchmark Tasks
 
-**Context Length Levels:**
-- **Long**: Full context (all 20+ conversation turns)
-- **Medium**: Partial context (10 conversation turns)  
-- **Short**: Minimal context (5 conversation turns)
+**Belief Attribution**: Inferring latent beliefs from conversational cues and participant responses. Models predict whether a person believes one factor has a positive, negative, or no significant effect on another.
 
-Each level tests belief attribution with decreasing information availability.
+**Belief Update**: Predicting how participants would change their opinions and reason weights under counterfactual interventions or scenarios.
 
 ## Files
 
 ```
-Benchmark/
-├── process_data.py          # Extract QA pairs from pilot_36users/
-├── evaluate_qwen.py         # Run model evaluation with ToM prompts
-├── run_all_evaluations.sh   # Batch evaluation script (parallel)
-├── llm_utils.py            # Qwen API wrapper with debug support
-├── sample_150.jsonl        # Generated benchmark questions
-├── pilot_36users/          # Raw participant data
-├── evaluation_results_*.json # Model performance by difficulty
-└── visualization.html      # Interactive analysis interface
+├── raw_data/
+│   ├── main_raw_data/           # Main participant data
+│   ├── aux_raw_data/            # Auxiliary participant data  
+│   └── survey_content/          # Survey questions and mappings
+├── benchmark/
+│   ├── process_data.py          # Extract QA pairs from ../raw_data/main_raw_data/
+│   ├── evaluate_qwen.py         # Run model evaluation with ToM prompts
+│   ├── run_all_evaluations.sh   # Batch evaluation script (parallel)
+│   ├── llm_utils.py            # Qwen API wrapper with debug support
+│   ├── sample_belief_*.jsonl    # Generated benchmark questions
+│   └── evaluation_results_*.json # Model performance results
+└── human_annotation_tool.html   # Interactive annotation interface
 ```
 
 ## Output Format
