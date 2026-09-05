@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HugAgent · MIT</title>
+<meta name="description" content="A human-grounded benchmark for individual-level reasoning: predicting what a specific person believes, and how they change their mind. EMNLP 2026 Main.">
+<meta property="og:title" content="HugAgent: can AI reason like you, or only answer like you?">
+<meta property="og:description" content="A human-grounded benchmark for individual-level reasoning. EMNLP 2026 Main.">
+<meta property="og:image" content="https://jajamoa.github.io/HugAgent/assets/teaser.jpg">
+<link rel="icon" type="image/svg+xml" href="assets/robot.svg">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0}
+:root{--ink:#111110;--ink2:#4f4e49;--mut:#96948d;--line:#e0e0e0;--accent:#15803d;--accent-ink:#0a6a30;--tint:#f4faf6;--tint2:#eef7f1}
+html{scroll-behavior:smooth}
+body{font-family:"Inconsolata",ui-monospace,monospace;color:var(--ink);background:#fff;line-height:1.6;font-size:16.5px;overflow-x:hidden}
+.wrap{max-width:880px;margin:0 auto;padding:0 24px}
+a{color:var(--accent-ink);text-decoration:none;border-bottom:1px solid #bcd9c6}
+a:hover{border-bottom-color:var(--accent-ink)}
+/* top strip */
+.topbar{border-bottom:1px solid var(--line);font-size:13.5px;color:var(--ink2)}
+.topbar .wrap{display:flex;justify-content:space-between;align-items:center;padding-top:13px;padding-bottom:13px;gap:12px;flex-wrap:wrap;line-height:1}
+.topbar b{color:var(--ink);letter-spacing:.04em}
+.topbar nav{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto;align-items:center}
+.mitmark{height:13.5px;display:block;margin-left:26px;position:relative;top:-.5px}
+.topbar a{border-bottom:none;color:var(--ink2)}
+.topbar a:hover{color:var(--accent-ink)}
+/* hero */
+.hero{padding:64px 0 8px;text-align:center}
+.kickerline{font-size:13px;color:var(--mut);letter-spacing:.03em}
+h1{font-size:31px;font-weight:800;letter-spacing:.01em;line-height:1.35;margin:16px 0 14px}
+.tagline{font-size:21px;color:var(--ink);font-weight:500}
+.tagline em{font-style:normal;color:var(--accent-ink);border-bottom:2px solid var(--accent)}
+.heroauthors{max-width:720px;margin:30px auto 0;font-size:13.5px;line-height:1.9;color:var(--ink)}
+.heroauthors sup{color:var(--accent-ink);font-size:10.5px;margin-left:1px}
+.heroaffils sup{color:var(--accent-ink);font-size:10.5px;margin-right:3px}
+.heroaffils{max-width:680px;margin:14px auto 0;font-size:12.5px;color:var(--mut);line-height:1.9}
+.heronote{font-size:12px;color:var(--mut);margin-top:12px}
+.tldrbox{max-width:720px;margin:30px auto 0;border:1px solid var(--accent);background:var(--tint);padding:14px 18px;text-align:left;font-size:14.5px;color:var(--ink2);line-height:1.7}
+.tldrbox p{margin:0}
+.tldrbox p+p{margin-top:11px;border-top:1px dashed #c4ddcd;padding-top:11px}
+.tldrbox strong{color:var(--ink)}
+.lb{color:var(--accent-ink);font-weight:800;margin-right:7px;text-transform:uppercase;font-size:11.5px;letter-spacing:.09em}
+.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:26px 0 8px}
+.btn{border:1px solid var(--ink);padding:7px 16px;font-size:14px;font-weight:600;color:var(--ink);border-bottom-width:1px}
+.btn:hover{background:var(--ink);color:#fff}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-ink);border-color:var(--accent-ink)}
+.teaser{margin:48px auto 0;max-width:1040px;padding:0 24px}
+.teaser img{width:100%;display:block;border:1px solid var(--line)}
+.figcap{font-size:13px;color:var(--mut);max-width:760px;margin:10px auto 0;text-align:center}
+.lg{white-space:normal;color:var(--ink2)}
+.lg i{display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 5px 0 2px;vertical-align:baseline}
+.panelcaps{display:grid;grid-template-columns:353fr 353fr 354fr 633fr;column-gap:12px;padding:0 .4% 0 1.6%;margin-top:8px;font-size:12px;color:var(--ink2);line-height:1.5}
+.panelcaps b{color:var(--accent-ink);margin-right:6px}
+.pc{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px;border:1px solid rgba(0,0,0,.18)}
+.pc-gray{background:#a9a9a6}
+.pc-green{background:#7cb46b}
+.pc-half{background:linear-gradient(90deg,#a9a9a6 50%,#7cb46b 50%)}
+.pc-green2{background:#7cb46b;box-shadow:2px 0 0 0 #a9a9a6 inset}
+.pcl{color:var(--mut);font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-right:6px}
+.term{border-bottom:1px dotted var(--mut);color:inherit}
+a.term:hover{border-bottom-color:var(--accent-ink);color:var(--accent-ink)}
+@media(max-width:760px){.panelcaps{grid-template-columns:1fr 1fr;font-size:12px}}
+/* sections */
+section.wrap{margin-top:46px}
+.kicker{font-size:13px;font-weight:700;letter-spacing:.14em;color:var(--accent-ink);text-transform:uppercase;margin-bottom:10px}
+h2{font-size:27px;font-weight:700;line-height:1.3;margin-bottom:14px;letter-spacing:-.01em}
+p.body{color:var(--ink2);max-width:700px;margin-bottom:14px}
+p.body strong{color:var(--ink)}
+/* cards */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.cards3{grid-template-columns:1fr 1fr 1fr}
+.card{border:1px solid var(--line);padding:20px 22px}
+.card h3{font-size:17.5px;font-weight:700;margin-bottom:2px}
+.card .csub{font-size:12.5px;color:var(--accent-ink);font-weight:600;letter-spacing:.06em;margin-bottom:10px}
+.card p{font-size:14.5px;color:var(--ink2)}
+.note{font-size:13.5px;color:var(--mut);margin-top:20px;max-width:760px}
+/* stats strip */
+.stats{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);margin-top:8px}
+.stat{padding:16px 14px;border-left:1px solid var(--line);font-size:13.5px;color:var(--ink2)}
+.stat:first-child{border-left:none}
+.stat b{display:block;font-size:21px;color:var(--ink);font-weight:800}
+/* table */
+.tablewrap{overflow-x:auto;margin-top:16px;border:1px solid var(--line)}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{padding:9px 14px;text-align:right;border-top:1px solid var(--line);white-space:nowrap}
+th{font-size:12.5px;color:var(--mut);font-weight:600;border-top:none;letter-spacing:.03em}
+td:first-child,th:first-child{text-align:left}
+tr.human{background:var(--tint)}
+tr.human td{font-weight:700}
+td.best{color:var(--accent-ink);font-weight:800}
+tr.dim td{color:var(--mut)}
+.tnote{font-size:13px;color:var(--mut);margin-top:10px;max-width:700px}
+/* quiz */
+.quiz{background:var(--tint);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:46px 0 42px;margin-top:46px}
+.qcard{background:#fff;border:1px solid var(--line);padding:22px 24px;margin-top:18px}
+.qhead{display:flex;justify-content:space-between;font-size:12.5px;color:var(--mut);letter-spacing:.05em;margin-bottom:10px}
+.qsetup{font-size:14.5px;color:var(--ink2);margin-bottom:12px}
+.chips{display:grid;gap:8px;margin-bottom:14px}
+.chip{border:1px solid var(--line);background:#fafaf8;padding:9px 12px;font-size:13px;color:var(--ink2)}
+.chip b{display:block;color:var(--mut);font-weight:600;font-size:12px;margin-bottom:2px}
+.qq{font-size:16px;font-weight:700;margin:14px 0 12px}
+.opts{display:flex;gap:8px;flex-wrap:wrap}
+.opt{border:1px solid var(--ink);background:#fff;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.opt:hover{background:var(--ink);color:#fff}
+.opt.scale{padding:7px 0;width:34px;text-align:center}
+.opt.picked-right{background:var(--accent);border-color:var(--accent);color:#fff}
+.opt.picked-wrong{background:#b3261e;border-color:#b3261e;color:#fff}
+.opt.gold{outline:2px solid var(--accent);outline-offset:1px}
+.opt:disabled{cursor:default;opacity:.85}
+.qreveal{display:none;margin-top:14px;border-left:3px solid var(--accent);padding:10px 14px;background:var(--tint2);font-size:14px;color:var(--ink2)}
+.qreveal b{color:var(--ink)}
+.verdict{font-weight:800;font-size:13px;letter-spacing:.05em;margin-bottom:4px}
+.verdict.ok{color:var(--accent-ink)} .verdict.no{color:#b3261e}
+.scoreline{margin-top:22px;font-size:15px;font-weight:700;display:none}
+.scoreline span{color:var(--accent-ink)}
+.outro{font-size:14.5px;color:var(--ink2);margin-top:12px;max-width:700px;display:none}
+/* pipeline + tyt */
+.steps{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px}
+.step{border:1px solid var(--line);padding:14px 16px;font-size:13.5px;color:var(--ink2);line-height:1.6}
+.sh{font-weight:700;color:var(--ink);font-size:13px;margin-bottom:5px;letter-spacing:.03em}
+.sh .pc{margin-right:6px}
+@media(max-width:760px){.steps{grid-template-columns:1fr}}
+.pipefig{margin-top:16px;border:1px solid var(--line)}
+.pipefig img{width:100%;display:block}
+.split{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center;margin-top:22px}
+.split img{width:100%;border:1px solid var(--line)}
+pre{background:#fafaf8;border:1px solid var(--line);padding:12px 14px;font-size:12.5px;overflow-x:auto;margin-top:14px;line-height:1.5;color:var(--ink)}
+/* team */
+.authors{font-size:14.5px;line-height:1.75;max-width:760px}
+.authors sup{color:var(--accent-ink);font-size:11px}
+.affils{font-size:13.5px;color:var(--ink2);margin-top:18px;max-width:760px;display:flex;flex-wrap:wrap;gap:6px 26px}
+.affils span{white-space:nowrap}
+.affils sup{color:var(--accent-ink);font-size:11px;margin-right:3px}
+/* footer */
+/* easter egg: average mode */
+body.avg{--accent:#8a8a86;--accent-ink:#6f6f6b;--tint:#f2f2f0;--tint2:#ececea}
+body.avg img{filter:grayscale(1)}
+body.avg .pc,body.avg .lb,body.avg .kicker,body.avg .csub{filter:grayscale(1)}
+body.avg .tagline em{color:var(--ink2);border-bottom-color:#8a8a86}
+.avgnote{display:none;position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:#111110;color:#fff;font-size:13px;padding:8px 16px;z-index:9;white-space:nowrap}
+body.avg .avgnote{display:block}
+.backnote{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:13px;padding:8px 16px;z-index:9;white-space:nowrap}
+footer{border-top:1px solid var(--line);margin-top:46px;padding:36px 0 48px;font-size:13.5px;color:var(--mut)}
+footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+@media(max-width:760px){
+  h1{font-size:21px;padding:0 6px}.tagline{font-size:16.5px}
+  .deskbr{display:none}
+  .hero.wrap{padding:44px 18px 8px}
+  .kickerline{padding:0 12px}
+  .heroauthors{font-size:12.5px;line-height:1.7}
+  .heroaffils{font-size:11.5px}
+  .heronote{font-size:11px}
+  section.wrap{margin-top:39px}
+  .quiz{margin-top:84px;padding:56px 0 48px}
+  .qcard{padding:16px 14px}
+  .opt.scale{width:28px;font-size:13px}
+  .chips{gap:6px}
+  .chip{font-size:12.5px}
+  .panelcaps{gap:10px 14px}
+  .teaser{padding:0 16px}
+  .wrap{padding:0 18px}
+  .topbar nav{gap:12px;font-size:12.5px}
+  .mitmark{height:12px;margin-left:12px}
+  table{min-width:520px;font-size:12.5px}
+  th,td{padding:7px 8px}
+  .cards,.cards3{grid-template-columns:1fr}
+  .stats{grid-template-columns:1fr 1fr;border-right:none}
+  .stat{border-right:1px solid var(--line);border-top:1px solid var(--line)}
+  .stat:nth-child(-n+2){border-top:none}
+  .stat:last-child{grid-column:1/-1}
+  .split{grid-template-columns:1fr}
+  body{font-size:15.5px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <b>HugAgent</b>
+  <nav>
+    <a href="https://arxiv.org/abs/2510.15144" target="_blank" rel="noopener">Paper</a>
+    <a href="https://github.com/jajamoa/HugAgent" target="_blank" rel="noopener">Code</a>
+    <a href="https://github.com/jajamoa/HugAgent/tree/main/Benchmark" target="_blank" rel="noopener">Data</a>
+    <a href="https://github.com/jajamoa/trace-your-thinking" target="_blank" rel="noopener">Chatbot</a>
+    <a href="#bibtex">BibTeX</a>
+  </nav>
+  <img class="mitmark" src="assets/mit-black.svg" alt="MIT">
+</div></div>
+
+<header class="hero wrap">
+  <div class="kickerline">EMNLP 2026 Main</div>
+  <h1>HugAgent: A Human Simulation Benchmark<br class="deskbr">for Individual-Level Reasoning</h1>
+  <div class="tagline">Can AI <em>reason</em> like you, or only answer like you?</div>
+  <p class="heroauthors">
+    Chance Jiajie Li<sup>1*</sup>, Zhenze Mo<sup>8*</sup>, Yuhan Tang<sup>5*</sup>, Ao Qu<sup>4</sup>, Jiayi Wu<sup>9</sup>, Kaiya Ivy Zhao<sup>2,3</sup>, Yulu Gan<sup>2</sup>, Jie Fan<sup>2,7,&dagger;</sup>, Jiangbo Yu<sup>10</sup>, Hang Jiang<sup>1,8</sup>, Paul Pu Liang<sup>1,2</sup>, Jinhua Zhao<sup>4,5,6</sup>, Luis Alberto Alonso Pastor<sup>1</sup>, Kent Larson<sup>1</sup>
+  </p>
+  <p class="heroaffils">
+    <sup>1</sup>MIT Media Lab &nbsp; <sup>2</sup>MIT EECS &nbsp; <sup>3</sup>MIT BCS &nbsp; <sup>4</sup>MIT IDSS &nbsp; <sup>5</sup>MIT CEE &nbsp; <sup>6</sup>MIT DUSP &nbsp; <sup>7</sup>MIT Architecture &nbsp; <sup>8</sup>Northeastern University &nbsp; <sup>9</sup>Brown University &nbsp; <sup>10</sup>McGill University
+  </p>
+  <p class="heronote">* equal contribution &nbsp;&middot;&nbsp; &dagger; now at Google &nbsp;&middot;&nbsp; <a href="mailto:jiajie@mit.edu">jiajie@mit.edu</a></p>
+  
+  <div class="tldrbox">
+    <p><b class="lb">tl;dr</b> HugAgent (<strong>Hu</strong>man-<strong>G</strong>rounded <strong>Agent</strong> Benchmark) is the first human simulation benchmark to evaluate how specific people reason and update their beliefs, not just what they would answer. It scales the think-aloud method with an LLM-driven chatbot, probing each person&rsquo;s beliefs, reasoning, and responses to counterfactuals on contested topics.</p>
+    <p><b class="lb">Finding</b> Models can recover what a person believes. Predicting what would change their mind is much harder. <a href="#finding">Results&nbsp;&darr;</a></p>
+  </div>
+  <div class="btns">
+    <a class="btn primary" href="https://arxiv.org/abs/2510.15144" target="_blank" rel="noopener">Paper</a>
+    <a class="btn" href="https://github.com/jajamoa/HugAgent" target="_blank" rel="noopener">Code</a>
+    <a class="btn" href="https://github.com/jajamoa/HugAgent/tree/main/Benchmark" target="_blank" rel="noopener">Data</a>
+    <a class="btn" href="https://github.com/jajamoa/trace-your-thinking" target="_blank" rel="noopener">Chatbot</a>
+    <a class="btn" href="#bibtex">BibTeX</a>
+  </div>
+  
+  
+</header>
+<div class="teaser">
+  <img src="assets/teaser.jpg" alt="Four-panel illustration: a gray robot echoes the population average, then aligns with one individual's reasoning, then adapts as that person updates.">
+  <div class="panelcaps">
+    <div><b>1</b><i class="pc pc-gray"></i><span class="pcl">population prior</span> Asked about park lighting, the gray agent echoes the consensus: more lights make parks safer.</div>
+    <div><b>2</b><i class="pc pc-green"></i><span class="pcl">this person</span> This person reasons differently: main-path lights help; deep in the park, it&rsquo;s light pollution.</div>
+    <div><b>3</b><i class="pc pc-half"></i><span class="pcl">aligning beliefs</span> The agent observes this person&rsquo;s reasoning and aligns with their beliefs, not the population prior.</div>
+    <div><b>4</b><i class="pc pc-green2"></i><span class="pcl">updating beliefs</span> An intervention: the city introduces <a class="term" href="https://darksky.org/resources/what-is-light-pollution/light-pollution-solutions/lighting/" target="_blank" rel="noopener" title="Real-world counterpart: DarkSky-approved shielded, warm-toned fixtures.">eco-lamps</a>, fixtures that cut light pollution. That dissolves this person&rsquo;s objection, and the agent must predict how they update.</div>
+  </div>
+</div>
+
+<section class="wrap" id="question" style="margin-top:55px">
+  <div class="kicker">The question</div>
+  <p class="body">Large language models are increasingly used to simulate people: digital twins, synthetic respondents, silicon samples. But they are trained on population-level text, so they tend to converge on an average voice. They capture what people think in general, while losing how any one person actually reasons.</p>
+  <p class="body">HugAgent asks what the average hides: given partial evidence of one person&rsquo;s views, <strong>can a model predict what that person believes now, and how they will change their mind under new evidence?</strong></p>
+</section>
+
+<section class="wrap" id="tasks">
+  <div class="kicker">Two tasks</div>
+  <div class="cards">
+    <div class="card">
+      <h3>What do they believe?</h3>
+      <div class="csub">Belief State Inference</div>
+      <p>The model reads a person&rsquo;s own words: question-and-answer pairs from a think-aloud interview. It must then infer a belief the person holds but never stated in the excerpt: does factor X push their support up or down?</p>
+    </div>
+    <div class="card">
+      <h3>What would change their mind?</h3>
+      <div class="csub">Belief Dynamics Update</div>
+      <p>The model gets the same interview, plus a new scenario: a policy changes, a technology improves, a cost appears. It must predict how this specific person&rsquo;s stance shifts, on the person&rsquo;s own scale. The ground truth is what the person actually answered.</p>
+    </div>
+  </div>
+  <p class="note">Ground truth comes from the participants themselves: stances, reason weights, and updates reported in structured questionnaires, never revealed in the interview transcripts the models see.</p>
+</section>
+
+<section class="wrap" id="stats">
+  <div class="stats">
+    <div class="stat"><b>54</b> participants, quality-filtered from 120</div>
+    <div class="stat"><b>3</b> contested domains: healthcare, surveillance, zoning</div>
+    <div class="stat"><b>1,742</b> benchmark items</div>
+    <div class="stat"><b>~85%</b> human test-retest ceiling</div>
+    <div class="stat"><b>100%</b> open source: data, pipeline, chatbot</div>
+  </div>
+</section>
+
+<section class="wrap" id="finding">
+  <div class="kicker">The finding</div>
+  <h2>Models can recover what you believe. They struggle to predict how you change your mind.</h2>
+  <p class="body">On belief states, the best models trail the human ceiling by 7 to 9 points. On belief updates, the gap widens sharply: models misjudge when a person will move and which way. The asymmetry holds across every model family we tested.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Model</th><th>Belief state (acc %)</th><th>Belief update (acc %)</th><th>Direction (acc %)</th><th>ATI</th></tr></thead>
+      <tbody>
+        <tr class="human"><td>Human ceiling</td><td>84.84</td><td>85.66</td><td>88.92</td><td>100.00</td></tr>
+        <tr><td>LLaMA 3.3 70B</td><td>76.39</td><td>67.57</td><td>79.56</td><td class="best">69.84</td></tr>
+        <tr><td>Claude Sonnet 4.5</td><td>76.04</td><td class="best">68.61</td><td>78.73</td><td>67.39</td></tr>
+        <tr><td>GPT-4o</td><td>74.66</td><td>63.11</td><td class="best">82.27</td><td>67.29</td></tr>
+        <tr><td>DeepSeek-R1</td><td>75.43</td><td>64.88</td><td>79.69</td><td>67.20</td></tr>
+        <tr><td>Gemini 2.5 Pro</td><td>75.45</td><td>64.87</td><td>78.65</td><td>64.29</td></tr>
+        <tr><td>GPT-5-mini</td><td>75.30</td><td>58.21</td><td>77.02</td><td>61.53</td></tr>
+        <tr><td>RAG (full context)</td><td class="best">77.56</td><td>59.97</td><td>76.80</td><td>65.65</td></tr>
+        <tr><td>Generative Agents</td><td>76.19</td><td>58.22</td><td>76.13</td><td>62.43</td></tr>
+        <tr class="dim"><td>Global majority baseline</td><td>65.77</td><td>58.18</td><td>17.93</td><td>4.44</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="tnote">ATI: average-to-individual score, aggregating both tasks against human and random baselines (human = 100, random = 0). Best model per column in green. Full table and confidence intervals in the paper.</p>
+</section>
+
+<div class="quiz" id="quiz">
+  <div class="wrap">
+    <div class="kicker">Try it yourself</div>
+    <h2>Predict a real person</h2>
+    <p class="body">Four items from the benchmark, unedited. You see exactly what the models saw: a stranger&rsquo;s own words from an interview. Predict their answer, then see what they actually said. Frontier models average 75% on belief states and 58% to 69% on updates. See if you can beat that.</p>
+
+    <div class="qcard" data-q="0">
+      <div class="qhead"><span>Person 1 of 4 &middot; surveillance</span><span>Belief State Inference</span></div>
+      <p class="qsetup">This person owns their home in Kansas, wears a mask whenever they go out, and thinks the balance should tip &ldquo;way in favor of privacy advocates.&rdquo;</p>
+      <div class="chips">
+        <div class="chip"><b>Q: How should the interests of law enforcement and privacy advocates be balanced?</b>&ldquo;The balance should be skewed way in favor of privacy advocates.&rdquo;</div>
+        <div class="chip"><b>Q: What role do social equity and potential bias play?</b>&ldquo;There could be bias against people like me who wear a mask all the time.&rdquo;</div>
+        <div class="chip"><b>Q: Does freedom have a positive or negative effect on support for surveillance cameras?</b>&ldquo;It has a very negative effect because having this surveillance destroys freedom.&rdquo;</div>
+        <div class="chip"><b>Q: Would small changes in negative perception of police lead to noticeable changes in support?</b>&ldquo;When trust of the police is already so low, just a small change could result in a noticeable drop&hellip;&rdquo;</div>
+      </div>
+      <p class="qq">Does wearing a mask push this person&rsquo;s support for surveillance cameras up or down?</p>
+      <div class="opts">
+        <button class="opt" data-v="A">A. Positive effect</button>
+        <button class="opt" data-v="B">B. Negative effect</button>
+      </div>
+      <div class="qreveal"><div class="verdict"></div>They said <b>negative</b>. The chain: they wear a mask everywhere, and they believe surveillance is biased against mask-wearers, so cameras mean being watched more closely, not being protected. For them, wearing a mask pushes support down. The average brain runs the opposite chain (mask means the camera cannot identify me, so who cares) and lands on A.</div>
+    </div>
+
+    <div class="qcard" data-q="1">
+      <div class="qhead"><span>Person 2 of 4 &middot; zoning</span><span>Belief State Inference</span></div>
+      <p class="qsetup">This person opposes dense housing (&ldquo;nobody&rsquo;s happy being stuffed like sardines&rdquo;), sides with current residents over future ones, and worries about traffic.</p>
+      <div class="chips">
+        <div class="chip"><b>Q: To what extent do you support or oppose upzoning?</b>&ldquo;I don&rsquo;t feel like they should have higher density housing mixed in with traditional single family neighborhoods&hellip;&rdquo;</div>
+        <div class="chip"><b>Q: What impact might increased housing density have on neighborhoods?</b>&ldquo;I think the quality of life would go down because nobody&rsquo;s happy being stuffed like sardines into neighborhoods&hellip;&rdquo;</div>
+        <div class="chip"><b>Q: How might upzoning affect housing affordability?</b>&ldquo;It would probably eventually make housing more affordable&hellip;&rdquo;</div>
+        <div class="chip"><b>Q: How should current versus future residents be weighed?</b>&ldquo;I think the interest of the current residents should be looked at instead of future residents.&rdquo;</div>
+      </div>
+      <p class="qq">Does housing affordability push this person&rsquo;s support for building more housing up or down?</p>
+      <div class="opts">
+        <button class="opt" data-v="A">A. Positive effect</button>
+        <button class="opt" data-v="B">B. Negative effect</button>
+      </div>
+      <div class="qreveal"><div class="verdict"></div><b>Positive.</b> The chain: their objections are about density, traffic, and current residents, not about price; and they concede that upzoning &ldquo;would probably eventually make housing more affordable.&rdquo; So on the affordability factor alone, cheaper housing pulls them toward support. Reading the persona (&ldquo;a NIMBY, so B&rdquo;) fails; opponents are not opponents on every factor.</div>
+    </div>
+
+    <div class="qcard" data-q="2">
+      <div class="qhead"><span>Person 3 of 4 &middot; healthcare</span><span>Belief Dynamics Update</span></div>
+      <p class="qsetup">This person strongly supports universal healthcare: it &ldquo;reduces burden from families,&rdquo; should reach &ldquo;even the small community, no discrimination.&rdquo;</p>
+      <div class="chips">
+        <div class="chip"><b>Q: How might universal healthcare affect the economic burden on individuals?</b>&ldquo;it will reduce a lot of burdens from family and individuals because the public funding&rdquo;</div>
+        <div class="chip"><b>Q: What role do social equity and access to care play?</b>&ldquo;it should be accessible to even the small community no discrimination&rdquo;</div>
+        <div class="chip"><b>Q: Does access to care have a positive or negative effect on support?</b>&ldquo;yes has a strong effect, when people knows they have access to care whenever they want, they will support&rdquo;</div>
+        <div class="chip"><b>Q: Is the effect of strong future impact immediate, or does it take time?</b>&ldquo;yes it&rsquo;s a strong effect people health is wealth less sickness more savings&rdquo;</div>
+      </div>
+      <p class="qq">If private insurance stayed available alongside the public system, where does their support land? (1 = strongly oppose, 10 = strongly support)</p>
+      <div class="opts scale-opts"></div>
+      <div class="qreveal"><div class="verdict"></div>They answered <b>10</b>. The chain: every reason they give is about access and reduced burden, and keeping private insurance takes nothing away from either, so the compromise removes nothing they care about and their support stays at the ceiling. Models often read any concession as a cue to hedge toward the middle; this person had nothing to hedge about. (Scored like the paper: within &plusmn;2 on a 10-point scale.)</div>
+    </div>
+
+    <div class="qcard" data-q="3">
+      <div class="qhead"><span>Person 4 of 4 &middot; surveillance</span><span>Belief Dynamics Update</span></div>
+      <p class="qsetup">This person is balanced and safety-minded: cameras deter crime, privacy matters, both sides deserve a seat at the table.</p>
+      <div class="chips">
+        <div class="chip"><b>Q: How should law enforcement and privacy advocates be balanced?</b>&ldquo;I think the concerns of both groups should be considered when implementing surveillance technology.&rdquo;</div>
+        <div class="chip"><b>Q: What are the main causes of support for surveillance cameras?</b>&ldquo;I think the main cause of support for surveillance technology is concern for safety&hellip;&rdquo;</div>
+        <div class="chip"><b>Q: Does crime deterrence have a positive or negative effect on support?</b>&ldquo;Crime deterrence has a big effect, and whether the effect is positive or negative depends on how you&hellip;&rdquo;</div>
+        <div class="chip"><b>Q: Does personal privacy have a positive or negative effect on support?</b>&ldquo;Personal privacy concerns can have a big effect on support for surveillance&hellip;&rdquo;</div>
+      </div>
+      <p class="qq">&ldquo;If you or someone you know has had a negative experience with facial recognition, how negative was it?&rdquo; (1 = not at all, 10 = extremely)</p>
+      <div class="opts scale-opts"></div>
+      <div class="qreveal"><div class="verdict"></div>They answered <b>1</b>. The chain: the question asks about their own experience, not their opinions, and across 19 answers they never mention one bad encounter, while their tone stays balanced (&ldquo;both groups should be considered&rdquo;). Absence of any such story in their own words is the evidence, so predict the floor. A model reasoning by association (thoughtful about privacy, so probably burned by it) invents a history this person never had. (Scored within &plusmn;2.)</div>
+    </div>
+
+    <p class="scoreline">Your score: <span id="score">0</span>/4 &middot; on items like these, frontier models land around 58% to 75%.</p>
+    <p class="outro">Static beliefs are the easy part. The misses cluster where beliefs move: whether a person updates at all, and which way. That asymmetry is the benchmark&rsquo;s central finding, and you likely just felt it firsthand.</p>
+  </div>
+</div>
+
+<section class="wrap" id="breaks">
+  <div class="kicker">Where it breaks</div>
+  <div class="cards cards3">
+    <div class="card">
+      <h3>Identity does not transfer</h3>
+      <p>Give GPT-4o a person&rsquo;s healthcare interview and ask about their zoning views: belief-state accuracy drops from 74.66 to 58.56, update accuracy from 63.11 to 44.64. Models match patterns within a topic instead of carrying one identity across topics.</p>
+    </div>
+    <div class="card">
+      <h3>More context does not help updating</h3>
+      <p>Belief-state inference improves with longer interviews, up 5.2 points at full context. Update prediction stays flat. For 43% of participant-domain pairs, context length changes nothing at all. Updating needs the right evidence, not more of it.</p>
+    </div>
+    <div class="card">
+      <h3>Models are change-averse</h3>
+      <p>When a person does move, models catch the direction about 89% of the time. But they detect that a change happened only about half the time. They preserve prior beliefs even when the evidence shows that this person changed their mind.</p>
+    </div>
+  </div>
+</section>
+
+<section class="wrap" id="pipeline">
+  <div class="kicker">The pipeline</div>
+  <p class="body">Each participant completes two stages (a questionnaire, then a semi-structured interview chatbot), and two safeguards keep the benchmark honest.</p>
+  <div class="steps">
+    <div class="step"><div class="sh"><i class="pc" style="background:#e67e22"></i>1 &middot; Questionnaire &rarr; ground truth</div>Demographics, baseline stances, reason weights, and counterfactual updates under stated interventions. These answers become the gold labels for both tasks.</div>
+    <div class="step"><div class="sh"><i class="pc" style="background:#c0392b"></i>2 &middot; Interview chatbot &rarr; context</div>Semi-structured guiding questions open each topic; automatic follow-ups personalize from earlier answers. Behind the dialogue, a live belief graph of the person is maintained and used to pick the most informative next question. The 8 to 20 resulting QA pairs become the context models see.</div>
+    <div class="step"><div class="sh"><i class="pc" style="background:#a9a9a6"></i>Leakage control</div>Survey answers never appear in the dialogue, so the transcript cannot leak the labels.</div>
+    <div class="step"><div class="sh"><i class="pc" style="background:#a9a9a6"></i>Human ceiling</div>A 14-day test-retest study sets the consistency ceiling the leaderboard is measured against.</div>
+  </div>
+  <a class="pipefig" style="display:block" href="assets/pipeline.png" target="_blank" rel="noopener"><img src="assets/pipeline.png" alt="HugAgent pipeline: questionnaire and interview chatbot feed two benchmark tasks."></a>
+  <p class="figcap">From one person to two tasks:
+    <span class="lg"><i style="background:#c0392b"></i>the interview chatbot yields context QAs</span>,
+    <span class="lg"><i style="background:#e67e22"></i>the questionnaire yields ground truth (baseline stances and updates)</span>, and
+    <span class="lg"><i style="background:#1a5276"></i>together they become the two tasks: Belief State Inference and Belief Dynamics Update</span>.
+    Click to enlarge.</p>
+</section>
+
+<section class="wrap" id="use">
+  <div class="kicker">Use it</div>
+  <h2>Evaluate your model</h2>
+  <p class="body">The dataset ships as plain JSONL, one item per line: context QAs, task question, gold answer. The evaluation harness runs any OpenAI-compatible API.</p>
+  <p class="note">A scaled-up v2, with more participants and more topics, is in preparation.</p>
+<pre>git clone https://github.com/jajamoa/HugAgent
+cd HugAgent/Benchmark
+python process_data.py
+python evaluate_qwen.py --model your-model</pre>
+  <h3 style="font-size:18px;margin:34px 0 8px">Collect your own</h3>
+  <p class="body" style="font-size:14.5px">TraceYourThinking, the interview chatbot behind HugAgent, is open source too. Point it at any topic and it collects fine-grained, think-aloud reasoning data: the raw material for benchmarks like this one, on questions we have not thought to ask. <a href="https://github.com/jajamoa/trace-your-thinking" target="_blank" rel="noopener">github.com/jajamoa/trace-your-thinking</a></p>
+  <a class="pipefig" style="display:block;border-bottom-width:1px" href="assets/chatbot.jpg" target="_blank" rel="noopener"><img src="assets/chatbot.jpg" alt="TraceYourThinking: a semi-structured interview chatbot maintains a causal belief graph and generates follow-up questions."></a>
+  <p class="figcap">The interview loop, left to right: each answer updates a causal belief network of the participant; the bot reads the graph, finds its most informative node (anchor discovery, then expansion), and asks the follow-up that probes it; the loop repeats for 8 to 20 turns. Click to enlarge.</p>
+</section>
+
+
+
+<section class="wrap" id="bibtex">
+  <div class="kicker">Citation</div>
+  <p class="body">If you use HugAgent, please cite the paper. Earlier versions appeared at the NeurIPS 2025 <a href="https://personallmworkshop.github.io/" target="_blank" rel="noopener">PersonaLLM workshop</a> (Oral) and <a href="https://sites.google.com/view/law-2025" target="_blank" rel="noopener">LAW workshop</a> (Spotlight).</p>
+<pre>@misc{li2025hugagent,
+  title   = {HugAgent: A Human Simulation Benchmark
+             for Individual-Level Reasoning},
+  author  = {Li, Chance Jiajie and Mo, Zhenze and Tang, Yuhan
+             and Qu, Ao and Wu, Jiayi and Zhao, Kaiya Ivy
+             and Gan, Yulu and Fan, Jie and Yu, Jiangbo
+             and Jiang, Hang and Liang, Paul Pu and Zhao, Jinhua
+             and Alonso Pastor, Luis Alberto and Larson, Kent},
+  year    = {2025},
+  eprint  = {2510.15144},
+  archivePrefix = {arXiv},
+  note    = {EMNLP 2026 Main}
+}</pre>
+</section>
+
+<footer><div class="wrap">
+  <span>HugAgent &middot; 2026</span>
+  <span><a href="https://github.com/jajamoa/HugAgent" target="_blank" rel="noopener">github.com/jajamoa/HugAgent</a></span>
+</div></footer>
+
+<script>
+(function(){
+  var gold={0:'A_B',1:'A_A'};
+  var answered=0, score=0;
+  function done(){
+    answered++;
+    if(answered===4){
+      document.querySelector('.scoreline').style.display='block';
+      document.querySelector('.outro').style.display='block';
+      document.getElementById('score').textContent=score;
+    }
+  }
+  // BSI cards (A/B)
+  var bsiGold={0:'B',1:'A'};
+  document.querySelectorAll('.qcard[data-q="0"] .opt, .qcard[data-q="1"] .opt').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var card=btn.closest('.qcard'), q=card.dataset.q, g=bsiGold[q];
+      if(card.dataset.done)return; card.dataset.done=1;
+      var right=btn.dataset.v===g;
+      if(right)score++;
+      btn.classList.add(right?'picked-right':'picked-wrong');
+      card.querySelectorAll('.opt').forEach(function(b){b.disabled=true;if(b.dataset.v===g)b.classList.add('gold');});
+      var rev=card.querySelector('.qreveal'), v=rev.querySelector('.verdict');
+      v.textContent=right?'You got it.':'Not this person.';
+      v.className='verdict '+(right?'ok':'no');
+      rev.style.display='block';
+      done();
+    });
+  });
+  // BDU cards (1-10 scale, tolerance +/-2)
+  var bduGold={2:10,3:1};
+  [2,3].forEach(function(q){
+    var card=document.querySelector('.qcard[data-q="'+q+'"]');
+    var box=card.querySelector('.scale-opts');
+    for(var i=1;i<=10;i++){
+      var b=document.createElement('button');
+      b.className='opt scale'; b.textContent=i; b.dataset.v=i;
+      box.appendChild(b);
+    }
+    box.addEventListener('click',function(e){
+      var btn=e.target.closest('.opt'); if(!btn||card.dataset.done)return;
+      card.dataset.done=1;
+      var g=bduGold[q], pick=+btn.dataset.v, right=Math.abs(pick-g)<=2;
+      if(right)score++;
+      btn.classList.add(right?'picked-right':'picked-wrong');
+      card.querySelectorAll('.opt').forEach(function(b){b.disabled=true;if(+b.dataset.v===g)b.classList.add('gold');});
+      var rev=card.querySelector('.qreveal'), v=rev.querySelector('.verdict');
+      v.textContent=right?'You got it.':'Not this person.';
+      v.className='verdict '+(right?'ok':'no');
+      rev.style.display='block';
+      done();
+    });
+  });
+})();
+</script>
+<div class="avgnote">average mode: everyone is 68.4. type &ldquo;me&rdquo; to be an individual again.</div>
+<script>
+(function(){
+  var buf="", avg=false, saved=null, tagline=document.querySelector(".tagline");
+  var tagHTML=tagline?tagline.innerHTML:"";
+  function goAvg(){
+    if(avg)return; avg=true;
+    document.body.classList.add("avg");
+    if(tagline)tagline.innerHTML="Can AI simulate anyone? Sure, on average.";
+    var tds=document.querySelectorAll("#finding tbody tr:not(.human):not(.dim) td:not(:first-child)");
+    saved=[]; tds.forEach(function(td){saved.push(td.textContent); td.textContent="68.40"; td.classList.remove("best");});
+  }
+  function goMe(){
+    if(!avg)return; avg=false;
+    document.body.classList.remove("avg");
+    if(tagline)tagline.innerHTML=tagHTML;
+    var tds=document.querySelectorAll("#finding tbody tr:not(.human):not(.dim) td:not(:first-child)");
+    tds.forEach(function(td,i){td.textContent=saved[i];});
+    document.querySelectorAll("#finding tbody td").forEach(function(td){
+      if(["69.84","68.61","82.27","77.56"].indexOf(td.textContent)>-1)td.classList.add("best");
+    });
+    var n=document.createElement("div"); n.className="backnote"; n.textContent="Welcome back, individual.";
+    document.body.appendChild(n); setTimeout(function(){n.remove();},2600);
+  }
+  document.addEventListener("keydown",function(e){
+    if(e.key.length!==1)return;
+    buf=(buf+e.key.toLowerCase()).slice(-12);
+    if(buf.endsWith("average"))goAvg();
+    if(avg&&buf.endsWith("me"))goMe();
+  });
+  var em=document.querySelector(".tagline em");
+  if(em){em.style.cursor="pointer";em.addEventListener("click",function(){avg?goMe():null;});}
+  console.log("%c\n   ___\n  |o o|   HugAgent\n  | u |   You opened the console.\n  |___|   The average visitor doesn&apos;t.\n  /|g|\\  We study individuals like you.\n","color:#15803d;font-family:monospace;font-size:12px");
+  console.log("%cWork with us: jiajie@mit.edu \u00b7 github.com/jajamoa/HugAgent","color:#4f4e49;font-family:monospace");
+})();
+</script>
+</body>
+</html>

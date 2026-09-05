@@ -1,0 +1,680 @@
+import json
+import os
+import csv
+import argparse
+import re
+from pathlib import Path
+from llm_utils import QwenLLM
+from concurrent.futures import ThreadPoolExecutor
+import threading
+
+# Weak causal sign detector patterns (disabled for belief attribution)
+KW_TRIGGER = re.compile(
+    r"(?:\b(effect|effects|impact|impacts|impacting|impacted|influence|influences|influencing|influenced|affect|affects|affecting|affected)\b"
+    r"|(?:\bpositive\b|\bnegative\b)"
+    r"|(?:\blead\s+to\b|\bled\s+to\b|\bcauses?\b|\bcaused\b|\bresult(?:s|ed)?\s+in\b|\bresult(?:s|ed)?\s+from\b)"
+    r"|(?:\bconsequence(?:s)?\b)"
+    r"|(?:\bdue\s+to\b|\bbecause\s+of\b|\bowing\s+to\b|\bas\s+a\s+result\s+of\b)"
+    r"|(?:\bcausal(?:ly)?\b)"
+    r"|(?:\brelationship(?:s)?\b|\bconnection(?:s)?\b))",
+    re.IGNORECASE
+)
+
+# New regex for belief attribution - match "How strong is this effect?"
+EFFECT_STRENGTH_TRIGGER = re.compile(r"How\s+strong\s+is\s+this\s+effect\?", re.IGNORECASE)
+
+
+def is_weak_causal_sign_question(text):
+    """
+    Only match "How strong is this effect?" pattern
+    """
+    if not text or not text.strip():
+        return False
+    t = text.strip()
+    
+    # Only use effect strength trigger
+    return bool(EFFECT_STRENGTH_TRIGGER.search(t))
+
+def process_user_folder(user_folder, qa_start_id=1, context_lengths=None, task_type="belief_attribution", topic="zoning", exclude_no_effect=False):
+    """Process single user folder and generate QA data for specified topic and task type
+    Returns: (qa_pairs, next_qa_id)
+    """
+    # Read demographic data
+    demo_path = user_folder / "demographic" / "demographic.json"
+    if not demo_path.exists():
+        return [], qa_start_id
+        
+    with open(demo_path, 'r') as f:
+        demo_data = json.load(f)
+    
+    # Get prolific ID (first 6 characters)
+    prolific_id = user_folder.name[:6]
+    
+    # Extract demographics data (remove nested prolific_id key)
+    demo_info = demo_data.get(user_folder.name, demo_data)
+    
+    qa_pairs = []
+    
+    if task_type == "belief_attribution":
+        # Original belief attribution logic
+        # Map topic to survey file name
+        survey_files = {
+            "zoning": "zoning_reaction.json",
+            "surveillance": "camera_reaction.json",
+            "healthcare": "healthcare_reaction.json"
+        }
+        
+        # Read topic-specific reaction data
+        survey_file = survey_files.get(topic, "zoning_reaction.json")
+        survey_path = user_folder / "survey" / survey_file
+        if not survey_path.exists():
+            return [], qa_start_id
+            
+        with open(survey_path, 'r') as f:
+            survey_data = json.load(f)
+        
+        # Read transcript CSV data - map topic to file name
+        transcript_files = {
+            "zoning": "zoning.csv",
+            "surveillance": "camera.csv",  # surveillance topic uses camera.csv file
+            "healthcare": "healthcare.csv"
+        }
+        transcript_file = transcript_files.get(topic, f"{topic}.csv")
+        transcript_path = user_folder / "transcript" / "raw" / transcript_file
+        context_qas = []
+        if transcript_path.exists():
+            context_qas = extract_context_qas(transcript_path)
+        
+        # Generate multiple belief attribution questions using LLM
+        belief_qas = generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic, exclude_no_effect)
+        
+        # Filter out "C" answers if exclude_no_effect is enabled
+        if exclude_no_effect:
+            original_count = len(belief_qas)
+            belief_qas = [qa for qa in belief_qas if qa.get("answer") != "C"]
+            filtered_count = len(belief_qas)
+            if original_count > filtered_count:
+                print(f"Filtered out {original_count - filtered_count} 'NO SIGNIFICANT effect' questions for user {prolific_id}")
+        
+        # Generate three context length versions for each belief attribution question
+        # Note: Shorter context = harder to infer beliefs with limited information
+        all_context_configs = [
+            {"name": "long", "context_size": len(context_qas)},  # All available context
+            {"name": "medium", "context_size": 10},  # Medium context
+            {"name": "short", "context_size": 5}  # Minimal context
+        ]
+        
+        # Filter context configs based on input parameter
+        if context_lengths is None:
+            context_lengths = ["short", "medium", "long"]
+        
+        context_configs = [config for config in all_context_configs 
+                          if config["name"] in context_lengths]
+        
+        for belief_qa in belief_qas:
+            # Get the source QA question content to exclude it from context for this specific question only
+            source_qa_question = belief_qa.get("source_qa", {}).get("question", "")
+            
+            for j, config in enumerate(context_configs):
+                # Remove only this question's source QA from context using question content match
+                context_without_current_source = [qa for qa in context_qas 
+                                                if qa["question"] != source_qa_question]
+                
+                # Select appropriate amount of context for this context length
+                if config["context_size"] >= len(context_without_current_source):
+                    context_length_context = context_without_current_source
+                else:
+                    context_length_context = context_without_current_source[:config["context_size"]]
+                
+                # Create answer options based on exclude_no_effect setting
+                if exclude_no_effect:
+                    answer_options = {
+                        "A": "POSITIVE effect",
+                        "B": "NEGATIVE effect"
+                    }
+                else:
+                    answer_options = {
+                        "A": "POSITIVE effect",
+                        "B": "NEGATIVE effect", 
+                        "C": "NO SIGNIFICANT effect"
+                    }
+                
+                # Create QA entry with LLM-generated question
+                qa_entry = {
+                    "id": f"qa_{qa_start_id:03d}",
+                    "prolific_id": prolific_id,
+                    "demographics": demo_info,
+                    "context_qas": context_length_context,
+                    "context_length": config["name"],
+                    "topic": topic,
+                    "task_type": "belief_attribution",
+                    "task_question": belief_qa["question"],
+                    "answer_options": answer_options,
+                    "answer": belief_qa["answer"],
+                    "source_qa": belief_qa.get("source_qa", {}),
+                    "reasoning": belief_qa.get("reasoning", "")
+                }
+                qa_pairs.append(qa_entry)
+                qa_start_id += 1
+                                 
+    elif task_type == "belief_update":
+        # New belief update logic
+        # Read transcript CSV data for context - map topic to file name
+        transcript_files = {
+            "zoning": "zoning.csv",
+            "surveillance": "camera.csv",  # surveillance topic uses camera.csv file
+            "healthcare": "healthcare.csv"
+        }
+        transcript_file = transcript_files.get(topic, f"{topic}.csv")
+        transcript_path = user_folder / "transcript" / "raw" / transcript_file
+        context_qas = []
+        if transcript_path.exists():
+            context_qas = extract_context_qas(transcript_path)
+        
+        # Generate three context length versions for each belief update question
+        all_context_configs = [
+            {"name": "long", "context_size": len(context_qas)},  # All available context
+            {"name": "medium", "context_size": 10},  # Medium context
+            {"name": "short", "context_size": 5}  # Minimal context
+        ]
+        
+        # Filter context configs based on input parameter
+        if context_lengths is None:
+            context_lengths = ["short", "medium", "long"]
+        
+        context_configs = [config for config in all_context_configs 
+                          if config["name"] in context_lengths]
+        
+        # Process belief update questions from survey data
+        survey_qas = process_belief_update_questions(user_folder, topic)
+        
+        for survey_qa in survey_qas:
+            for config in context_configs:
+                # Apply context length filtering
+                if config["context_size"] >= len(context_qas):
+                    context_length_context = context_qas
+                else:
+                    context_length_context = context_qas[:config["context_size"]]
+                
+                qa_entry = {
+                    "id": f"qa_{qa_start_id:03d}",
+                    "prolific_id": prolific_id,
+                    "demographics": demo_info,
+                    "context_qas": context_length_context,
+                    "context_length": config["name"],
+                    "topic": topic,
+                    "task_type": "belief_update",
+                    "question_id": survey_qa["question_id"],
+                    "question_type": survey_qa["question_type"],
+                    "task_question": survey_qa["question_text"],
+                    "user_answer": survey_qa["user_answer"],
+                    "scale": survey_qa["scale"]
+                }
+                
+                # Add reason-specific fields if it's a reason evaluation question
+                if survey_qa["question_type"] == "reason_evaluation":
+                    qa_entry["reason_code"] = survey_qa["reason_code"]
+                    qa_entry["reason_text"] = survey_qa["reason_text"]
+                
+                qa_pairs.append(qa_entry)
+                qa_start_id += 1
+    
+    return qa_pairs, qa_start_id
+
+def extract_zoning_answer(zoning_data, user_id):
+    """Extract answer from zoning reaction data"""
+    # Get user's data from the nested structure
+    if user_id not in zoning_data:
+        return "neutral"
+    
+    user_data = zoning_data[user_id]
+    opinions = user_data.get("opinions", {})
+    
+    # Calculate average opinion score (assuming 1-10 scale)
+    if opinions:
+        avg_score = sum(opinions.values()) / len(opinions)
+        # Convert to support/oppose/neutral based on score
+        if avg_score >= 7:
+            return "support"
+        elif avg_score <= 4:
+            return "oppose"
+        else:
+            return "neutral"
+    
+    return "neutral"
+
+def extract_context_qas(csv_path):
+    """Extract QA pairs from transcript CSV file, skipping first 6 guidance questions"""
+    context_qas = []
+    
+    with open(csv_path, 'r', encoding='utf-8') as f:
+        reader = csv.reader(f)
+        lines = list(reader)
+        
+        # Find the start of QA data (after the header section)
+        qa_start_idx = None
+        for i, line in enumerate(lines):
+            if len(line) >= 3 and line[0] == "Question Number":
+                qa_start_idx = i + 1
+                break
+        
+        if qa_start_idx is None:
+            return context_qas
+            
+        # Extract QA pairs, starting from question 7 (skip first 6 guidance questions)
+        qa_counter = 1
+        for line in lines[qa_start_idx:]:
+            if len(line) >= 3 and line[0].strip():  # Has question number
+                question_num = int(line[0].strip())
+                
+                # Skip first 6 guidance questions
+                if question_num > 6:
+                    qa_pair = {
+                        "question_number": str(qa_counter),
+                        "question": line[1].strip(),
+                        "answer": line[2].strip()
+                    }
+                    context_qas.append(qa_pair)
+                    qa_counter += 1
+    
+    return context_qas
+
+def load_survey_data(topic="zoning"):
+    """Load survey questions and reason mappings"""
+    survey_path = Path("../raw_data/survey_content/surveys.json")
+    
+    # Map topic to reason mapping file
+    reason_mapping_files = {
+        "zoning": "housing_reason_mapping.json",
+        "surveillance": "surveillance_reason_mapping.json", 
+        "healthcare": "healthcare_reason_mapping.json"
+    }
+    
+    reason_mapping_file = reason_mapping_files.get(topic, "housing_reason_mapping.json")
+    reason_mapping_path = Path(f"../raw_data/survey_content/{reason_mapping_file}")
+    
+    with open(survey_path, 'r') as f:
+        survey_data = json.load(f)
+    
+    with open(reason_mapping_path, 'r') as f:
+        reason_mapping = json.load(f)
+    
+    return survey_data, reason_mapping
+
+def process_belief_update_questions(user_folder, topic="zoning"):
+    """Process belief update questions based on survey data"""
+    # Load survey structure and reason mappings
+    survey_data, reason_mapping = load_survey_data(topic)
+    
+    # Map topic to survey key
+    topic_map = {
+        "zoning": "upzoning",
+        "surveillance": "surveillance_camera", 
+        "healthcare": "universal_healthcare"
+    }
+    
+    survey_key = topic_map.get(topic, "upzoning")
+    
+    # Map topic to survey file name
+    survey_files = {
+        "zoning": "zoning_reaction.json",
+        "surveillance": "camera_reaction.json",
+        "healthcare": "healthcare_reaction.json"
+    }
+    
+    # Read user's survey responses
+    survey_file = survey_files.get(topic, "zoning_reaction.json")
+    survey_path = user_folder / "survey" / survey_file
+    
+    if not survey_path.exists():
+        return []
+    
+    with open(survey_path, 'r') as f:
+        user_responses = json.load(f)
+    
+    user_id = user_folder.name
+    if user_id not in user_responses:
+        return []
+    
+    user_data = user_responses[user_id]
+    opinions = user_data.get("opinions", {})
+    reasons = user_data.get("reasons", {})
+    
+    # Get survey questions for this topic
+    topic_questions = survey_data["topics"][survey_key]["questions"]
+    
+    qa_pairs = []
+    
+    # Process each opinion question
+    for question_data in topic_questions:
+        question_id = question_data["id"]
+        
+        if question_id in opinions:
+            # Create opinion question with modified wording for annotation task
+            original_text = question_data["text"]
+            # Convert from direct question to annotation question
+            if "how much do you support or oppose" in original_text.lower():
+                # Replace "you" with "this person" and ask for annotation
+                modified_text = original_text.replace("how much do you support or oppose", "how much does this person support or oppose")
+                modified_text = modified_text.replace("your neighborhood", "their neighborhood")
+                annotation_text = f"Based on their responses, {modified_text.lower()}"
+            elif "how would this affect your stance" in original_text.lower():
+                # For scenario questions, ask about the person's likely response
+                annotation_text = f"Based on their responses, how do you think this scenario would affect this person's stance? {original_text}"
+            else:
+                # Generic conversion for other question types
+                annotation_text = f"Based on their responses, what do you think this person would answer to: {original_text}"
+            
+            opinion_qa = {
+                "question_id": question_id,
+                "question_type": "opinion",
+                "question_text": annotation_text,
+                "user_answer": opinions[question_id],
+                "scale": question_data["scale"]
+            }
+            qa_pairs.append(opinion_qa)
+            
+            # Process follow-up reason questions if they exist
+            if question_data.get("has_reason_followup") and question_id in reasons:
+                reason_questions = generate_reason_questions(
+                    question_data, reasons[question_id], reason_mapping, question_id, annotation_text
+                )
+                qa_pairs.extend(reason_questions)
+    
+    return qa_pairs
+
+def generate_reason_questions(question_data, user_reasons, reason_mapping, base_question_id, opinion_question_text):
+    """Generate individual reason evaluation questions using string templates (no LLM needed)"""
+    if "followup" not in question_data:
+        return []
+    
+    followup = question_data["followup"]
+    reason_codes = followup["reasons"]
+    
+    # Map reason codes to text
+    mapped_reasons = []
+    for code in reason_codes:
+        if code in reason_mapping["reverse_mapping"]:
+            reason_text = reason_mapping["reverse_mapping"][code]
+            user_score = user_reasons.get(code, 0)
+            mapped_reasons.append({
+                "code": code,
+                "text": reason_text,
+                "user_score": user_score
+            })
+    
+    if not mapped_reasons:
+        return []
+    
+    # Generate questions using simple string templates - no LLM needed
+    reason_questions = []
+    
+    # Extract the main topic from the original question for better templates
+    original_question = question_data["text"].lower()
+    
+    # Topic-specific templates
+    if "apartment buildings" in original_question or "upzoning" in original_question:
+        template = "How much does {reason} influence this person's opinion on allowing bigger, taller apartment buildings in their neighborhood?"
+    elif "rent" in original_question and "drop" in original_question:
+        template = "How much does {reason} influence this person's opinion on allowing more apartments in low-density areas?"
+    elif "design" in original_question and "rules" in original_question:
+        template = "How much does {reason} influence this person's opinion on new buildings with design rules?"
+    elif "surveillance" in original_question or "camera" in original_question:
+        template = "How much does {reason} influence this person's opinion on surveillance cameras?"
+    elif "healthcare" in original_question or "universal" in original_question:
+        template = "How much does {reason} influence this person's opinion on universal healthcare?"
+    else:
+        # Generic template
+        template = "How much does {reason} influence this person's opinion?"
+    
+    for reason in mapped_reasons:
+        # Clean up reason text for better question flow
+        reason_text = reason["text"]
+        if reason_text.endswith("."):
+            reason_text = reason_text[:-1]
+        
+        # Make reason text flow better in question by converting to a noun phrase
+        if reason_text.startswith("I'm worried about"):
+            reason_text = reason_text.replace("I'm worried about", "worrying about")
+        elif reason_text.startswith("I care about"):
+            reason_text = reason_text.replace("I care about", "caring about") 
+        elif reason_text.startswith("I'd worry about"):
+            reason_text = reason_text.replace("I'd worry about", "worrying about")
+        elif reason_text.endswith("helps with the housing crisis"):
+            reason_text = "the idea that " + reason_text.lower()
+        elif reason_text.endswith("benefit when more people live nearby"):
+            reason_text = "the fact that " + reason_text.lower()
+        elif reason_text.endswith("more housing choices for middle- and lower-income people"):
+            reason_text = "the fact that " + reason_text.lower()
+        elif reason_text.endswith("might change the look and feel of the neighborhood"):
+            reason_text = "the idea that " + reason_text.lower()
+        elif reason_text.endswith("could make the area more walkable and convenient"):
+            reason_text = "the idea that " + reason_text.lower()
+        elif reason_text.endswith("could mean more noise or crowding"):
+            reason_text = "the possibility of " + reason_text.lower().replace("could mean", "having")
+        elif reason_text.endswith("should pitch in when it comes to new development"):
+            reason_text = "the idea that " + reason_text.lower()
+        elif reason_text.endswith("could mean more traffic and harder parking"):
+            reason_text = "the concern about " + reason_text.lower().replace("could mean", "having")
+        elif reason_text.startswith("More") and ("traffic" in reason_text or "concern" in reason_text):
+            reason_text = "the concern about " + reason_text.lower()
+        elif not reason_text.startswith(("the ", "worrying", "caring")):
+            # Add appropriate article for other cases
+            reason_text = "the idea that " + reason_text.lower()
+        
+        # Generate the question using template
+        question_text = template.format(reason=reason_text)
+        
+        # Combine opinion question context with reason evaluation question
+        combined_question_text = f"Context: {opinion_question_text}\n\nBased on this context, {question_text.lower()}"
+        
+        reason_question = {
+            "question_id": f"{base_question_id}r_{reason['code']}",
+            "question_type": "reason_evaluation",
+            "question_text": combined_question_text,
+            "reason_code": reason["code"],
+            "reason_text": reason["text"],
+            "user_answer": reason["user_score"],
+            "scale": [1, 5]
+        }
+        
+        reason_questions.append(reason_question)
+        
+        # Debug output
+        print(f"Generated reason question: {question_text}")
+    
+    print(f"Generated {len(reason_questions)} reason evaluation questions")
+    return reason_questions
+
+def generate_multiple_belief_attribution_questions(context_qas, prolific_id, topic="zoning", exclude_no_effect=False):
+    """Generate multiple belief attribution questions using LLM based on context QAs"""
+    if not context_qas:
+        return []
+    
+    try:
+        llm = QwenLLM(model="qwen-plus")
+        
+        # Filter context QAs to only include those with "How strong is this effect?" pattern
+        filtered_qas = [qa for qa in context_qas if is_weak_causal_sign_question(qa['question'])]
+        
+        if not filtered_qas:
+            print(f"No causal-relevant questions found for user {prolific_id}")
+            return []
+        
+        print(f"Filtered {len(context_qas)} QAs down to {len(filtered_qas)} causal-relevant QAs for user {prolific_id}")
+        
+        # Format filtered context QAs for the prompt
+        context_text = "\n".join([
+            f"Q{qa['question_number']}: {qa['question']}\nA{qa['question_number']}: {qa['answer']}"
+            for qa in filtered_qas
+        ])
+        
+        # Topic-specific conversation descriptions
+        topic_descriptions = {
+            "zoning": "urban zoning and housing development",
+            "surveillance": "surveillance cameras and public safety", 
+            "healthcare": "healthcare policy and universal coverage"
+        }
+        
+        conversation_topic = topic_descriptions.get(topic, "urban zoning and housing development")
+        
+        # Define answer options based on exclude_no_effect setting
+        if exclude_no_effect:
+            answer_options_text = """- A: POSITIVE effect
+- B: NEGATIVE effect"""
+        else:
+            answer_options_text = """- A: POSITIVE effect
+- B: NEGATIVE effect  
+- C: NO SIGNIFICANT effect"""
+        
+        prompt = f"""
+Based on the following conversation about {conversation_topic}, identify ALL question-answer pairs that reveal the person's beliefs about causal relationships between different factors.
+
+Conversation:
+{context_text}
+
+Your task:
+1. Find ALL Q&A pairs that show how the person believes one factor affects another (up to 10 pairs)
+2. For each pair, create a direct question asking about the influence level using everyday language
+3. Based on the person's answer, determine their belief about the effect
+
+Selection rule:
+- PRIORITIZE items with dependency_level ≥ 1 (needs-context). If fewer than 10 such items exist, then fill the remainder with the best dependency_level = 0 items.
+- Prefer diverse factor pairs; avoid near-duplicates.
+
+Return JSON format as an array:
+[
+{{
+    "question": "How much does [Factor A] affect [Factor B] according to this person?",
+    "source_qa": {{
+        "question_number": "original question number",
+        "question": "original question from conversation",
+        "answer": "original answer from conversation"
+    }},
+    "answer": "A" or "B" or "C",
+    "reasoning": "Brief explanation of why this answer was chosen based on their response"
+}},
+...
+]
+
+{answer_options_text}
+
+Use simple, everyday language for the factors. Examples by topic:
+Zoning: "building more housing" instead of "upzoning policies", "traffic congestion", "neighborhood character"
+Surveillance: "installing cameras" instead of "surveillance systems", "crime rates", "privacy concerns"  
+Healthcare: "universal coverage" instead of "healthcare policy", "wait times", "healthcare costs"
+
+Return up to 10 belief inference questions maximum.
+"""
+
+        # Topic-specific system messages
+        topic_system_messages = {
+            "zoning": "You are an expert at analyzing conversations about urban policy to extract causal beliefs.",
+            "surveillance": "You are an expert at analyzing conversations about surveillance and public safety to extract causal beliefs.",
+            "healthcare": "You are an expert at analyzing conversations about healthcare policy to extract causal beliefs."
+        }
+        
+        system_message = topic_system_messages.get(topic, "You are an expert at analyzing conversations about urban policy to extract causal beliefs.")
+        
+        response = llm.generate_response(
+            prompt,
+            system_message=system_message,
+            return_json=True
+        )
+        
+        if response and isinstance(response, list):
+            print(f"Generated {len(response)} belief attribution questions for user {prolific_id}")
+            for i, qa in enumerate(response):
+                print(f"Question {i+1}: {qa.get('question', 'N/A')}")
+                print(f"Answer {i+1}: {qa.get('answer', 'N/A')}")
+            return response
+        else:
+            print(f"Failed to generate valid questions for user {prolific_id}")
+            return []
+            
+    except Exception as e:
+        print(f"Error generating belief attribution questions: {e}")
+        return []
+
+def main():
+    parser = argparse.ArgumentParser(description='Process user data and generate QA pairs')
+    parser.add_argument('--task-type', choices=['belief_attribution', 'belief_update'],
+                       default='belief_attribution',
+                       help='Type of task to generate (default: belief_attribution)')
+    parser.add_argument('--topic', choices=['zoning', 'surveillance', 'healthcare'],
+                       default='zoning',
+                       help='Topic to process (default: zoning)')
+    parser.add_argument('--context-lengths', nargs='+', 
+                       choices=['short', 'medium', 'long'],
+                       default=['short', 'medium', 'long'],
+                       help='Context lengths to generate (default: all, only for belief_attribution)')
+    parser.add_argument('--max-workers', type=int, default=6,
+                       help='Maximum number of parallel workers (default: 6)')
+    parser.add_argument('--max-users', type=int, default=10,
+                       help='Maximum number of user folders to process (default: 10)')
+    parser.add_argument('--exclude-no-effect', action='store_true',
+                       help='Exclude belief attribution questions with answer "C" (NO SIGNIFICANT effect)')
+    args = parser.parse_args()
+    # Set up paths (relative to current working directory)
+    pilot_dir = Path("../raw_data/main_raw_data")
+    output_dir = Path("./")
+    
+    # Get all user folders
+    user_folders = [f for f in pilot_dir.iterdir() if f.is_dir() and not f.name.startswith('.')]
+    if not user_folders:
+        print("No user folders found")
+        return
+    
+    all_qa_pairs = []
+    qa_counter = 1
+    qa_counter_lock = threading.Lock()
+    
+    def process_user_with_counter(user_folder):
+        """Thread-safe wrapper for processing user folder"""
+        nonlocal qa_counter
+        print(f"Processing user folder: {user_folder.name}")
+        
+        # Get thread-safe counter value
+        with qa_counter_lock:
+            current_counter = qa_counter
+        
+        # Process current user's data
+        qa_pairs, next_counter = process_user_folder(
+            user_folder, current_counter, args.context_lengths, args.task_type, args.topic, args.exclude_no_effect
+        )
+        
+        # Update global counter thread-safely
+        with qa_counter_lock:
+            qa_counter = max(qa_counter, next_counter)
+        
+        print(f"Generated {len(qa_pairs)} QA pairs for user {user_folder.name}")
+        return qa_pairs
+    
+    # Process user folders concurrently with configurable workers
+    with ThreadPoolExecutor(max_workers=args.max_workers) as executor:
+        futures = []
+        for user_folder in user_folders[:args.max_users]:
+            future = executor.submit(process_user_with_counter, user_folder)
+            futures.append(future)
+        
+        # Collect results from all threads
+        for future in futures:
+            qa_pairs = future.result()
+            all_qa_pairs.extend(qa_pairs)
+    
+    # Save results as JSONL (one JSON object per line, formatted)
+    output_file = output_dir / f"sample_{args.task_type}_{args.topic}.jsonl"
+    with open(output_file, 'w') as f:
+        for qa_pair in all_qa_pairs:
+            f.write(json.dumps(qa_pair, indent=2, ensure_ascii=False) + '\n')
+    
+    print(f"Total QA pairs generated: {len(all_qa_pairs)}")
+    
+    # Show filtering statistics for belief_attribution
+    if args.task_type == "belief_attribution" and args.exclude_no_effect:
+        print(f"Applied --exclude-no-effect filter: removed all 'NO SIGNIFICANT effect' questions")
+    
+    print(f"Output saved to {output_file}")
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Human Annotation and Quiz Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f8fafc;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            color: #1e293b;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        /* File Upload Section */
+        .file-upload-area {
+            border: 3px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .upload-button {
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .upload-button:hover {
+            background: #2563eb;
+        }
+
+        .data-status {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .data-status.ready {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .data-status.incomplete {
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fde68a;
+        }
+
+        /* Control Panel */
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .context-selector {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .context-tabs {
+            display: flex;
+            gap: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .context-tab {
+            padding: 10px 20px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .context-tab:not(:first-child) {
+            border-left: none;
+        }
+
+        .context-tab.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .score-toggle {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+        }
+
+        .score-toggle input[type="checkbox"] {
+            transform: scale(1.2);
+        }
+
+        .score-display {
+            display: none;
+            padding: 15px;
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .score-display.visible {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #1e293b;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        /* Quiz Interface */
+        .quiz-container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .quiz-container.visible {
+            display: block;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .question-counter {
+            background: #3b82f6;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .question-info {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .info-badge {
+            background: #f3f4f6;
+            color: #374151;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .question-text {
+            font-size: 1.2rem;
+            color: #1e293b;
+            margin-bottom: 25px;
+            line-height: 1.7;
+            font-weight: 500;
+        }
+
+        .answer-options {
+            margin-bottom: 30px;
+        }
+
+        .answer-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1rem;
+            position: relative;
+        }
+
+        .answer-option:hover {
+            background: #eff6ff;
+            border-color: #3b82f6;
+        }
+
+        .answer-option.selected {
+            background: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+
+        .answer-option.correct {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #166534;
+        }
+
+        .answer-option.incorrect {
+            background: #fee2e2;
+            border-color: #dc2626;
+            color: #991b1b;
+        }
+
+        .answer-option .option-letter {
+            font-weight: bold;
+            color: #6b7280;
+            margin-right: 10px;
+        }
+
+        .answer-feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .answer-feedback.visible {
+            display: block;
+        }
+
+        .answer-feedback.correct {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .answer-feedback.incorrect {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .nav-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: #e2e8f0;
+        }
+
+        .context-container {
+            margin-top: 25px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 20px;
+        }
+
+        .context-toggle {
+            cursor: pointer;
+            color: #3b82f6;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .context-content {
+            display: none;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+        }
+
+        .context-content.visible {
+            display: block;
+        }
+
+        .context-item {
+            padding: 15px;
+            border-bottom: 1px solid #e5e7eb;
+            background: white;
+        }
+
+        .context-item:last-child {
+            border-bottom: none;
+        }
+
+        .context-item:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        .context-question {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        .context-answer {
+            color: #6b7280;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .quiz-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .navigation-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .nav-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Human Annotation and Quiz Tool</h1>
+            <p>Upload JSONL file with questions and standard answers to start the quiz</p>
+        </div>
+
+        <!-- File Upload Area -->
+        <div class="file-upload-area" id="fileUploadArea">
+            <div class="upload-icon">📄</div>
+            <div class="upload-text">
+                <strong>Drag and drop JSONL file here</strong><br>
+                File should contain questions with standard answers
+            </div>
+            <button class="upload-button" onclick="document.getElementById('jsonlFile').click()">
+                Choose JSONL File
+            </button>
+            <input type="file" id="jsonlFile" class="file-input" accept=".jsonl">
+        </div>
+
+        <!-- Data Status -->
+        <div class="data-status incomplete" id="dataStatus">
+            📋 Please upload a JSONL file to start the quiz
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel" id="controlPanel">
+            <div class="control-row">
+                <div class="context-selector">
+                    <span style="font-weight: 500; color: #374151;">Context Length:</span>
+                    <div class="context-tabs" id="context-tabs">
+                        <!-- Context length tabs will be populated dynamically -->
+                    </div>
+                </div>
+                
+                <div class="score-toggle">
+                    <input type="checkbox" id="showScore" onchange="toggleScoreDisplay()">
+                    <label for="showScore" style="cursor: pointer; color: #374151;">Show Score</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Score Display -->
+        <div class="score-display" id="scoreDisplay">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalQuestions">0</div>
+                    <div class="stat-label">Total Questions</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="answeredQuestions">0</div>
+                    <div class="stat-label">Answered</div>
+                </div>
+                <div class="stat-item" id="correctAnswersContainer">
+                    <div class="stat-value" id="correctAnswers">0</div>
+                    <div class="stat-label">Correct</div>
+                </div>
+                <div class="stat-item" id="accuracyContainer">
+                    <div class="stat-value" id="accuracy">0%</div>
+                    <div class="stat-label">Accuracy</div>
+                </div>
+                <div class="stat-item" id="maeContainer" style="display: none;">
+                    <div class="stat-value" id="mae">0.0</div>
+                    <div class="stat-label">MAE</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Interface -->
+        <div class="quiz-container" id="quizContainer">
+            <div class="quiz-header">
+                <div class="question-counter" id="questionCounter">Question 1 of 0</div>
+                <div class="question-info" id="questionInfo">
+                    <!-- Question metadata will be populated here -->
+                </div>
+            </div>
+
+            <div class="question-text" id="questionText">
+                <!-- Question text will be populated here -->
+            </div>
+
+            <div class="answer-options" id="answerOptions">
+                <!-- Answer options will be populated here -->
+            </div>
+
+            <div class="answer-feedback" id="answerFeedback">
+                <!-- Feedback will be shown here -->
+            </div>
+
+            <div class="navigation-buttons">
+                <button class="nav-button btn-secondary" id="prevButton" onclick="previousQuestion()">
+                    ← Previous
+                </button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="nav-button btn-secondary" onclick="showResetConfirmation()">
+                        Reset Quiz
+                    </button>
+                    <button class="nav-button btn-secondary" onclick="exportAnswers()" style="background: #059669; color: white;">
+                        📥 Export
+                    </button>
+                    <button class="nav-button btn-primary" id="nextButton" onclick="nextQuestion()">
+                        Next →
+                    </button>
+                </div>
+            </div>
+
+            <!-- Demographics Section -->
+            <div class="context-container" id="demographicsContainer" style="display: none;">
+                <div class="context-toggle" onclick="toggleDemographics()">
+                    <span>👤</span>
+                    <span>Show Participant Demographics</span>
+                    <span id="demographicsArrow">▼</span>
+                </div>
+                <div class="context-content" id="demographicsContent">
+                    <!-- Demographics content will be populated here -->
+                </div>
+            </div>
+
+            <!-- Context Section -->
+            <div class="context-container" id="contextContainer" style="display: none;">
+                <div class="context-toggle" onclick="toggleContext()">
+                    <span>📋</span>
+                    <span>Show Context Responses</span>
+                    <span id="contextArrow">▼</span>
+                </div>
+                <div class="context-content" id="contextContent">
+                    <!-- Context content will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let questionsData = {};
+        let currentContextLength = null; // Will be set dynamically
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+        let showScoreEnabled = false;
+        let dataType = 'quiz'; // 'quiz' or 'belief_update'
+        
+        // Initialize the application
+        function init() {
+            setupFileHandling();
+            setupEventListeners();
+            updateDisplay();
+        }
+
+        // File handling setup
+        function setupFileHandling() {
+            const uploadArea = document.getElementById('fileUploadArea');
+            const jsonlFile = document.getElementById('jsonlFile');
+
+            // Drag and drop events
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                handleFile(e.dataTransfer.files[0]);
+            });
+
+            // File input event
+            jsonlFile.addEventListener('change', (e) => {
+                if (e.target.files[0]) {
+                    handleFile(e.target.files[0]);
+                }
+            });
+        }
+
+        // Handle uploaded JSONL file
+        function handleFile(file) {
+            if (!file.name.endsWith('.jsonl')) {
+                showDetailedError(
+                    'Unsupported File Type',
+                    `The file "${file.name}" is not a JSONL file.`,
+                    'Please upload a file with .jsonl extension containing question data.',
+                    `File type: ${file.type || 'unknown'}\nFile size: ${file.size} bytes`
+                );
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const content = e.target.result.trim();
+                    
+                    if (!content) {
+                        showDetailedError(
+                            'Empty File',
+                            'The uploaded file is empty.',
+                            'Please upload a JSONL file containing question data.',
+                            `File: ${file.name}`
+                        );
+                        return;
+                    }
+                    
+                    let data;
+                    
+                    // Try to parse as a single JSON array first
+                    try {
+                        data = JSON.parse(content);
+                        if (!Array.isArray(data)) {
+                            // If it's a single object, wrap it in an array
+                            data = [data];
+                        }
+                    } catch (singleJsonError) {
+                        // If that fails, try to parse as JSONL (one JSON object per line)
+                        try {
+                            const lines = content.split('\n').filter(line => line.trim());
+                            if (lines.length === 0) {
+                                throw new Error('No valid JSON lines found');
+                            }
+                            
+                            data = [];
+                            lines.forEach((line, index) => {
+                                try {
+                                    data.push(JSON.parse(line));
+                                } catch (lineError) {
+                                    throw new Error(`Invalid JSON on line ${index + 1}: ${lineError.message}`);
+                                }
+                            });
+                        } catch (jsonlError) {
+                            // If both fail, try to split by '}\n{' pattern for formatted JSON objects
+                            try {
+                                const jsonObjects = content.split(/}\s*\n\s*{/);
+                                if (jsonObjects.length > 1) {
+                                    // Add back the braces that were removed by split
+                                    data = jsonObjects.map((obj, index) => {
+                                        let jsonStr = obj.trim();
+                                        if (index > 0) jsonStr = '{' + jsonStr;
+                                        if (index < jsonObjects.length - 1) jsonStr = jsonStr + '}';
+                                        return JSON.parse(jsonStr);
+                                    });
+                                } else {
+                                    throw new Error('Unable to parse file format');
+                                }
+                            } catch (formattedError) {
+                                showDetailedError(
+                                    'File Parsing Error',
+                                    'Unable to parse the uploaded file as valid JSON or JSONL.',
+                                    'Please ensure the file contains valid JSON objects, either as an array or one object per line.',
+                                    `Original error: ${jsonlError.message}\nFormatted parse error: ${formattedError.message}`
+                                );
+                                return;
+                            }
+                        }
+                    }
+                    
+                    questionsData = parseQuestionsData(data);
+                    
+                    // Check if we successfully parsed any questions
+                    const totalQuestions = Object.values(questionsData).reduce((sum, questions) => sum + questions.length, 0);
+                    if (totalQuestions === 0) {
+                        showDetailedError(
+                            'No Valid Questions Found',
+                            'The file was parsed successfully but contains no valid questions.',
+                            'Please ensure your file contains objects with "task_question" or "question" fields and "answer_options".',
+                            `Parsed ${data.length} objects from file, but none contained valid question data.`
+                        );
+                        return;
+                    }
+                    
+                    updateDataStatus();
+                    resetQuiz();
+                    
+                } catch (error) {
+                    showDetailedError(
+                        'Unexpected Error',
+                        'An unexpected error occurred while processing the file.',
+                        'Please check the file format and try again.',
+                        `Error: ${error.message}\nStack: ${error.stack}`
+                    );
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Show detailed error modal
+        function showDetailedError(title, error, suggestion, technicalDetails) {
+            // Create modal overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+                background: rgba(0,0,0,0.5); z-index: 10000;
+                display: flex; align-items: center; justify-content: center;
+                padding: 20px;
+            `;
+            
+            // Create modal content
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                background: white; border-radius: 12px; max-width: 600px; width: 100%;
+                max-height: 80vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);
+            `;
+            
+            modal.innerHTML = `
+                <div style="padding: 24px; border-bottom: 1px solid #e5e7eb;">
+                    <h2 style="margin: 0; color: #dc2626; font-size: 1.5rem; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 1.2em;">⚠️</span>
+                        ${title}
+                    </h2>
+                </div>
+                <div style="padding: 24px;">
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 8px 0; color: #374151; font-size: 1.1rem;">Error Details:</h3>
+                        <p style="margin: 0; color: #6b7280; line-height: 1.5;">${error}</p>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 8px 0; color: #374151; font-size: 1.1rem;">Suggestion:</h3>
+                        <p style="margin: 0; color: #6b7280; line-height: 1.5;">${suggestion}</p>
+                    </div>
+                    <details style="margin-bottom: 20px;">
+                        <summary style="cursor: pointer; color: #6b7280; font-weight: 500;">Technical Details</summary>
+                        <pre style="margin: 12px 0 0 0; padding: 12px; background: #f3f4f6; border-radius: 6px; 
+                                   font-size: 0.875rem; color: #374151; overflow-x: auto; white-space: pre-wrap;">${technicalDetails}</pre>
+                    </details>
+                </div>
+                <div style="padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; 
+                           border-radius: 0 0 12px 12px; text-align: right;">
+                    <button onclick="this.closest('[style*=\"position: fixed\"]').remove()" 
+                            style="background: #3b82f6; color: white; padding: 8px 16px; border: none; 
+                                   border-radius: 6px; cursor: pointer; font-weight: 500;">
+                        Close
+                    </button>
+                </div>
+            `;
+            
+            overlay.appendChild(modal);
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.remove();
+                }
+            });
+        }
+
+        // Parse questions data by context length with backward compatibility
+        function parseQuestionsData(data) {
+            const parsed = {};
+            
+            // Detect data type
+            const hasBeliefUpdate = data.some(item => item.task_type === 'belief_update');
+            if (hasBeliefUpdate) {
+                dataType = 'belief_update';
+                return parseBeliefUpdateData(data);
+            } else {
+                dataType = 'quiz';
+                return parseQuizData(data);
+            }
+        }
+
+        // Parse belief update data
+        function parseBeliefUpdateData(data) {
+            const parsed = {};
+            const participantGroups = {};
+            
+            // Group by participant and context length
+            data.forEach((item, index) => {
+                const contextLength = item.context_length || 'unknown';
+                const prolificId = item.prolific_id || 'unknown';
+                const questionId = item.question_id || `q_${index}`;
+                
+                if (!participantGroups[prolificId]) {
+                    participantGroups[prolificId] = {};
+                }
+                if (!participantGroups[prolificId][contextLength]) {
+                    participantGroups[prolificId][contextLength] = {
+                        demographics: item.demographics || {},
+                        context_qas: item.context_qas || [],
+                        questions: []
+                    };
+                }
+                
+                const questionInfo = {
+                    id: item.id || `${prolificId}_${questionId}`,
+                    prolific_id: prolificId,
+                    question_id: questionId,
+                    question_type: item.question_type,
+                    question: item.task_question,
+                    user_answer: item.user_answer,
+                    scale: item.scale || [1, 10],
+                    reason_code: item.reason_code || '',
+                    reason_text: item.reason_text || '',
+                    topic: item.topic || '',
+                    task_type: item.task_type,
+                    context_length: contextLength,
+                    demographics: item.demographics || {},
+                    context_qas: item.context_qas || [],
+                    _original: item
+                };
+                
+                participantGroups[prolificId][contextLength].questions.push(questionInfo);
+            });
+            
+            // Convert to the expected format for display
+            Object.keys(participantGroups).forEach(prolificId => {
+                Object.keys(participantGroups[prolificId]).forEach(contextLength => {
+                    const participantData = participantGroups[prolificId][contextLength];
+                    
+                    if (!parsed[contextLength]) {
+                        parsed[contextLength] = [];
+                    }
+                    
+                    // Add all questions instead of trying to group them
+                    // This ensures no questions are lost due to mismatched pairing logic
+                    participantData.questions.forEach(question => {
+                        const processedQuestion = {
+                            ...question,
+                            demographics: participantData.demographics,
+                            context_qas: participantData.context_qas
+                        };
+                        
+                        // Mark question types for UI purposes
+                        if (question.question_type === 'opinion') {
+                            processedQuestion.isOpinion = true;
+                        } else if (question.question_type === 'reason_evaluation') {
+                            processedQuestion.isReasonEvaluation = true;
+                            
+                            // Try to find related opinion question for context
+                            const baseQuestionId = question.question_id.replace(/r_[A-Z]$/, '');
+                            const relatedOpinion = participantData.questions.find(q => 
+                                q.question_type === 'opinion' && q.question_id === baseQuestionId
+                            );
+                            if (relatedOpinion) {
+                                processedQuestion.relatedOpinion = relatedOpinion;
+                            }
+                        }
+                        
+                        parsed[contextLength].push(processedQuestion);
+                    });
+                });
+            });
+            
+            return parsed;
+        }
+
+        // Parse traditional quiz data
+        function parseQuizData(data) {
+            const parsed = {};
+            
+            data.forEach((item, index) => {
+                // Support both new and old context length field names
+                const contextLength = item.context_length || item.difficulty || 'unknown';
+                const questionText = item.task_question || item.question;
+                
+                // Validate that we have a question to work with
+                if (questionText) {
+                    // Handle different answer option formats
+                    let answerOptions = {};
+                    if (item.answer_options && typeof item.answer_options === 'object') {
+                        answerOptions = item.answer_options;
+                    } else if (item.answer_options && typeof item.answer_options === 'string') {
+                        // Handle case where answer_options might be a string
+                        try {
+                            answerOptions = JSON.parse(item.answer_options);
+                        } catch (e) {
+                            answerOptions = {};
+                        }
+                    }
+                    
+                    // Ensure we have at least some answer options for quizzes
+                    if (Object.keys(answerOptions).length === 0) {
+                        // Default to A/B format if no options are provided
+                        answerOptions = {
+                            "A": "Option A",
+                            "B": "Option B"
+                        };
+                    }
+                    
+                    const questionInfo = {
+                        id: item.id || `q_${index}`,
+                        prolific_id: item.prolific_id || '',
+                        question: questionText,
+                        answer_options: answerOptions,
+                        standard_answer: item.answer || Object.keys(answerOptions)[0], // Use first option as fallback
+                        topic: item.topic || '',
+                        task_type: item.task_type || '',
+                        context_qas: item.context_qas || [],
+                        demographics: item.demographics || {},
+                        source_qa: item.source_qa || {},
+                        reasoning: item.reasoning || '',
+                        context_length: contextLength,
+                        // Keep original field for backward compatibility
+                        difficulty: item.difficulty || contextLength,
+                        // Store original item for debugging
+                        _original: item
+                    };
+                    
+                    if (!parsed[contextLength]) {
+                        parsed[contextLength] = [];
+                    }
+                    parsed[contextLength].push(questionInfo);
+                }
+            });
+            
+            return parsed;
+        }
+
+        // Update context tabs based on available data
+        function updateContextTabs() {
+            const tabsContainer = document.getElementById('context-tabs');
+            tabsContainer.innerHTML = '';
+            
+            const availableContexts = Object.keys(questionsData);
+            if (availableContexts.length === 0) return;
+            
+            // Set initial currentContextLength if not set
+            if (!currentContextLength || !availableContexts.includes(currentContextLength)) {
+                currentContextLength = availableContexts[0];
+            }
+            
+            availableContexts.forEach((contextLength, index) => {
+                const tab = document.createElement('div');
+                tab.className = 'context-tab';
+                tab.dataset.contextLength = contextLength;
+                tab.textContent = contextLength.charAt(0).toUpperCase() + contextLength.slice(1);
+                
+                if (contextLength === currentContextLength) {
+                    tab.classList.add('active');
+                }
+                
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.context-tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    currentContextLength = this.dataset.contextLength;
+                    resetQuiz();
+                });
+                
+                tabsContainer.appendChild(tab);
+            });
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Context tabs are now handled dynamically in updateContextTabs()
+        }
+
+        // Update data status
+        function updateDataStatus() {
+            const statusElement = document.getElementById('dataStatus');
+            const hasData = Object.values(questionsData).some(questions => questions.length > 0);
+            
+            if (hasData) {
+                statusElement.className = 'data-status ready';
+                const actionText = dataType === 'belief_update' ? 'annotation session' : 'quiz';
+                statusElement.innerHTML = `✅ ${dataType === 'belief_update' ? 'Belief Update' : 'Quiz'} data loaded successfully! Select context length and start the ${actionText}.`;
+                document.getElementById('controlPanel').style.display = 'block';
+                document.getElementById('quizContainer').classList.add('visible');
+                updateContextTabs();
+                
+                // Update header title based on data type
+                const headerTitle = document.querySelector('.header h1');
+                if (dataType === 'belief_update') {
+                    headerTitle.textContent = 'Human Annotation Tool - Belief Update';
+                } else {
+                    headerTitle.textContent = 'Human Annotation and Quiz Tool';
+                }
+            } else {
+                statusElement.className = 'data-status incomplete';
+                statusElement.innerHTML = '📋 Please upload a JSONL file to start the quiz';
+                document.getElementById('controlPanel').style.display = 'none';
+                document.getElementById('quizContainer').classList.remove('visible');
+            }
+        }
+
+        // Toggle score display
+        function toggleScoreDisplay() {
+            showScoreEnabled = document.getElementById('showScore').checked;
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            if (showScoreEnabled) {
+                scoreDisplay.classList.add('visible');
+                updateScoreDisplay();
+            } else {
+                scoreDisplay.classList.remove('visible');
+            }
+        }
+
+        // Update score display
+        function updateScoreDisplay() {
+            if (!showScoreEnabled) return;
+            
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const totalQuestions = currentQuestions.length;
+            
+            document.getElementById('totalQuestions').textContent = totalQuestions;
+            
+            if (dataType === 'belief_update') {
+                updateBeliefUpdateScores(currentQuestions);
+            } else {
+                updateQuizScores(currentQuestions);
+            }
+        }
+
+        // Calculate tolerance based on scale range (same logic as evaluate_qwen.py)
+        function calculateTolerance(scale) {
+            const scaleRange = scale[1] - scale[0];
+            return scaleRange <= 5 ? 1 : 2;  // Stricter tolerance for smaller scales
+        }
+        
+        // Check if answer is correct within tolerance
+        function isAnswerCorrectWithTolerance(userAnswer, correctAnswer, scale) {
+            if (userAnswer == null || correctAnswer == null) return false;
+            const tolerance = calculateTolerance(scale);
+            return Math.abs(userAnswer - correctAnswer) <= tolerance;
+        }
+
+        // Update scores for belief update data (MAE and Accuracy)
+        function updateBeliefUpdateScores(currentQuestions) {
+            let answeredCount = 0;
+            let totalAbsoluteError = 0;
+            let correctCount = 0;
+            
+            // Show both accuracy and MAE for belief update
+            document.getElementById('correctAnswersContainer').style.display = 'block';
+            document.getElementById('accuracyContainer').style.display = 'block';
+            document.getElementById('maeContainer').style.display = 'block';
+            
+            for (let i = 0; i < currentQuestions.length; i++) {
+                const userAnswer = userAnswers[`${currentContextLength}_${i}`];
+                const question = currentQuestions[i];
+                
+                if (userAnswer !== undefined && question.user_answer !== undefined) {
+                    answeredCount++;
+                    const absoluteError = Math.abs(userAnswer - question.user_answer);
+                    totalAbsoluteError += absoluteError;
+                    
+                    // Check if answer is correct within tolerance
+                    const scale = question.scale || [1, 10];
+                    if (isAnswerCorrectWithTolerance(userAnswer, question.user_answer, scale)) {
+                        correctCount++;
+                    }
+                }
+            }
+            
+            const mae = answeredCount > 0 ? (totalAbsoluteError / answeredCount).toFixed(2) : '0.00';
+            const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+            
+            document.getElementById('answeredQuestions').textContent = answeredCount;
+            document.getElementById('correctAnswers').textContent = correctCount;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+            document.getElementById('mae').textContent = mae;
+        }
+
+        // Update scores for quiz data (accuracy)
+        function updateQuizScores(currentQuestions) {
+            let answeredCount = 0;
+            let correctCount = 0;
+            
+            // Show quiz-specific metrics
+            document.getElementById('correctAnswersContainer').style.display = 'block';
+            document.getElementById('accuracyContainer').style.display = 'block';
+            document.getElementById('maeContainer').style.display = 'none';
+            
+            for (let i = 0; i < currentQuestions.length; i++) {
+                const userAnswer = userAnswers[`${currentContextLength}_${i}`];
+                if (userAnswer !== undefined) {
+                    answeredCount++;
+                    const question = currentQuestions[i];
+                    if (userAnswer === question.standard_answer) {
+                        correctCount++;
+                    }
+                }
+            }
+            
+            const accuracy = answeredCount > 0 ? Math.round((correctCount / answeredCount) * 100) : 0;
+            
+            document.getElementById('answeredQuestions').textContent = answeredCount;
+            document.getElementById('correctAnswers').textContent = correctCount;
+            document.getElementById('accuracy').textContent = accuracy + '%';
+        }
+
+        // Show reset confirmation dialog
+        function showResetConfirmation() {
+            const answeredCount = Object.keys(userAnswers).length;
+            const message = answeredCount > 0 
+                ? `Are you sure you want to reset? This will clear all ${answeredCount} saved answers.`
+                : 'Are you sure you want to reset?';
+            
+            if (confirm(message)) {
+                resetQuiz();
+            }
+        }
+
+        // Reset quiz to beginning
+        function resetQuiz() {
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            showCurrentQuestion();
+            updateScoreDisplay();
+        }
+
+        // Export answers as JSON
+        function exportAnswers() {
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const exportData = {
+                dataType: dataType,
+                contextLength: currentContextLength,
+                timestamp: new Date().toISOString(),
+                totalQuestions: currentQuestions.length,
+                answeredQuestions: Object.keys(userAnswers).length,
+                answers: {}
+            };
+
+            // Add performance metrics based on data type
+            if (dataType === 'belief_update') {
+                let answeredCount = 0;
+                let totalAbsoluteError = 0;
+                let correctCount = 0;
+                
+                for (let i = 0; i < currentQuestions.length; i++) {
+                    const userAnswer = userAnswers[`${currentContextLength}_${i}`];
+                    const question = currentQuestions[i];
+                    
+                    if (userAnswer !== undefined && question.user_answer !== undefined) {
+                        answeredCount++;
+                        const absoluteError = Math.abs(userAnswer - question.user_answer);
+                        totalAbsoluteError += absoluteError;
+                        
+                        // Check if answer is correct within tolerance
+                        const scale = question.scale || [1, 10];
+                        if (isAnswerCorrectWithTolerance(userAnswer, question.user_answer, scale)) {
+                            correctCount++;
+                        }
+                    }
+                }
+                
+                exportData.performance = {
+                    mae: answeredCount > 0 ? parseFloat((totalAbsoluteError / answeredCount).toFixed(2)) : 0,
+                    accuracy: answeredCount > 0 ? parseFloat((correctCount / answeredCount * 100).toFixed(2)) : 0,
+                    correctAnswers: correctCount,
+                    totalAbsoluteError: totalAbsoluteError,
+                    answeredWithGroundTruth: answeredCount
+                };
+            } else {
+                // Quiz mode performance metrics
+                let correctCount = 0;
+                let answeredCount = 0;
+                
+                for (let i = 0; i < currentQuestions.length; i++) {
+                    const userAnswer = userAnswers[`${currentContextLength}_${i}`];
+                    if (userAnswer !== undefined) {
+                        answeredCount++;
+                        const question = currentQuestions[i];
+                        if (userAnswer === question.standard_answer) {
+                            correctCount++;
+                        }
+                    }
+                }
+                
+                exportData.performance = {
+                    accuracy: answeredCount > 0 ? parseFloat((correctCount / answeredCount * 100).toFixed(2)) : 0,
+                    correctAnswers: correctCount,
+                    totalAnswered: answeredCount
+                };
+            }
+
+            // Include question details with answers
+            if (questionsData[currentContextLength]) {
+                questionsData[currentContextLength].forEach((question, index) => {
+                    const answerKey = `${currentContextLength}_${index}`;
+                    const userAnswer = userAnswers[answerKey];
+                    
+                    exportData.answers[answerKey] = {
+                        questionIndex: index,
+                        questionId: question.question_id || question.id,
+                        questionType: question.question_type || 'quiz',
+                        question: question.question,
+                        userAnswer: userAnswer,
+                        answered: userAnswer !== undefined,
+                        prolificId: question.prolific_id,
+                        reasonCode: question.reason_code,
+                        reasonText: question.reason_text,
+                        scale: question.scale,
+                        isOpinion: question.isOpinion || false,
+                        isReasonEvaluation: question.isReasonEvaluation || false,
+                        relatedOpinionId: question.relatedOpinion ? question.relatedOpinion.question_id : null
+                    };
+                    
+                    // Add performance metrics based on data type
+                    if (dataType === 'belief_update') {
+                        exportData.answers[answerKey].originalAnswer = question.user_answer;
+                        if (userAnswer !== undefined && question.user_answer !== undefined) {
+                            exportData.answers[answerKey].absoluteError = Math.abs(userAnswer - question.user_answer);
+                            
+                            // Add tolerance-based correctness check
+                            const scale = question.scale || [1, 10];
+                            const tolerance = calculateTolerance(scale);
+                            exportData.answers[answerKey].tolerance = tolerance;
+                            exportData.answers[answerKey].correct = isAnswerCorrectWithTolerance(userAnswer, question.user_answer, scale);
+                        }
+                    } else if (dataType === 'quiz' && question.standard_answer) {
+                        exportData.answers[answerKey].standardAnswer = question.standard_answer;
+                        exportData.answers[answerKey].correct = userAnswer === question.standard_answer;
+                    }
+                });
+            }
+
+            // Create and download file
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            link.download = `annotation_export_${dataType}_${currentContextLength}_${timestamp}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // Show success message
+            const exportButton = event.target;
+            const originalText = exportButton.innerHTML;
+            exportButton.innerHTML = '✅ Exported!';
+            exportButton.style.background = '#059669';
+            
+            setTimeout(() => {
+                exportButton.innerHTML = originalText;
+                exportButton.style.background = '#059669';
+            }, 2000);
+        }
+
+        // Show current question
+        function showCurrentQuestion() {
+            const currentQuestions = questionsData[currentContextLength] || [];
+            
+            if (currentQuestions.length === 0) {
+                document.getElementById('quizContainer').innerHTML = 
+                    '<div style="text-align: center; padding: 40px; color: #64748b;">No questions available for this context length.</div>';
+                return;
+            }
+            
+            const question = currentQuestions[currentQuestionIndex];
+            const userAnswer = userAnswers[`${currentContextLength}_${currentQuestionIndex}`];
+            
+            // Update question counter
+            document.getElementById('questionCounter').textContent = 
+                `Question ${currentQuestionIndex + 1} of ${currentQuestions.length}`;
+            
+            // Update question info
+            const questionInfo = document.getElementById('questionInfo');
+            let infoHtml = `<span class="info-badge">ID: ${question.id}</span>`;
+            if (question.topic) infoHtml += `<span class="info-badge">Topic: ${question.topic}</span>`;
+            if (question.task_type) infoHtml += `<span class="info-badge">Type: ${question.task_type}</span>`;
+            if (question.question_type) infoHtml += `<span class="info-badge">Question Type: ${question.question_type}</span>`;
+            if (question.prolific_id) infoHtml += `<span class="info-badge">Participant: ${question.prolific_id}</span>`;
+            questionInfo.innerHTML = infoHtml;
+            
+            // Update question text
+            document.getElementById('questionText').textContent = question.question;
+            
+            // Show related opinion for reason evaluation questions
+            if (dataType === 'belief_update' && question.isReasonEvaluation && question.relatedOpinion) {
+                showRelatedOpinion(question.relatedOpinion);
+            } else {
+                hideRelatedOpinion();
+            }
+            
+            // Update answer options based on data type
+            if (dataType === 'belief_update') {
+                showBeliefUpdateAnswerOptions(question, userAnswer);
+            } else {
+                showQuizAnswerOptions(question, userAnswer);
+            }
+            
+            // Update answer feedback
+            updateAnswerFeedback();
+            
+            // Update navigation buttons
+            updateNavigationButtons();
+            
+            // Update demographics
+            updateDemographics();
+            
+            // Update context
+            updateContext();
+        }
+
+        // Show related opinion for reason evaluation questions
+        function showRelatedOpinion(relatedOpinion) {
+            const answerOptions = document.getElementById('answerOptions');
+            
+            // Check if already exists to avoid duplication
+            const existingOpinion = document.getElementById('relatedOpinion');
+            if (existingOpinion) {
+                return; // Don't add if already exists
+            }
+            
+            const opinionDiv = document.createElement('div');
+            opinionDiv.id = 'relatedOpinion';
+            opinionDiv.style.cssText = `
+                margin-bottom: 25px; 
+                padding: 20px; 
+                background: #f0f9ff; 
+                border: 2px solid #0ea5e9; 
+                border-radius: 12px;
+            `;
+            
+            // Find the related opinion question index to get user's annotation
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const relatedOpinionIndex = currentQuestions.findIndex(q => 
+                q.question_id === relatedOpinion.question_id && q.isOpinion
+            );
+            
+            // Get user's annotation for this opinion question
+            const userOpinionAnswer = relatedOpinionIndex >= 0 
+                ? userAnswers[`${currentContextLength}_${relatedOpinionIndex}`] 
+                : null;
+            
+            // Display user's annotation if available, otherwise show original answer
+            const displayAnswer = userOpinionAnswer !== null && userOpinionAnswer !== undefined 
+                ? `${userOpinionAnswer}/${relatedOpinion.scale[1]} (Your annotation)`
+                : `${relatedOpinion.user_answer}/${relatedOpinion.scale[1]} (Original participant answer)`;
+            
+            opinionDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+                    <span style="font-size: 1.2em;">💭</span>
+                    <strong style="color: #0369a1; font-size: 1.1rem;">Related Opinion Context</strong>
+                </div>
+                <div style="color: #374151; font-weight: 500; margin-bottom: 8px;">
+                    ${relatedOpinion.question}
+                </div>
+                <div style="color: #0369a1; font-weight: 600; font-size: 1.1rem;">
+                    Answer: ${displayAnswer}
+                </div>
+            `;
+            
+            answerOptions.insertBefore(opinionDiv, answerOptions.firstChild);
+        }
+
+        // Hide related opinion display
+        function hideRelatedOpinion() {
+            const existingOpinion = document.getElementById('relatedOpinion');
+            if (existingOpinion) {
+                existingOpinion.remove();
+            }
+        }
+
+        // Show belief update answer options (scale-based)
+        function showBeliefUpdateAnswerOptions(question, userAnswer) {
+            const answerOptions = document.getElementById('answerOptions');
+            
+            // Remove existing scale options only, keep related opinion if present
+            const existingOptions = answerOptions.querySelectorAll('.scale-options, .answer-option:not(#relatedOpinion *)');
+            existingOptions.forEach(option => {
+                if (option.id !== 'relatedOpinion') {
+                    option.remove();
+                }
+            });
+            
+            const scaleDiv = document.createElement('div');
+            scaleDiv.className = 'scale-options';
+            scaleDiv.style.cssText = 'margin-top: 20px;';
+            
+            const scaleMin = question.scale[0];
+            const scaleMax = question.scale[1];
+            
+            // Add header
+            const headerDiv = document.createElement('div');
+            headerDiv.style.cssText = 'margin-bottom: 20px; font-weight: 600; color: #374151; font-size: 1rem;';
+            
+            if (question.isReasonEvaluation) {
+                headerDiv.innerHTML = `
+                    <div style="margin-bottom: 10px;">Rate the influence of this reason (${scaleMin}-${scaleMax}):</div>
+                    <div style="background: #fffbeb; padding: 15px; border-radius: 8px; border: 1px solid #f59e0b; font-weight: 500;">
+                        📝 <strong>Reason:</strong> ${question.reason_text}
+                    </div>
+                `;
+            } else {
+                headerDiv.textContent = `Rate your opinion (${scaleMin}-${scaleMax}):`;
+            }
+            
+            scaleDiv.appendChild(headerDiv);
+            
+            // Create scale buttons
+            const scaleContainer = document.createElement('div');
+            scaleContainer.style.cssText = `
+                display: grid; 
+                grid-template-columns: repeat(${scaleMax - scaleMin + 1}, 1fr); 
+                gap: 8px; 
+                margin-bottom: 15px;
+            `;
+            
+            for (let i = scaleMin; i <= scaleMax; i++) {
+                const button = document.createElement('button');
+                button.className = 'answer-option scale-button';
+                button.style.cssText = `
+                    padding: 12px 8px; 
+                    text-align: center; 
+                    font-weight: 600; 
+                    min-height: 50px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                button.textContent = i.toString();
+                button.onclick = () => selectScaleAnswer(i);
+                
+                if (userAnswer === i) {
+                    button.classList.add('selected');
+                }
+                
+                scaleContainer.appendChild(button);
+            }
+            
+            scaleDiv.appendChild(scaleContainer);
+            
+            // Add scale labels
+            const labelsDiv = document.createElement('div');
+            labelsDiv.style.cssText = 'display: flex; justify-content: space-between; color: #6b7280; font-size: 0.9rem; margin-top: 5px;';
+            
+            if (question.isReasonEvaluation) {
+                labelsDiv.innerHTML = `
+                    <span>No influence (${scaleMin})</span>
+                    <span>Strong influence (${scaleMax})</span>
+                `;
+            } else {
+                labelsDiv.innerHTML = `
+                    <span>Strongly oppose (${scaleMin})</span>
+                    <span>Strongly support (${scaleMax})</span>
+                `;
+            }
+            
+            scaleDiv.appendChild(labelsDiv);
+            answerOptions.appendChild(scaleDiv);
+        }
+
+        // Show traditional quiz answer options
+        function showQuizAnswerOptions(question, userAnswer) {
+            const answerOptions = document.getElementById('answerOptions');
+            
+            // Remove existing scale options if any
+            const existingOptions = answerOptions.querySelectorAll('.scale-options, .answer-option');
+            existingOptions.forEach(option => option.remove());
+            
+            if (question.answer_options && Object.keys(question.answer_options).length > 0) {
+                // Add header showing number of options
+                const optionCount = Object.keys(question.answer_options).length;
+                const headerDiv = document.createElement('div');
+                headerDiv.style.cssText = 'margin-bottom: 15px; font-weight: 600; color: #374151; font-size: 1rem;';
+                headerDiv.textContent = `Answer Options (${optionCount}):`;
+                answerOptions.appendChild(headerDiv);
+                
+                Object.entries(question.answer_options).forEach(([key, value]) => {
+                    const button = document.createElement('button');
+                    button.className = 'answer-option';
+                    button.innerHTML = `<span class="option-letter">${key}.</span>${value}`;
+                    button.onclick = () => selectAnswer(key);
+                    
+                    if (userAnswer === key) {
+                        button.classList.add('selected');
+                        
+                        // Show correct/incorrect styling if score is visible
+                        if (showScoreEnabled) {
+                            if (key === question.standard_answer) {
+                                button.classList.add('correct');
+                            } else {
+                                button.classList.add('incorrect');
+                            }
+                        }
+                    }
+                    
+                    // Highlight correct answer if score is visible and question is answered
+                    if (showScoreEnabled && userAnswer !== undefined && key === question.standard_answer) {
+                        button.classList.add('correct');
+                    }
+                    
+                    answerOptions.appendChild(button);
+                });
+            } else {
+                answerOptions.innerHTML = '<div style="text-align: center; color: #64748b;">No answer options available for this question.</div>';
+            }
+        }
+
+        // Select an answer
+        function selectAnswer(selectedOption) {
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const question = currentQuestions[currentQuestionIndex];
+            
+            // Store user answer
+            userAnswers[`${currentContextLength}_${currentQuestionIndex}`] = selectedOption;
+            
+            // Update answer options styling
+            const options = document.querySelectorAll('.answer-option');
+            options.forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+            });
+            
+            // Mark selected option
+            const selectedButton = Array.from(options).find(option => 
+                option.textContent.startsWith(selectedOption + '.')
+            );
+            if (selectedButton) {
+                selectedButton.classList.add('selected');
+                
+                // Show correct/incorrect styling if score is visible
+                if (showScoreEnabled) {
+                    if (selectedOption === question.standard_answer) {
+                        selectedButton.classList.add('correct');
+                    } else {
+                        selectedButton.classList.add('incorrect');
+                        
+                        // Highlight correct answer
+                        const correctButton = Array.from(options).find(option => 
+                            option.textContent.startsWith(question.standard_answer + '.')
+                        );
+                        if (correctButton) {
+                            correctButton.classList.add('correct');
+                        }
+                    }
+                }
+            }
+            
+            updateAnswerFeedback();
+            updateScoreDisplay();
+        }
+
+        // Select a scale answer for belief update questions
+        function selectScaleAnswer(selectedValue) {
+            // Store user answer
+            userAnswers[`${currentContextLength}_${currentQuestionIndex}`] = selectedValue;
+            
+            // Update scale button styling
+            const scaleButtons = document.querySelectorAll('.scale-button');
+            scaleButtons.forEach(button => {
+                button.classList.remove('selected');
+            });
+            
+            // Mark selected button
+            const selectedButton = Array.from(scaleButtons).find(button => 
+                parseInt(button.textContent) === selectedValue
+            );
+            if (selectedButton) {
+                selectedButton.classList.add('selected');
+            }
+            
+            // If this is an opinion question, update any related opinion contexts that might be displayed
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const currentQuestion = currentQuestions[currentQuestionIndex];
+            if (currentQuestion && currentQuestion.isOpinion) {
+                updateRelatedOpinionContexts();
+            }
+            
+            updateScoreDisplay();
+        }
+
+        // Update related opinion contexts when opinion answers change
+        function updateRelatedOpinionContexts() {
+            const relatedOpinion = document.getElementById('relatedOpinion');
+            if (relatedOpinion) {
+                // Remove the existing context and it will be recreated with updated answer
+                relatedOpinion.remove();
+            }
+        }
+
+        // Update answer feedback
+        function updateAnswerFeedback() {
+            const feedback = document.getElementById('answerFeedback');
+            const userAnswer = userAnswers[`${currentContextLength}_${currentQuestionIndex}`];
+            
+            if (!showScoreEnabled || userAnswer === undefined) {
+                feedback.classList.remove('visible');
+                return;
+            }
+            
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const question = currentQuestions[currentQuestionIndex];
+            const isCorrect = userAnswer === question.standard_answer;
+            
+            feedback.classList.add('visible');
+            feedback.className = `answer-feedback visible ${isCorrect ? 'correct' : 'incorrect'}`;
+            
+            if (isCorrect) {
+                feedback.innerHTML = '✅ Correct!';
+            } else {
+                let html = `❌ Incorrect. The correct answer is ${question.standard_answer}.`;
+                
+                // Add source question info for incorrect answers
+                if (question.source_qa && question.source_qa.question) {
+                    html += `
+                        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e5e7eb;">
+                            <div class="context-toggle" onclick="toggleSourceInFeedback()" style="margin-bottom: 10px;">
+                                <span>🎯</span>
+                                <span>Show Source Question</span>
+                                <span id="sourceInFeedbackArrow">▼</span>
+                            </div>
+                            <div class="context-content" id="sourceInFeedbackContent">
+                                <div class="context-item">
+                                    <div class="context-question">
+                                        <span style="color: #059669; font-weight: bold;">Source Question:</span>
+                                        ${question.source_qa.question}
+                                    </div>
+                                    ${question.source_qa.answer ? `
+                                        <div class="context-answer">
+                                            <span style="color: #3b82f6; font-weight: bold;">Participant Answer:</span>
+                                            ${question.source_qa.answer}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                                ${question.reasoning ? `
+                                    <div class="context-item">
+                                        <div class="context-question">
+                                            <span style="color: #dc2626; font-weight: bold;">Expected Reasoning:</span>
+                                        </div>
+                                        <div class="context-answer">
+                                            ${question.reasoning}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                feedback.innerHTML = html;
+            }
+        }
+
+        // Update navigation buttons
+        function updateNavigationButtons() {
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const prevButton = document.getElementById('prevButton');
+            const nextButton = document.getElementById('nextButton');
+            
+            prevButton.disabled = currentQuestionIndex === 0;
+            nextButton.disabled = currentQuestionIndex >= currentQuestions.length - 1;
+            
+            if (currentQuestionIndex >= currentQuestions.length - 1) {
+                nextButton.textContent = 'Finished';
+            } else {
+                nextButton.textContent = 'Next →';
+            }
+        }
+
+        // Navigate to previous question
+        function previousQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showCurrentQuestion();
+            }
+        }
+
+        // Navigate to next question
+        function nextQuestion() {
+            const currentQuestions = questionsData[currentContextLength] || [];
+            if (currentQuestionIndex < currentQuestions.length - 1) {
+                currentQuestionIndex++;
+                showCurrentQuestion();
+            }
+        }
+
+        // Update context section (always expanded)
+        function updateContext() {
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const question = currentQuestions[currentQuestionIndex];
+            const contextContainer = document.getElementById('contextContainer');
+            
+            if (question && question.context_qas && question.context_qas.length > 0) {
+                contextContainer.style.display = 'block';
+                
+                const contextContent = document.getElementById('contextContent');
+                contextContent.classList.add('visible'); // Always show expanded
+                contextContent.innerHTML = '';
+                
+                question.context_qas.forEach((qa, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'context-item';
+                    item.innerHTML = `
+                        <div class="context-question">
+                            <span style="color: #3b82f6; font-weight: bold;">Q${qa.question_number || index + 1}:</span> 
+                            ${qa.question}
+                        </div>
+                        <div class="context-answer">
+                            <span style="color: #059669; font-weight: bold;">A:</span> 
+                            ${qa.answer}
+                        </div>
+                    `;
+                    contextContent.appendChild(item);
+                });
+                
+                // Update arrow to show expanded state
+                const arrow = document.getElementById('contextArrow');
+                if (arrow) arrow.textContent = '▲';
+            } else {
+                contextContainer.style.display = 'none';
+            }
+        }
+
+        // Update demographics section
+        function updateDemographics() {
+            const currentQuestions = questionsData[currentContextLength] || [];
+            const question = currentQuestions[currentQuestionIndex];
+            const demographicsContainer = document.getElementById('demographicsContainer');
+            
+            if (question && question.demographics && Object.keys(question.demographics).length > 0) {
+                demographicsContainer.style.display = 'block';
+                
+                const demographicsContent = document.getElementById('demographicsContent');
+                demographicsContent.innerHTML = '';
+                
+                // Group demographics into meaningful categories
+                const demographics = question.demographics;
+                let html = '<div class="context-item">';
+                
+                // Create a grid of demographic info
+                html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">';
+                
+                Object.entries(demographics).forEach(([key, value]) => {
+                    if (value && value.toString().trim()) {
+                        const displayKey = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        html += `
+                            <div style="padding: 8px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0;">
+                                <div style="font-weight: 600; color: #374151; font-size: 0.9rem;">${displayKey}</div>
+                                <div style="color: #6b7280; margin-top: 4px;">${value}</div>
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += '</div></div>';
+                demographicsContent.innerHTML = html;
+            } else {
+                demographicsContainer.style.display = 'none';
+            }
+        }
+
+        // Toggle demographics visibility
+        function toggleDemographics() {
+            const demographicsContent = document.getElementById('demographicsContent');
+            const arrow = document.getElementById('demographicsArrow');
+            
+            if (demographicsContent.classList.contains('visible')) {
+                demographicsContent.classList.remove('visible');
+                arrow.textContent = '▼';
+            } else {
+                demographicsContent.classList.add('visible');
+                arrow.textContent = '▲';
+            }
+        }
+
+        // Toggle source info in feedback
+        function toggleSourceInFeedback() {
+            const sourceContent = document.getElementById('sourceInFeedbackContent');
+            const arrow = document.getElementById('sourceInFeedbackArrow');
+            
+            if (sourceContent.classList.contains('visible')) {
+                sourceContent.classList.remove('visible');
+                arrow.textContent = '▼';
+            } else {
+                sourceContent.classList.add('visible');
+                arrow.textContent = '▲';
+            }
+        }
+
+        // Toggle context visibility
+        function toggleContext() {
+            const contextContent = document.getElementById('contextContent');
+            const arrow = document.getElementById('contextArrow');
+            
+            if (contextContent.classList.contains('visible')) {
+                contextContent.classList.remove('visible');
+                arrow.textContent = '▼';
+            } else {
+                contextContent.classList.add('visible');
+                arrow.textContent = '▲';
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            updateDataStatus();
+            if (questionsData[currentContextLength] && questionsData[currentContextLength].length > 0) {
+                showCurrentQuestion();
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
