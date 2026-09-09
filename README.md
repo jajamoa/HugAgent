@@ -1,14 +1,27 @@
 # HugAgent: A Human Simulation Benchmark for Individual-Level Reasoning
 
-> Accepted to **EMNLP 2026 Main**. Earlier versions presented at NeurIPS 2025 workshops (PersonaLLM, Oral; LAW, Spotlight). [Paper](https://arxiv.org/pdf/2510.15144) · [Project page](https://jajamoa.github.io/HugAgent/)
->
-> A scaled-up v2 (more participants, more topics) is in preparation.
+**EMNLP 2026, main conference** · [Paper](https://arxiv.org/abs/2510.15144) · [Project page](https://jajamoa.github.io/HugAgent/) · [Benchmark data](Benchmark/) · [Interview chatbot](https://github.com/jajamoa/trace-your-thinking) · [BibTeX](#citation)
 
-**HugAgent** (**Hu**man-**G**rounded **Agent** Benchmark) is a benchmark for evaluating average-to-individual reasoning adaptation in large language models. While current LLMs approximate human responses at scale, they remain tuned to population-level consensus, often erasing the individuality of reasoning styles and belief trajectories that characterize human thought.
+Chance Jiajie Li\*, Zhenze Mo\*, Yuhan Tang\*, Ao Qu, Jiayi Wu, Kaiya Ivy Zhao, Yulu Gan, Jie Fan, Jiangbo Yu, Hang Jiang, Paul Pu Liang, Jinhua Zhao, Luis Alberto Alonso Pastor, Kent Larson  
+MIT Media Lab, MIT EECS, MIT IDSS, MIT CEE, MIT DUSP, Northeastern University, Brown University, McGill University · \*equal contribution
 
-Our benchmark addresses a fundamental challenge: can models predict how a *specific person* would reason and update their beliefs in novel scenarios, given only partial evidence of their past views? HugAgent is built on real human reasoning data from three complex, controversial domains that require deliberate thinking: healthcare, surveillance, and housing. A synthetic track (`Benchmark/synth_500.zip`) is included for controlled stress testing and is not used in the paper.
+![HugAgent](docs/assets/teaser.jpg)
 
-This design enables scalable, reproducible evaluation of **intra-agent fidelity**: whether models can capture not just what people believe, but how their individual reasoning evolves. Each instance preserves individual variation instead of collapsing it into population-level labels, advancing the vision of more human-like reasoning in machines.
+> Can AI reason like you, or only answer like you?
+
+HugAgent (Human-Grounded Agent Benchmark) evaluates whether a language model can simulate how a specific person reasons and updates their beliefs, given only that person's own words. It scales the think-aloud method with an LLM-driven interview chatbot. Ground truth comes from the participants themselves, reported in structured questionnaires the models never see.
+
+**Two tasks.** *Belief state inference*: from an interview excerpt, infer a belief the person holds but never stated. *Belief dynamics update*: given a new scenario, predict how this person's stance moves, on their own scale.
+
+**Data.** 54 participants (quality-filtered from 120), 3 contested domains (healthcare, surveillance, zoning), 1,742 items, ~85% human test-retest ceiling. Everything is open: data, pipeline, chatbot. A synthetic track (`Benchmark/synth_500.zip`) is included for controlled stress testing and is not used in the paper.
+
+**Finding.** Models recover what a person believes: the best trail the human ceiling by 7 to 9 points. They struggle to predict how a person changes their mind: best model 68.6% vs. 85.7% for humans, and the gap holds across every model family tested.
+
+## News
+
+- **2026-08** Accepted to EMNLP 2026, main conference.
+- **2025-12** Earlier versions presented at NeurIPS 2025 workshops: PersonaLLM (oral) and LAW (spotlight).
+- A scaled-up v2, with more participants and more topics, is in preparation.
 
 ## Usage
 
