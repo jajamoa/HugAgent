@@ -1,6 +1,6 @@
 # HugAgent: A Human Simulation Benchmark for Individual-Level Reasoning
 
-**EMNLP 2026, main conference** · [Paper](https://arxiv.org/abs/2510.15144) · [Project page](https://jajamoa.github.io/HugAgent/) · [Benchmark data](Benchmark/) · [Interview chatbot](https://github.com/jajamoa/trace-your-thinking) · [BibTeX](#citation)
+**EMNLP 2026, main conference (oral)** · [Paper](https://arxiv.org/abs/2510.15144) · [Project page](https://jajamoa.github.io/HugAgent/) · [Benchmark data](Benchmark/) · [Interview chatbot](https://github.com/jajamoa/trace-your-thinking) · [BibTeX](#citation)
 
 Chance Jiajie Li\*, Zhenze Mo\*, Yuhan Tang\*, Ao Qu, Jiayi Wu, Kaiya Ivy Zhao, Yulu Gan, Jie Fan, Jiangbo Yu, Hang Jiang, Paul Pu Liang, Jinhua Zhao, Luis Alberto Alonso Pastor, Kent Larson  
 MIT Media Lab, MIT EECS, MIT IDSS, MIT CEE, MIT DUSP, Northeastern University, Brown University, McGill University · \*equal contribution
@@ -19,6 +19,7 @@ HugAgent (Human-Grounded Agent Benchmark) evaluates whether a language model can
 
 ## News
 
+- **2026-09** Selected for an oral presentation at EMNLP 2026 (Budapest, October 24 to 29).
 - **2026-08** Accepted to EMNLP 2026, main conference.
 - **2025-12** Earlier versions presented at NeurIPS 2025 workshops: PersonaLLM (oral) and LAW (spotlight).
 - A scaled-up v2, with more participants and more topics, is in preparation.
@@ -147,6 +148,7 @@ If you use HugAgent, please cite the paper:
                Alonso Pastor, Luis Alberto and Larson, Kent},
   booktitle = {Proceedings of the 2026 Conference on Empirical Methods in
                Natural Language Processing (EMNLP)},
-  year      = {2026}
+  year      = {2026},
+  note      = {Oral}
 }
 ```
