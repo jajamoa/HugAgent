@@ -1,0 +1,13 @@
+{
+  "model": "GPT-5-mini",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 75.3,
+    "bdu_acc": 58.21,
+    "bdu_mae": 1.43,
+    "bdu_dir_acc": 77.02,
+    "ati": 61.53
+  }
+}

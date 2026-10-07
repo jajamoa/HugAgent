@@ -1,0 +1,60 @@
+{
+  "model": "Random guess (mean of 5 seeds)",
+  "data_version": "data-v1.0",
+  "settings": {
+    "temperature": 0.1,
+    "demographics": true,
+    "context": true,
+    "limit": null,
+    "base_url": null,
+    "mae_max": 3.0,
+    "lambda": 0.3
+  },
+  "date": "2026-10-07",
+  "overall": {
+    "bsi_acc": 50.51160840778327,
+    "bdu_acc": 43.503770241058376,
+    "bdu_mae": 1.8584360498258803,
+    "bdu_dir_acc": 47.930948159649226,
+    "n_items": 1742.0,
+    "unparsed": 0.0,
+    "ati_unscaled": 0.4743302898299507,
+    "ati": -0.6793108367501703
+  },
+  "per_domain": {
+    "healthcare": {
+      "n_bsi": 108.0,
+      "n_bdu": 472.0,
+      "bsi_acc": 48.70370370370371,
+      "bsi_unparsed": 0.0,
+      "bdu_acc": 42.83898305084746,
+      "bdu_mae": 1.8512711864406781,
+      "bdu_unparsed": 0.0,
+      "bdu_dir_pairs": 83.0,
+      "bdu_dir_acc": 46.54095445326457
+    },
+    "surveillance": {
+      "n_bsi": 122.0,
+      "n_bdu": 364.0,
+      "bsi_acc": 49.18032786885246,
+      "bsi_unparsed": 0.0,
+      "bdu_acc": 44.94505494505495,
+      "bdu_mae": 1.7925824175824174,
+      "bdu_unparsed": 0.0,
+      "bdu_dir_pairs": 75.0,
+      "bdu_dir_acc": 50.977164750957854
+    },
+    "zoning": {
+      "n_bsi": 126.0,
+      "n_bdu": 550.0,
+      "bsi_acc": 53.65079365079365,
+      "bsi_unparsed": 0.0,
+      "bdu_acc": 42.72727272727273,
+      "bdu_mae": 1.9314545454545453,
+      "bdu_unparsed": 0.0,
+      "bdu_dir_pairs": 21.0,
+      "bdu_dir_acc": 46.27472527472527
+    }
+  },
+  "notes": "Uniform random over the options or the scale, averaged over 5 seeds. The ATI scale's 0 point is fixed by the paper's random-guess row (Table 2), so this lands near 0, not exactly on it."
+}

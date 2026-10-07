@@ -1,0 +1,13 @@
+{
+  "model": "Qwen2.5-7B-instr.",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 77.18,
+    "bdu_acc": 58.82,
+    "bdu_mae": 1.4,
+    "bdu_dir_acc": 77.12,
+    "ati": 64.83
+  }
+}

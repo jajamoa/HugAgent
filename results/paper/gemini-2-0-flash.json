@@ -1,0 +1,13 @@
+{
+  "model": "Gemini 2.0 Flash",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 69.95,
+    "bdu_acc": 60.55,
+    "bdu_mae": 1.35,
+    "bdu_dir_acc": 83.31,
+    "ati": 59.76
+  }
+}

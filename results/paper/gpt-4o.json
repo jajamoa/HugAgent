@@ -1,0 +1,13 @@
+{
+  "model": "GPT-4o",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 74.66,
+    "bdu_acc": 63.11,
+    "bdu_mae": 1.29,
+    "bdu_dir_acc": 82.27,
+    "ati": 67.29
+  }
+}

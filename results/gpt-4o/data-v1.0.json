@@ -1,0 +1,61 @@
+{
+  "model": "gpt-4o",
+  "data_version": "data-v1.0",
+  "settings": {
+    "temperature": 0.1,
+    "demographics": true,
+    "context": true,
+    "limit": null,
+    "base_url": "https://app-us.ppapi.ai/v1",
+    "mae_max": 3.0,
+    "lambda": 0.3
+  },
+  "date": "2026-10-07",
+  "overall": {
+    "bsi_acc": 78.77815364154162,
+    "bdu_acc": 62.23339936899259,
+    "bdu_mae": 1.2434289862679693,
+    "bdu_dir_acc": 77.44897685982023,
+    "n_items": 1742,
+    "unparsed": 0,
+    "ati_unscaled": 0.7384954184740007,
+    "ati": 70.07130948974462
+  },
+  "per_domain": {
+    "healthcare": {
+      "n_bsi": 108,
+      "n_bdu": 472,
+      "bsi_acc": 75.92592592592592,
+      "bsi_unparsed": 0,
+      "bdu_acc": 58.05084745762712,
+      "bdu_mae": 1.2701271186440677,
+      "bdu_unparsed": 0,
+      "bdu_dir_pairs": 83,
+      "bdu_dir_acc": 79.9421686746988
+    },
+    "surveillance": {
+      "n_bsi": 122,
+      "n_bdu": 364,
+      "bsi_acc": 77.8688524590164,
+      "bsi_unparsed": 0,
+      "bdu_acc": 64.28571428571429,
+      "bdu_mae": 1.271978021978022,
+      "bdu_unparsed": 0,
+      "bdu_dir_pairs": 75,
+      "bdu_dir_acc": 75.49999999999999
+    },
+    "zoning": {
+      "n_bsi": 126,
+      "n_bdu": 550,
+      "bsi_acc": 82.53968253968254,
+      "bsi_unparsed": 0,
+      "bdu_acc": 64.36363636363636,
+      "bdu_mae": 1.1881818181818182,
+      "bdu_unparsed": 0,
+      "bdu_dir_pairs": 21,
+      "bdu_dir_acc": 76.90476190476191
+    }
+  },
+  "source": "Released data, Benchmark/hugagent_eval.py, gpt-4o via an OpenAI-compatible gateway, one run, 8 workers",
+  "notes": "Paper Table 2 for GPT-4o: 74.66 / 63.11 / 1.29 / 82.27 / 67.29 (mean of 5 runs, pre-release inputs)."
+}

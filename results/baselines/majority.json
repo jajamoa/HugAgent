@@ -1,0 +1,60 @@
+{
+  "model": "Global majority (A, 1)",
+  "data_version": "data-v1.0",
+  "settings": {
+    "temperature": 0.1,
+    "demographics": true,
+    "context": true,
+    "limit": null,
+    "base_url": null,
+    "mae_max": 3.0,
+    "lambda": 0.3
+  },
+  "date": "2026-10-07",
+  "overall": {
+    "bsi_acc": 63.63879492294793,
+    "bdu_acc": 58.3173464953126,
+    "bdu_mae": 1.6804719009803755,
+    "bdu_dir_acc": 15.337464142283418,
+    "n_items": 1742,
+    "unparsed": 0,
+    "ati_unscaled": 0.48441465554873997,
+    "ati": 2.021557116055791
+  },
+  "per_domain": {
+    "healthcare": {
+      "n_bsi": 108,
+      "n_bdu": 472,
+      "bsi_acc": 65.74074074074075,
+      "bsi_unparsed": 0,
+      "bdu_acc": 52.75423728813559,
+      "bdu_mae": 1.8114406779661016,
+      "bdu_unparsed": 0,
+      "bdu_dir_pairs": 83,
+      "bdu_dir_acc": 20.240963855421686
+    },
+    "surveillance": {
+      "n_bsi": 122,
+      "n_bdu": 364,
+      "bsi_acc": 68.0327868852459,
+      "bsi_unparsed": 0,
+      "bdu_acc": 52.1978021978022,
+      "bdu_mae": 1.809065934065934,
+      "bdu_unparsed": 0,
+      "bdu_dir_pairs": 75,
+      "bdu_dir_acc": 17.200000000000003
+    },
+    "zoning": {
+      "n_bsi": 126,
+      "n_bdu": 550,
+      "bsi_acc": 57.142857142857146,
+      "bsi_unparsed": 0,
+      "bdu_acc": 70.0,
+      "bdu_mae": 1.420909090909091,
+      "bdu_unparsed": 0,
+      "bdu_dir_pairs": 21,
+      "bdu_dir_acc": 8.57142857142857
+    }
+  },
+  "notes": "Most frequent answer over all items (A for BSI, 1 for BDU), the paper's Global Majority. Paper row: 65.77 / 58.18 / 2.54 / 17.93; the MAE there appears to be unnormalized (raw MAE of this predictor is 2.43)."
+}

@@ -1,0 +1,13 @@
+{
+  "model": "RAG (Qwen-max)",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 75.46,
+    "bdu_acc": 51.9,
+    "bdu_mae": 1.57,
+    "bdu_dir_acc": 72.25,
+    "ati": 54.96
+  }
+}

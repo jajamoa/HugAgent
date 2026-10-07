@@ -1,0 +1,13 @@
+{
+  "model": "o3-mini",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 75.12,
+    "bdu_acc": 64.54,
+    "bdu_mae": 1.22,
+    "bdu_dir_acc": 71.29,
+    "ati": 60.92
+  }
+}
