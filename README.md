@@ -1,6 +1,6 @@
 # HugAgent: A Human Simulation Benchmark for Individual-Level Reasoning
 
-**EMNLP 2026, main conference (oral)** · [Paper](https://arxiv.org/abs/2510.15144) · [Project page](https://jajamoa.github.io/HugAgent/) · [Benchmark data](Benchmark/) · [Interview chatbot](https://github.com/jajamoa/trace-your-thinking) · [BibTeX](#citation)
+**EMNLP 2026, main conference (oral)** · [Paper](https://arxiv.org/abs/2510.15144) · [Project page](https://jajamoa.github.io/HugAgent/) · [Data on Hugging Face](https://huggingface.co/datasets/social-atoms/hugagent) · [Interview chatbot](https://github.com/jajamoa/trace-your-thinking) · [BibTeX](#citation)
 
 Chance Jiajie Li\*, Zhenze Mo\*, Yuhan Tang\*, Ao Qu, Jiayi Wu, Kaiya Ivy Zhao, Yulu Gan, Jie Fan, Jiangbo Yu, Hang Jiang, Paul Pu Liang, Jinhua Zhao, Luis Alberto Alonso Pastor, Kent Larson  
 MIT Media Lab, MIT EECS, MIT IDSS, MIT CEE, MIT DUSP, Northeastern University, Brown University, McGill University · \*equal contribution
@@ -19,12 +19,25 @@ HugAgent (Human-Grounded Agent Benchmark) evaluates whether a language model can
 
 ## News
 
+- **2026-10** Full benchmark (1,742 items) released on the Hugging Face Hub as [social-atoms/hugagent](https://huggingface.co/datasets/social-atoms/hugagent), gated, CC BY-NC 4.0.
 - **2026-09** Selected for an oral presentation at EMNLP 2026 (Budapest, October 24 to 29).
 - **2026-08** Accepted to EMNLP 2026, main conference.
 - **2025-12** Earlier versions presented at NeurIPS 2025 workshops: PersonaLLM (oral) and LAW (spotlight).
 - A scaled-up v2, with more participants and more topics, is in preparation.
 
 ## Usage
+
+### Load from the Hugging Face Hub
+
+The benchmark is a gated dataset: accept the terms once on the dataset page, then `hf auth login`.
+
+```python
+from datasets import load_dataset
+bsi = load_dataset("social-atoms/hugagent", "belief_state_inference", split="test")
+bdu = load_dataset("social-atoms/hugagent", "belief_dynamics_update", split="test")
+```
+
+The same items are in `Benchmark/data/` as jsonl for use with the scripts below.
 
 ### Core Scripts
 
