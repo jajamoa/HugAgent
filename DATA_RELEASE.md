@@ -55,7 +55,7 @@ write the exact rule in this section and in the dataset card.
 
 ## Hugging Face Hub
 
-- Repository `Social-Atoms/hugagent` (or the org that owns it), type dataset.
+- Repository `social-atoms/hugagent` (or the org that owns it), type dataset.
 - Gated with automatic approval. Users accept the CC BY-NC 4.0 terms and the
   no-profiling clause before downloading; we keep the access log.
 - Files: `data/<config>/test-00000-of-00001.parquet`, two configs,

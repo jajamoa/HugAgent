@@ -4,7 +4,7 @@
 Needs a write token: run `hf auth login` first, or set HF_TOKEN.
 
 Usage:
-  python scripts/upload_hf.py --repo Social-Atoms/hugagent --tag data-v1.0
+  python scripts/upload_hf.py --repo social-atoms/hugagent --tag data-v1.0
 """
 import argparse
 from pathlib import Path

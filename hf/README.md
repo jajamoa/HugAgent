@@ -49,8 +49,8 @@ Code and evaluation scripts: https://github.com/jajamoa/HugAgent
 
 ```python
 from datasets import load_dataset
-bsi = load_dataset("Social-Atoms/hugagent", "belief_state_inference", split="test")
-bdu = load_dataset("Social-Atoms/hugagent", "belief_dynamics_update", split="test")
+bsi = load_dataset("social-atoms/hugagent", "belief_state_inference", split="test")
+bdu = load_dataset("social-atoms/hugagent", "belief_dynamics_update", split="test")
 ```
 
 Nested fields (`demographics`, `context_qas`, `answer_options`, `source_qa`,
