@@ -1,0 +1,13 @@
+{
+  "model": "Gemini 2.5 Pro",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 75.45,
+    "bdu_acc": 64.87,
+    "bdu_mae": 1.27,
+    "bdu_dir_acc": 78.65,
+    "ati": 64.29
+  }
+}

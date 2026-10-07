@@ -1,0 +1,13 @@
+{
+  "model": "LLaMA 3.3 70B",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 76.39,
+    "bdu_acc": 67.57,
+    "bdu_mae": 1.24,
+    "bdu_dir_acc": 79.56,
+    "ati": 69.84
+  }
+}

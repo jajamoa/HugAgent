@@ -1,0 +1,13 @@
+{
+  "model": "Human (test-retest)",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 84.84,
+    "bdu_acc": 85.66,
+    "bdu_mae": 0.68,
+    "bdu_dir_acc": 88.92,
+    "ati": 100.0
+  }
+}

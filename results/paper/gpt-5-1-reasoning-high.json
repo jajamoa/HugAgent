@@ -1,0 +1,13 @@
+{
+  "model": "GPT-5.1 (reasoning high)",
+  "data_version": "paper",
+  "source": "HugAgent paper, Table 2 (mean of 5 runs, authors' pipeline, pre-release inputs)",
+  "date": "2026-10",
+  "overall": {
+    "bsi_acc": 73.36,
+    "bdu_acc": 67.13,
+    "bdu_mae": 1.17,
+    "bdu_dir_acc": 80.94,
+    "ati": 64.66
+  }
+}
