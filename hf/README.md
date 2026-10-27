@@ -113,7 +113,7 @@ Belief dynamics update: accuracy within a tolerance band (plus or minus 1 on a
 normalized to a 5-point scale, and directional accuracy. The paper combines
 these into an average-to-individual (ATI) score. Human test-retest ceilings
 (13 participants, 14-day interval): 84.8% on inference, 85.7% on update.
-The scorer is `Benchmark/evaluate_qwen.py` in the code repository.
+The scorer is `Benchmark/hugagent_eval.py` in the code repository; run it with `--hub` to score straight on this dataset.
 
 ## How the data was collected
 

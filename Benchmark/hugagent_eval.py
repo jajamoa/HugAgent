@@ -6,6 +6,11 @@
   python Benchmark/hugagent_eval.py --model gpt-4o --api-key-env OPENAI_API_KEY \
       --out results/gpt-4o/data-v1.0.json               # full run, 1,742 items
   python Benchmark/hugagent_eval.py --baseline majority --out results/baselines/majority.json
+  python Benchmark/hugagent_eval.py --hub --model gpt-4o --api-key-env OPENAI_API_KEY \
+      --out results/gpt-4o/data-v1.0.json               # items from the Hugging Face Hub, no local data needed
+
+Items come from Benchmark/data/ (jsonl) by default, or from the Hub dataset
+social-atoms/hugagent with --hub (gated: accept the terms once, then `hf auth login`).
 
 Prompts are the ones from the paper (same text as evaluate_qwen.py). Metrics follow
 Appendix R.1: BSI accuracy; BDU tolerance accuracy, MAE on a 5-point scale,
@@ -38,11 +43,34 @@ BDU_SYSTEM = ("You are an expert in survey research and human psychology. "
     "Base your prediction on evidence from their profile and statements.")
 
 
+TASKS = ("belief_state_inference", "belief_dynamics_update")
+HUB_REPO = "social-atoms/hugagent"
+HUB_JSON_COLUMNS = ("demographics", "context_qas", "answer_options", "source_qa", "scale")  # stored as JSON strings in the parquet
+
+
 def load_items(data_dir: Path, limit=None):
     items = []
-    for task in ("belief_state_inference", "belief_dynamics_update"):
+    for task in TASKS:
         for domain in DOMAINS:
             rows = [json.loads(l) for l in (data_dir / f"{task}_{domain}.jsonl").read_text().splitlines() if l.strip()]
+            items.extend(rows[:limit] if limit else rows)
+    return items
+
+
+def load_items_hub(repo=HUB_REPO, limit=None):
+    """Same items as load_items, read from the Hub dataset (one config per task, rows in domain order)."""
+    from datasets import load_dataset
+    items = []
+    for task in TASKS:
+        by_domain = defaultdict(list)
+        for r in load_dataset(repo, task, split="test"):
+            r = {k: v for k, v in r.items() if v is not None}  # parquet has every column; the jsonl omits unused ones
+            for k in HUB_JSON_COLUMNS:
+                if isinstance(r.get(k), str):
+                    r[k] = json.loads(r[k])
+            by_domain[r["topic"]].append(r)
+        for domain in DOMAINS:
+            rows = by_domain[domain]
             items.extend(rows[:limit] if limit else rows)
     return items
 
@@ -194,6 +222,8 @@ def main():
     ap.add_argument("--baseline", choices=["majority", "random"],
                     help="non-learning baseline, no API calls: majority = most frequent answer overall (A, 1), random = uniform")
     ap.add_argument("--data-dir", type=Path, default=HERE / "data")
+    ap.add_argument("--hub", action="store_true", help=f"read the items from the Hub dataset ({HUB_REPO}) instead of --data-dir")
+    ap.add_argument("--repo", default=HUB_REPO, help="with --hub: dataset id, or a local folder with the same layout")
     ap.add_argument("--data-version", default="data-v1.0")
     ap.add_argument("--limit", type=int, help="items per file, for smoke tests")
     ap.add_argument("--workers", type=int, default=4)
@@ -207,7 +237,7 @@ def main():
     if not args.model and not args.baseline:
         ap.error("--model or --baseline is required")
 
-    items = load_items(args.data_dir, args.limit)
+    items = load_items_hub(args.repo, args.limit) if args.hub else load_items(args.data_dir, args.limit)
     if args.baseline == "random":
         # Average the metrics over several seeds, as the paper does (mean of 5 runs).
         runs = [score(items, baseline_preds(items, "random", seed=s)) for s in range(args.seeds)]
@@ -257,6 +287,7 @@ def main():
         "model": name, "data_version": args.data_version,
         "settings": {"temperature": args.temperature, "demographics": not args.no_demographics,
                      "context": not args.no_context, "limit": args.limit, "base_url": args.base_url,
+                     "items": f"hub:{args.repo}" if args.hub else ("Benchmark/data" if args.data_dir == HERE / "data" else str(args.data_dir)),
                      "mae_max": MAE_MAX, "lambda": LAMBDA},
         "date": time.strftime("%Y-%m-%d"),
         **res,

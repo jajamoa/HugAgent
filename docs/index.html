@@ -128,6 +128,13 @@ tr.dim td{color:var(--mut)}
 .split{display:grid;grid-template-columns:1.2fr 1fr;gap:24px;align-items:center;margin-top:22px}
 .split img{width:100%;border:1px solid var(--line)}
 pre{background:#fafaf8;border:1px solid var(--line);padding:12px 14px;font-size:12.5px;overflow-x:auto;margin-top:14px;line-height:1.5;color:var(--ink)}
+.ex{margin-top:22px}
+.exh{display:flex;justify-content:space-between;align-items:baseline;gap:6px 18px;flex-wrap:wrap;font-size:12.5px;font-weight:600;letter-spacing:.06em;color:var(--accent-ink)}
+.exh span{color:var(--mut);font-weight:400;letter-spacing:0}
+.exh a{color:var(--ink2);border-bottom-color:var(--line)}
+.exh a:hover{color:var(--accent-ink);border-bottom-color:var(--accent-ink)}
+.ex pre{margin-top:8px}
+.sub{font-size:18px;font-weight:700;margin:38px 0 8px}
 /* team */
 .authors{font-size:14.5px;line-height:1.75;max-width:760px}
 .authors sup{color:var(--accent-ink);font-size:11px}
@@ -393,15 +400,22 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 <section class="wrap" id="use">
   <div class="kicker">Use it</div>
   <h2>Evaluate your model</h2>
-  <p class="body">The dataset ships as JSONL on GitHub and parquet on the Hub, one item per line: demographics, context QAs, task question, gold answer. The scorer runs against any OpenAI-compatible endpoint and writes one results JSON.</p>
-  <p class="note">A scaled-up v2, with more participants and more topics, is in preparation.</p>
-<pre>pip install datasets openai
-git clone https://github.com/jajamoa/HugAgent &amp;&amp; cd HugAgent/Benchmark
-python hugagent_eval.py --model your-model --base-url https://your-endpoint/v1 --api-key-env YOUR_KEY --limit 20
-python hugagent_eval.py --model your-model --out ../results/your-model/data-v1.0.json</pre>
-  <p class="note">The full item set is on the Hugging Face Hub as <a href="https://huggingface.co/datasets/social-atoms/hugagent" target="_blank" rel="noopener">social-atoms/hugagent</a> (gated, CC BY-NC 4.0). Results go into <code>results/</code> by pull request and appear below.</p>
-  <h3 style="font-size:18px;margin:34px 0 8px">Collect your own</h3>
-  <p class="body" style="font-size:14.5px">TraceYourThinking, the interview chatbot behind HugAgent, is open source too. Point it at any topic and it collects fine-grained, think-aloud reasoning data: the raw material for benchmarks like this one, on questions we have not thought to ask. <a href="https://github.com/jajamoa/trace-your-thinking" target="_blank" rel="noopener">github.com/jajamoa/trace-your-thinking</a></p>
+  <p class="body">Load the items, run the scorer against any OpenAI-compatible endpoint, and submit the results JSON by <a href="https://github.com/jajamoa/HugAgent/tree/main/results" target="_blank" rel="noopener">pull request</a>. It then appears in the table below.</p>
+  <div class="ex">
+    <div class="exh">1 &middot; Load <span><a href="https://huggingface.co/datasets/social-atoms/hugagent" target="_blank" rel="noopener">social-atoms/hugagent</a> on the Hugging Face Hub, gated, CC BY-NC 4.0</span></div>
+<pre>from datasets import load_dataset
+bsi = load_dataset("social-atoms/hugagent", "belief_state_inference", split="test")
+bdu = load_dataset("social-atoms/hugagent", "belief_dynamics_update", split="test")</pre>
+  </div>
+  <div class="ex">
+    <div class="exh">2 &middot; Score <span><a href="https://github.com/jajamoa/HugAgent/blob/main/Benchmark/hugagent_eval.py" target="_blank" rel="noopener">hugagent_eval.py</a>, the paper&rsquo;s prompts and metrics</span></div>
+<pre>pip install datasets openai &amp;&amp; hf auth login
+curl -O https://raw.githubusercontent.com/jajamoa/HugAgent/main/Benchmark/hugagent_eval.py
+python hugagent_eval.py --hub --model your-model --base-url https://your-endpoint/v1 \
+    --api-key-env YOUR_KEY --out your-model.json</pre>
+  </div>
+  <h3 class="sub">Collect your own</h3>
+  <p class="body">TraceYourThinking, the interview chatbot behind HugAgent, is open source too. Point it at any topic and it collects fine-grained, think-aloud reasoning data: the raw material for benchmarks like this one, on questions we have not thought to ask. <a href="https://github.com/jajamoa/trace-your-thinking" target="_blank" rel="noopener">github.com/jajamoa/trace-your-thinking</a></p>
   <a class="pipefig" style="display:block;border-bottom-width:1px" href="assets/chatbot.jpg" target="_blank" rel="noopener"><img src="assets/chatbot.jpg" alt="TraceYourThinking: a semi-structured interview chatbot maintains a causal belief graph and generates follow-up questions."></a>
   <p class="figcap">The interview loop, left to right: each answer updates a causal belief network of the participant; the bot reads the graph, finds its most informative node (anchor discovery, then expansion), and asks the follow-up that probes it; the loop repeats for 8 to 20 turns. Click to enlarge.</p>
 </section>

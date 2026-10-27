@@ -65,7 +65,7 @@ bsi = load_dataset("social-atoms/hugagent", "belief_state_inference", split="tes
 bdu = load_dataset("social-atoms/hugagent", "belief_dynamics_update", split="test")
 ```
 
-The same items are in `Benchmark/data/` as jsonl for use with the scripts below.
+The same items are in `Benchmark/data/` as jsonl. The scorer below reads those by default, or the Hub copy with `--hub`.
 
 ### Core Scripts
 
@@ -95,6 +95,8 @@ cd Benchmark
 python hugagent_eval.py --model gpt-4o --base-url https://api.openai.com/v1 --api-key-env OPENAI_API_KEY --limit 20
 # Full run (1,742 items), results file ready to submit
 python hugagent_eval.py --model gpt-4o --api-key-env OPENAI_API_KEY --out ../results/gpt-4o/data-v1.0.json --save-responses ../runs/gpt-4o.jsonl
+# Same run with the items pulled from the Hub instead of Benchmark/data/ (after `hf auth login`)
+python hugagent_eval.py --hub --model gpt-4o --api-key-env OPENAI_API_KEY --out ../results/gpt-4o/data-v1.0.json
 # Non-learning baselines, no API calls
 python hugagent_eval.py --baseline majority
 ```
