@@ -13,4 +13,5 @@ Layout:
 Required fields: `model`, `data_version`, `date`, `overall.bsi_acc`, `overall.bdu_acc`,
 `overall.bdu_mae`, `overall.bdu_dir_acc`, `overall.ati`. Optional: `settings`, `per_domain`,
 `source`, `notes`. A submission must come from an unmodified scorer run on the full set
-(no `--limit`) and should link the raw responses (`--save-responses`) somewhere we can check.
+(no `--limit`), or from `--score` on responses your own pipeline produced, and should link the raw
+responses (`--save-responses`, or your responses file) somewhere we can re-score them with `--score`.

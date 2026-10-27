@@ -400,19 +400,21 @@ footer .wrap{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
 <section class="wrap" id="use">
   <div class="kicker">Use it</div>
   <h2>Evaluate your model</h2>
-  <p class="body">Load the items, run the scorer against any OpenAI-compatible endpoint, and submit the results JSON by <a href="https://github.com/jajamoa/HugAgent/tree/main/results" target="_blank" rel="noopener">pull request</a>. It then appears in the table below.</p>
+  <p class="body">Two ways to get a number. Either way, submit the results JSON by <a href="https://github.com/jajamoa/HugAgent/tree/main/results" target="_blank" rel="noopener">pull request</a> and it appears in the table below.</p>
   <div class="ex">
-    <div class="exh">1 &middot; Load <span><a href="https://huggingface.co/datasets/social-atoms/hugagent" target="_blank" rel="noopener">social-atoms/hugagent</a> on the Hugging Face Hub, gated, CC BY-NC 4.0</span></div>
-<pre>from datasets import load_dataset
-bsi = load_dataset("social-atoms/hugagent", "belief_state_inference", split="test")
-bdu = load_dataset("social-atoms/hugagent", "belief_dynamics_update", split="test")</pre>
-  </div>
-  <div class="ex">
-    <div class="exh">2 &middot; Score <span><a href="https://github.com/jajamoa/HugAgent/blob/main/Benchmark/hugagent_eval.py" target="_blank" rel="noopener">hugagent_eval.py</a>, the paper&rsquo;s prompts and metrics</span></div>
+    <div class="exh">Option A &middot; Run the scorer <span><a href="https://github.com/jajamoa/HugAgent/blob/main/Benchmark/hugagent_eval.py" target="_blank" rel="noopener">hugagent_eval.py</a>, the paper&rsquo;s prompts and metrics, against any OpenAI-compatible endpoint</span></div>
 <pre>pip install datasets openai &amp;&amp; hf auth login
 curl -O https://raw.githubusercontent.com/jajamoa/HugAgent/main/Benchmark/hugagent_eval.py
 python hugagent_eval.py --hub --model your-model --base-url https://your-endpoint/v1 \
     --api-key-env YOUR_KEY --out your-model.json</pre>
+  </div>
+  <div class="ex">
+    <div class="exh">Option B &middot; Bring your own pipeline <span><a href="https://huggingface.co/datasets/social-atoms/hugagent" target="_blank" rel="noopener">social-atoms/hugagent</a> on the Hugging Face Hub, gated, CC BY-NC 4.0</span></div>
+<pre>from datasets import load_dataset
+bsi = load_dataset("social-atoms/hugagent", "belief_state_inference", split="test")
+bdu = load_dataset("social-atoms/hugagent", "belief_dynamics_update", split="test")
+# generate with anything, one line per item {"item_id": ..., "response": ...}, then score it:
+python hugagent_eval.py --hub --score your-responses.jsonl --model your-model --out your-model.json</pre>
   </div>
   <h3 class="sub">Collect your own</h3>
   <p class="body">TraceYourThinking, the interview chatbot behind HugAgent, is open source too. Point it at any topic and it collects fine-grained, think-aloud reasoning data: the raw material for benchmarks like this one, on questions we have not thought to ask. <a href="https://github.com/jajamoa/trace-your-thinking" target="_blank" rel="noopener">github.com/jajamoa/trace-your-thinking</a></p>

@@ -27,7 +27,7 @@ HugAgent (Human-Grounded Agent Benchmark) evaluates whether a language model can
 
 ## Leaderboard
 
-ATI is the paper's unified score: 0 is random guessing, 100 is the human test-retest ceiling. Rows marked `paper` are copied from Table 2; rows marked `released data` were produced by `Benchmark/hugagent_eval.py` on the files in `Benchmark/data/`. To add a model, run the scorer on the full set and open a pull request with the JSON under `results/` (see `results/README.md`). The test set is public with gold answers, so all scores are self-reported; we re-score the submitted raw responses, nothing more. A held-out split scored by us is planned for v2.
+ATI is the paper's unified score: 0 is random guessing, 100 is the human test-retest ceiling. Rows marked `paper` are copied from Table 2; rows marked `released data` were produced by `Benchmark/hugagent_eval.py` on the files in `Benchmark/data/`. To add a model, run the scorer on the full set and open a pull request with the JSON under `results/` (see `results/README.md`). The test set is public with gold answers, so all scores are self-reported; we re-score the submitted raw responses with `--score`, nothing more. A held-out split scored by us is planned for v2.
 
 <!-- leaderboard:start -->
 | Model | BSI acc | BDU acc | BDU MAE | BDU dir. acc | ATI | Data | Source |
@@ -97,6 +97,11 @@ python hugagent_eval.py --model gpt-4o --base-url https://api.openai.com/v1 --ap
 python hugagent_eval.py --model gpt-4o --api-key-env OPENAI_API_KEY --out ../results/gpt-4o/data-v1.0.json --save-responses ../runs/gpt-4o.jsonl
 # Same run with the items pulled from the Hub instead of Benchmark/data/ (after `hf auth login`)
 python hugagent_eval.py --hub --model gpt-4o --api-key-env OPENAI_API_KEY --out ../results/gpt-4o/data-v1.0.json
+# Bring your own pipeline: score a responses file, one line per item {"item_id": ..., "response": ...}
+# (the format --save-responses writes). The scorer parses "response" the same way as a live run, and that
+# parser expects what the paper's prompts ask for: a bare option letter or a bare number. If your prompts
+# produce longer text, have your pipeline reduce each response to the letter or number before scoring.
+python hugagent_eval.py --hub --score ../runs/my-model.jsonl --model my-model --out ../results/my-model/data-v1.0.json
 # Non-learning baselines, no API calls
 python hugagent_eval.py --baseline majority
 ```

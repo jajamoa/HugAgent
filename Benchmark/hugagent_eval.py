@@ -8,6 +8,12 @@
   python Benchmark/hugagent_eval.py --baseline majority --out results/baselines/majority.json
   python Benchmark/hugagent_eval.py --hub --model gpt-4o --api-key-env OPENAI_API_KEY \
       --out results/gpt-4o/data-v1.0.json               # items from the Hugging Face Hub, no local data needed
+  python Benchmark/hugagent_eval.py --hub --score runs/my-model.jsonl --model my-model \
+      --out results/my-model/data-v1.0.json             # score responses produced by your own pipeline
+
+A responses file has one JSON line per item, {"item_id": ..., "response": ...}, the
+format --save-responses writes; "response" is the raw model text and is parsed here.
+Items without a line count as unparsed.
 
 Items come from Benchmark/data/ (jsonl) by default, or from the Hub dataset
 social-atoms/hugagent with --hub (gated: accept the terms once, then `hf auth login`).
@@ -221,6 +227,8 @@ def main():
     ap.add_argument("--api-key-env", default="OPENAI_API_KEY")
     ap.add_argument("--baseline", choices=["majority", "random"],
                     help="non-learning baseline, no API calls: majority = most frequent answer overall (A, 1), random = uniform")
+    ap.add_argument("--score", type=Path, metavar="RESPONSES_JSONL",
+                    help="score a responses file instead of calling a model: one line per item, {item_id, response}")
     ap.add_argument("--data-dir", type=Path, default=HERE / "data")
     ap.add_argument("--hub", action="store_true", help=f"read the items from the Hub dataset ({HUB_REPO}) instead of --data-dir")
     ap.add_argument("--repo", default=HUB_REPO, help="with --hub: dataset id, or a local folder with the same layout")
@@ -234,8 +242,8 @@ def main():
     ap.add_argument("--out", type=Path, help="write the results JSON here")
     ap.add_argument("--save-responses", type=Path, help="also dump raw model responses (jsonl)")
     args = ap.parse_args()
-    if not args.model and not args.baseline:
-        ap.error("--model or --baseline is required")
+    if not args.model and not args.baseline and not args.score:
+        ap.error("--model, --baseline or --score is required")
 
     items = load_items_hub(args.repo, args.limit) if args.hub else load_items(args.data_dir, args.limit)
     if args.baseline == "random":
@@ -251,6 +259,21 @@ def main():
     elif args.baseline:
         preds = baseline_preds(items, args.baseline)
         name = "Global majority (A, 1)"
+    elif args.score:
+        by_id = {it["item_id"]: it for it in items}
+        raw = {}
+        for line in args.score.read_text().splitlines():
+            if line.strip():
+                r = json.loads(line)
+                raw[r["item_id"]] = r.get("response", r.get("parsed"))
+        unknown = [iid for iid in raw if iid not in by_id]
+        if unknown:
+            sys.stderr.write(f"ignoring {len(unknown)} responses whose item_id is not in the item set\n")
+        missing = [iid for iid in by_id if iid not in raw]
+        if missing:
+            sys.stderr.write(f"{len(missing)} of {len(items)} items have no response; they count as unparsed\n")
+        preds = {iid: (extract(it, raw.get(iid)) if isinstance(raw.get(iid), str) else raw.get(iid)) for iid, it in by_id.items()}
+        name = args.model or args.score.stem
     else:
         from openai import OpenAI
         key = os.environ.get(args.api_key_env)
@@ -288,6 +311,7 @@ def main():
         "settings": {"temperature": args.temperature, "demographics": not args.no_demographics,
                      "context": not args.no_context, "limit": args.limit, "base_url": args.base_url,
                      "items": f"hub:{args.repo}" if args.hub else ("Benchmark/data" if args.data_dir == HERE / "data" else str(args.data_dir)),
+                     "responses": args.score.name if args.score else None,
                      "mae_max": MAE_MAX, "lambda": LAMBDA},
         "date": time.strftime("%Y-%m-%d"),
         **res,
