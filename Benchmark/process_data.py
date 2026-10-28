@@ -396,7 +396,9 @@ def generate_reason_questions(question_data, user_reasons, reason_mapping, base_
     for code in reason_codes:
         if code in reason_mapping["reverse_mapping"]:
             reason_text = reason_mapping["reverse_mapping"][code]
-            user_score = user_reasons.get(code, 0)
+            if code not in user_reasons:
+                raise KeyError(f"{base_question_id}: reason {code} is not in the survey export, keys {sorted(user_reasons)}")
+            user_score = user_reasons[code]
             mapped_reasons.append({
                 "code": code,
                 "text": reason_text,

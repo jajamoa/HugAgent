@@ -29,7 +29,9 @@ that contained raw participant folders. The branches `data_preprocess` and
 - `participant_id` is `P01` to `P54`. It has no relation to any recruitment id.
   A 24-character hex string must never appear in a public file.
 - `item_id` is `<task>-<domain>-<nnnn>` and is stable across releases. New items
-  get new ids; an item is never renumbered or edited in place.
+  get new ids; an item is never renumbered. A wrong label or question text is
+  corrected in place under a new data version, and `CHANGELOG.md` lists the
+  item ids and the fields that changed.
 - The zipcode field is dropped. Age, income, race, occupation and household
   fields stay as collected because the tasks use them.
 - `scripts/build_release.py` refuses to write a file that contains a 24-hex id,
@@ -58,8 +60,8 @@ review stage; the public files are named by task and domain only.
 
 - Releases are tagged `data-v1.0`, `data-v1.1`, and so on. The Hub dataset
   carries the same tag.
-- A new version adds a CHANGELOG entry: items added, items withdrawn (with
-  reason, never with content), schema changes.
+- A new version adds a `CHANGELOG.md` entry: items added, items corrected (ids
+  and fields), items withdrawn (with reason, never with content), schema changes.
 - Reported numbers must cite the data version they were computed on.
 
 ## Reported scores

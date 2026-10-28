@@ -232,7 +232,7 @@ def main():
     ap.add_argument("--data-dir", type=Path, default=HERE / "data")
     ap.add_argument("--hub", action="store_true", help=f"read the items from the Hub dataset ({HUB_REPO}) instead of --data-dir")
     ap.add_argument("--repo", default=HUB_REPO, help="with --hub: dataset id, or a local folder with the same layout")
-    ap.add_argument("--data-version", default="data-v1.0")
+    ap.add_argument("--data-version", default="data-v1.1")
     ap.add_argument("--limit", type=int, help="items per file, for smoke tests")
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--temperature", type=float, default=0.1)

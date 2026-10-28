@@ -59,7 +59,7 @@
             "text": "To what extent do the following reasons influence your stance?",
             "type": "reason_evaluation",
             "scale": [1, 5],
-            "reasons": ["G", "C", "S", "T", "U"]
+            "reasons": ["N", "C", "S", "T", "U"]
           }
         }
       ]

@@ -206,26 +206,26 @@
   },
   {
    "model": "Global majority (A, 1)",
-   "data_version": "data-v1.0",
-   "date": "2026-10-07",
+   "data_version": "data-v1.1",
+   "date": "2026-10-28",
    "source": "baseline",
    "bsi_acc": 63.63879492294793,
-   "bdu_acc": 58.3173464953126,
-   "bdu_mae": 1.6804719009803755,
+   "bdu_acc": 56.07492225288835,
+   "bdu_mae": 1.725926446434921,
    "bdu_dir_acc": 15.337464142283418,
-   "ati": 2.021557116055791,
+   "ati": 0.7635806321000479,
    "file": "results/baselines/majority.json"
   },
   {
    "model": "Random guess (mean of 5 seeds)",
-   "data_version": "data-v1.0",
-   "date": "2026-10-07",
+   "data_version": "data-v1.1",
+   "date": "2026-10-28",
    "source": "baseline",
    "bsi_acc": 50.51160840778327,
-   "bdu_acc": 43.503770241058376,
-   "bdu_mae": 1.8584360498258803,
+   "bdu_acc": 44.437103574391706,
+   "bdu_mae": 1.8144360498258805,
    "bdu_dir_acc": 47.930948159649226,
-   "ati": -0.6793108367501703,
+   "ati": 0.12417091751833031,
    "file": "results/baselines/random.json"
   }
  ]

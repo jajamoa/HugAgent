@@ -49,9 +49,11 @@ ATI is the paper's unified score: 0 is random guessing, 100 is the human test-re
 | o3-mini | 75.12 | 64.54 | 1.22 | 71.29 | 60.92 | paper | paper |
 | Gemini 2.0 Flash | 69.95 | 60.55 | 1.35 | 83.31 | 59.76 | paper | paper |
 | RAG (Qwen-max) | 75.46 | 51.90 | 1.57 | 72.25 | 54.96 | paper | paper |
-| Global majority (A, 1) | 63.64 | 58.32 | 1.68 | 15.34 | 2.02 | data-v1.0 | baseline |
-| Random guess (mean of 5 seeds) | 50.51 | 43.50 | 1.86 | 47.93 | -0.68 | data-v1.0 | baseline |
+| Global majority (A, 1) | 63.64 | 56.07 | 1.73 | 15.34 | 0.76 | data-v1.1 | baseline |
+| Random guess (mean of 5 seeds) | 50.51 | 44.44 | 1.81 | 47.93 | 0.12 | data-v1.1 | baseline |
 <!-- leaderboard:end -->
+
+data-v1.1 corrects 54 belief dynamics update items in the zoning domain (see `CHANGELOG.md`). The gpt-4o row was run on data-v1.0 and has not been re-run; the correction can move its BDU accuracy by at most 3.9 points.
 
 ## Usage
 
@@ -94,14 +96,14 @@ cd Benchmark
 # Smoke test: 20 items per file
 python hugagent_eval.py --model gpt-4o --base-url https://api.openai.com/v1 --api-key-env OPENAI_API_KEY --limit 20
 # Full run (1,742 items), results file ready to submit
-python hugagent_eval.py --model gpt-4o --api-key-env OPENAI_API_KEY --out ../results/gpt-4o/data-v1.0.json --save-responses ../runs/gpt-4o.jsonl
+python hugagent_eval.py --model gpt-4o --api-key-env OPENAI_API_KEY --out ../results/gpt-4o/data-v1.1.json --save-responses ../runs/gpt-4o.jsonl
 # Same run with the items pulled from the Hub instead of Benchmark/data/ (after `hf auth login`)
-python hugagent_eval.py --hub --model gpt-4o --api-key-env OPENAI_API_KEY --out ../results/gpt-4o/data-v1.0.json
+python hugagent_eval.py --hub --model gpt-4o --api-key-env OPENAI_API_KEY --out ../results/gpt-4o/data-v1.1.json
 # Bring your own pipeline: score a responses file, one line per item {"item_id": ..., "response": ...}
 # (the format --save-responses writes). The scorer parses "response" the same way as a live run, and that
 # parser expects what the paper's prompts ask for: a bare option letter or a bare number. If your prompts
 # produce longer text, have your pipeline reduce each response to the letter or number before scoring.
-python hugagent_eval.py --hub --score ../runs/my-model.jsonl --model my-model --out ../results/my-model/data-v1.0.json
+python hugagent_eval.py --hub --score ../runs/my-model.jsonl --model my-model --out ../results/my-model/data-v1.1.json
 # Non-learning baselines, no API calls
 python hugagent_eval.py --baseline majority
 ```

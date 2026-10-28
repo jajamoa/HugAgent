@@ -1,25 +1,27 @@
 {
   "model": "Global majority (A, 1)",
-  "data_version": "data-v1.0",
+  "data_version": "data-v1.1",
   "settings": {
     "temperature": 0.1,
     "demographics": true,
     "context": true,
     "limit": null,
     "base_url": null,
+    "items": "Benchmark/data",
+    "responses": null,
     "mae_max": 3.0,
     "lambda": 0.3
   },
-  "date": "2026-10-07",
+  "date": "2026-10-28",
   "overall": {
     "bsi_acc": 63.63879492294793,
-    "bdu_acc": 58.3173464953126,
-    "bdu_mae": 1.6804719009803755,
+    "bdu_acc": 56.07492225288835,
+    "bdu_mae": 1.725926446434921,
     "bdu_dir_acc": 15.337464142283418,
     "n_items": 1742,
     "unparsed": 0,
-    "ati_unscaled": 0.48441465554873997,
-    "ati": 2.021557116055791
+    "ati_unscaled": 0.4797176858517702,
+    "ati": 0.7635806321000479
   },
   "per_domain": {
     "healthcare": {
@@ -49,8 +51,8 @@
       "n_bdu": 550,
       "bsi_acc": 57.142857142857146,
       "bsi_unparsed": 0,
-      "bdu_acc": 70.0,
-      "bdu_mae": 1.420909090909091,
+      "bdu_acc": 63.27272727272727,
+      "bdu_mae": 1.5572727272727274,
       "bdu_unparsed": 0,
       "bdu_dir_pairs": 21,
       "bdu_dir_acc": 8.57142857142857
