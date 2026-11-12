@@ -112,6 +112,33 @@ Flags: `--workers`, `--temperature` (default 0.1), `--no-demographics`, `--no-co
 
 `evaluate_qwen.py` is the original per-file script used for the paper (DashScope, Gemini and Novita clients in `llm_utils.py`); it is kept for reference.
 
+#### Evaluate in OdysSim
+
+HugAgent is also a built-in evaluation-only task in [OdysSim](https://github.com/sunnweiwei/OdysSim) (`agents/hugagent`), so you can score a local checkpoint, an open-source HF model, or any OpenAI-compatible API model next to the 27-task SOUL suite. It adds two tasks: `hugagent_bsi` (356 items) and `hugagent_bdu` (1,386 items).
+
+```bash
+git clone https://github.com/sunnweiwei/OdysSim && cd OdysSim   # install as in its README
+
+# 1. Download the OdysSim-format parquets (gated: accept the terms on the dataset page first)
+huggingface-cli login
+huggingface-cli download social-atoms/hugagent \
+  odyssim/hugagent_bsi_val.parquet odyssim/hugagent_bdu_val.parquet \
+  --repo-type dataset --revision data-v1.1 --local-dir data/hugagent
+
+# 2. Run (INCLUDE_HUGAGENT=1 appends the two tasks to the default suite)
+# Local checkpoint or HF model via vLLM
+ACTOR_MODEL_PATH=Qwen/Qwen3-8B-Instruct INCLUDE_HUGAGENT=1 bash recipe/ditto/eval.sh local
+# API model, or a local vLLM/SGLang server through an OpenAI-compatible endpoint
+OPENAI_AGENT_MODEL=gpt-5.4-mini OPENAI_AGENT_BASE_URL=https://api.openai.com/v1/ \
+OPENAI_AGENT_API_KEY=$OPENAI_API_KEY INCLUDE_HUGAGENT=1 bash recipe/ditto/eval.sh api
+```
+
+- Data is read from `$DATA_DIR/hugagent/odyssim` (default `data/hugagent/odyssim`); set `HUGAGENT_DATA_DIR` to point at an existing download. Without `INCLUDE_HUGAGENT=1` the original suite needs no HugAgent data.
+- The parquets are built from `Benchmark/data/` with `python scripts/build_odyssim_parquet.py` (the Hub copy is already built). Use `data-v1.1`; earlier downloads have 54 wrong zoning BDU gold answers.
+- Prompts follow the paper (Appendix K.1); answers must be in `<answer>...</answer>` tags, and unparsed responses score zero.
+- Reported scores are BSI exact-match accuracy and BDU tolerance accuracy (within 1 on the 5-point scale, 2 on the 10-point scale). These are per-task scores, not the paper's composite ATI, and they are not directly comparable with `hugagent_eval.py` numbers unless the prompts and decoding settings match.
+- The rows carry `split: test`; the OdysSim adapter refuses to use them in training mode. To submit to the leaderboard, use `hugagent_eval.py --save-responses` / `--score` as above.
+
 ### Human Annotation Tool
 
 Launch interactive annotation interface:
