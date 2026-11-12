@@ -19,6 +19,7 @@ HugAgent (Human-Grounded Agent Benchmark) evaluates whether a language model can
 
 ## News
 
+- **2026-10** HugAgent is now a built-in evaluation task in [OdysSim](https://github.com/sunnweiwei/OdysSim); see [Evaluate in OdysSim](#evaluate-in-odyssim).
 - **2026-10** Full benchmark (1,742 items) released on the Hugging Face Hub as [social-atoms/hugagent](https://huggingface.co/datasets/social-atoms/hugagent), gated, CC BY-NC 4.0.
 - **2026-09** Selected for an oral presentation at EMNLP 2026 (Budapest, October 24 to 29).
 - **2026-08** Accepted to EMNLP 2026, main conference.
